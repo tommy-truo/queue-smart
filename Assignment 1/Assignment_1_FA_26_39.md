@@ -64,7 +64,11 @@ We're building QueueSmart as a web app.
 Fill this in before submitting. Each row should match that person's commits and pull requests.
 
 Group member name | Contribution | Discussion notes
+
 Megan A Cowan
+
 Charles Mccallum
+
 Pete Sankar | Added "Initial Thoughts" | The initial ideas and features we talked about in the first meeting on 09/02/26
+
 Tommy Truong
