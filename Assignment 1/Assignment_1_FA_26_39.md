@@ -10,7 +10,7 @@ We're building QueueSmart as a web app.
 
 ### Who uses it
 
-**Customers/Users** - people who need to join a queue or book an appointment, they see their position and estimated wait time (time tange as 10-30 mins left), receive notifications as their turn approaches. Users also see how many people are in front of them (names not shown).
+**Users** - people who need to join a queue or book an appointment, they see their position and estimated wait time (time tange as 10-30 mins left), receive notifications as their turn approaches. Users also see how many people are in front of them (names not shown).
 **Employees** - staff can pop users from the queue once they are serced without having authority to modufy the services/queues properties like description, size, priorities, etc.
 **Administrators** - who manages the queues, monitors priorities, review usage info, and be able to modify users. They can also create/delete queues for different services.
 
