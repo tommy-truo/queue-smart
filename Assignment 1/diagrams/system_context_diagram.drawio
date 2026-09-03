@@ -68,8 +68,8 @@
               <mxPoint x="691" y="70" />
               <mxPoint x="108" y="70" />
             </Array>
-            <mxPoint x="396" y="316" as="sourcePoint" />
-            <mxPoint x="496" y="316" as="targetPoint" />
+            <mxPoint x="691" y="172" as="sourcePoint" />
+            <mxPoint x="108" y="109" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="8v4B5KqBkfQIcH0m0VFM-4" connectable="0" parent="8v4B5KqBkfQIcH0m0VFM-3" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;labelBackgroundColor=#B7B7B7;fontSize=12;fontFamily=Tahoma;" value="Deliver Email" vertex="1">
