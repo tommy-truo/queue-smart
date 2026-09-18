@@ -53,6 +53,12 @@ We're building QueueSmart as a web app.
 
 ## 2. Development Methodology
 
+We plan to use Agile, with a light version of Scrum. Each assignment is one sprint. At the start of a sprint we meet, split the work into small tasks, and each person picks tasks. We check in over group chat during the week and meet again before the deadline to review everything together.
+
+This fits the project because the requirements come in pieces (design, UI, API, data, then the final build), and we expect to change earlier decisions as we learn more. Working in short sprints lets us adjust without redoing a big upfront plan. Our team is also small and has different class schedules, so short check-ins work better for us than long formal meetings.
+
+Across assignments, each sprint builds on the last one. At the end of each assignment we look at what went well and what didn't, and carry any unfinished or changed items into the next sprint. Tasks are tracked in GitHub so everyone can see who is doing what, and so each person's contribution shows up in the commit history.
+
 ## 3. High-Level Design and Architecture
 
 ### 3.1 System Context Diagram
