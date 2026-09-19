@@ -101,9 +101,6 @@ A typical flow: a user joins a queue in the web app, the API Server passes the r
 
 ## Team Contribution Record
 
-Fill this in before submitting. Each heading is one group member.
-Each row under that heading is that member's contribution or discussion notes.
-
 ### Megan A Cowan
 
 
@@ -117,9 +114,10 @@ Each row under that heading is that member's contribution or discussion notes.
 ### Charles Mccallum
 
 
-| Contribution                               | Discussion notes |
-| ------------------------------------------ | ---------------- |
-| *(each row is an individual contribution)* |                  |
+| Contribution                                                 | Discussion notes                                     |
+| ------------------------------------------------------------ | ---------------------------------------------------- |
+| Added "Development Methodology" and the diagram explanations | Also set up the Assignment 1 document structure      |
+| Edited the System Context Diagram                            |                                                      |
 
 
 
