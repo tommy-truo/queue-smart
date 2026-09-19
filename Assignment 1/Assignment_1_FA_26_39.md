@@ -71,9 +71,31 @@ Across assignments, each sprint builds on the last one. At the end of each assig
 
 ![System Context Diagram](./diagrams/system_context_diagram.png)
 
+This diagram shows QueueSmart as a single system, the people who use it, and the outside systems it depends on.
+
+- **Users** register and log in, pick a service, join or leave a queue, and see their position, estimated wait time, in-app alerts, and history.
+- **Service Employees** log in, view the queue for their service, call the next person, and mark people as served or remove them.
+- **Administrators** log in, create and manage services, configure queues, manage staff, and view usage data.
+- **Email Service (external)** - QueueSmart decides when an email is needed (account verification, or a queue notification) and hands it to the email service, which delivers it to the user. In-app alerts stay inside QueueSmart.
+- **Auth Provider (external)** - QueueSmart passes login credentials to the auth provider to verify them, so we do not handle password checking ourselves.
+
+Everything else, including queues, priorities, wait time estimates, history, and in-app notifications, is inside the QueueSmart boundary. No implementation details are shown at this level.
+
 ### 3.2 Container Diagram
 
 ![Container Diagram](./diagrams/Container%20Diagram.jpg)
+
+This diagram opens up the QueueSmart box from 3.1 and shows its main parts.
+
+- **Web App (frontend)** - All three roles use the same web app. It shows different screens depending on the role, and sends every action to the backend as an API request.
+- **API Server** - The single entry point to the backend. It checks who is logged in (using the Auth Provider), handles history requests, and forwards other work to the right component below.
+- **Priority Queue Management** - Handles joining, leaving, and serving the next person. It orders the queue by priority and arrival time.
+- **Service Management** - Lets administrators create, update, and list services. Queue Management uses the service's settings, such as priority level and expected duration.
+- **Wait-Time Estimator** - Estimates the wait from a person's position in the queue and the expected duration of the service.
+- **Notification Manager** - Decides when someone should be notified, for example when they are close to the front. It creates in-app alerts and sends queue notification emails through the Email Service.
+- **Database** - Stores users, services, queue entries, and history. All backend components read from and write to it.
+
+A typical flow: a user joins a queue in the web app, the API Server passes the request to Queue Management, and the new entry is saved in the database. The Wait-Time Estimator calculates their wait, which is shown in the web app. As people ahead of them are served, the Notification Manager sees they are near the front and sends an in-app alert and an email.
 
 ## Team Contribution Record
 
