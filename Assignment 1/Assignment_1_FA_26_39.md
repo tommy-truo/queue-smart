@@ -42,6 +42,8 @@ We're building QueueSmart as a web app.
 - Queue & Service history
 - Monitor queues and view usage data
 
+
+
 ### Anticipated challenges
 
 - Long queues
@@ -50,6 +52,8 @@ We're building QueueSmart as a web app.
 - Keeping queue position and estimated wait time updated as users join, leave, or are served
 - Managing different role permissions
 - Managing priorities while keeping the queue fair
+
+
 
 ## 2. Development Methodology
 
@@ -61,9 +65,15 @@ Across assignments, each sprint builds on the last one. At the end of each assig
 
 ## 3. High-Level Design and Architecture
 
+
+
 ### 3.1 System Context Diagram
 
+![System Context Diagram](./diagrams/system_context_diagram.png)
+
 ### 3.2 Container Diagram
+
+
 
 ## Team Contribution Record
 
@@ -71,18 +81,40 @@ Fill this in before submitting. Each heading is one group member.
 Each row under that heading is that member's contribution or discussion notes.
 
 ### Megan A Cowan
-| Contribution | Discussion notes |
-| --- | --- |
-| *(each row is an individual contribution)* | |
+
+
+| Contribution                               | Discussion notes |
+| ------------------------------------------ | ---------------- |
+| *(each row is an individual contribution)* |                  |
+
+
+
+
 ### Charles Mccallum
-| Contribution | Discussion notes |
-| --- | --- |
-| *(each row is an individual contribution)* | |
+
+
+| Contribution                               | Discussion notes |
+| ------------------------------------------ | ---------------- |
+| *(each row is an individual contribution)* |                  |
+
+
+
+
 ### Pete Sankar
-| Contribution | Discussion notes |
-| --- | --- |
+
+
+| Contribution             | Discussion notes                                                                |
+| ------------------------ | ------------------------------------------------------------------------------- |
 | Added "Initial Thoughts" | The initial ideas and features we talked about in the first meeting on 09/02/26 |
+
+
+
+
 ### Tommy Truong
-| Contribution | Discussion notes |
-| --- | --- |
+
+
+| Contribution                 | Discussion notes                                                                       |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
 | Added System Context Diagram | Agreed to design the system context diagram and added it under `Assignment 1/diagrams` |
+
+
