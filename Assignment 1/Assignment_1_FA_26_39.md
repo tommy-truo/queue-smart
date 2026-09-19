@@ -104,9 +104,9 @@ A typical flow: a user joins a queue in the web app, the API Server passes the r
 ### Megan A Cowan
 
 
-| Contribution                               | Discussion notes |
-| ------------------------------------------ | ---------------- |
-| *(each row is an individual contribution)* |                  |
+| Contribution            | Discussion notes                                                          |
+| ----------------------- | ------------------------------------------------------------------------- |
+| Added Container Diagram | Designed the container diagram and added it under `Assignment 1/diagrams` |
 
 
 
