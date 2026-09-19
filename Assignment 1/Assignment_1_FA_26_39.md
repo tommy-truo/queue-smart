@@ -2,6 +2,8 @@
 
 Megan A Cowan, Charles Mccallum, Pete Sankar, Tommy Truong
 
+https://github.com/tommy-truo/queue-smart
+
 ## Overview
 
 We're building QueueSmart as a web app.
