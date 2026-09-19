@@ -73,7 +73,7 @@ Across assignments, each sprint builds on the last one. At the end of each assig
 
 ### 3.2 Container Diagram
 
-
+![Container Diagram](./diagrams/Container%20Diagram.jpg)
 
 ## Team Contribution Record
 
