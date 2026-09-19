@@ -10,13 +10,15 @@ We're building QueueSmart as a web app.
 
 ### Who uses it
 
-**Users** - people who need to join a queue or book an appointment, they see their position and estimated wait time (time tange as 10-30 mins left), receive notifications as their turn approaches. Users also see how many people are in front of them (names not shown).
-**Employees** - staff can pop users from the queue once they are serced without having authority to modufy the services/queues properties like description, size, priorities, etc.
+**Users** - people who need to join a queue or book an appointment, they see their position and estimated wait time (time range as 10-30 mins left), receive notifications as their turn approaches. Users also see how many people are in front of them (names not shown).
+
+**Employees** - staff can pop users from the queue once they are served without having authority to modify the services/queues properties like description, size, priorities, etc.
+
 **Administrators** - who manages the queues, monitors priorities, review usage info, and be able to modify users. They can also create/delete queues for different services.
 
 ### How they'll use it
 
-**Users** - First they register and log in, they will then view available services and the option to view available queues or appointments and then book either option. They will see their positon, estimated wait time, and furhter information for that specific queue, and an option to leave the queue. They can also see in-app notifications and opted-in for email notifications with updates.
+**Users** - First they register and log in, they will then view available services and the option to view available queues or appointments and then book either option. They will see their position, estimated wait time, and further information for that specific queue, and an option to leave the queue. They can also see in-app notifications and opted-in for email notifications with updates.
 
 **Employees** - They can view the queue and pop users from the queue once they are served, but do not have authority to manipulate services/queue properties like descriptions, max size, priorities, etc.
 
