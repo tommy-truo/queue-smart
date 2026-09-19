@@ -67,14 +67,22 @@ Across assignments, each sprint builds on the last one. At the end of each assig
 
 ## Team Contribution Record
 
-Fill this in before submitting. Each row should match that person's commits and pull requests.
+Fill this in before submitting. Each heading is one group member.
+Each row under that heading is that member's contribution or discussion notes.
 
-Group member name | Contribution | Discussion notes
-
-Megan A Cowan
-
-Charles Mccallum
-
-Pete Sankar | Added "Initial Thoughts" | The initial ideas and features we talked about in the first meeting on 09/02/26
-
-Tommy Truong
+### Megan A Cowan
+| Contribution | Discussion notes |
+| --- | --- |
+| *(each row is an individual contribution)* | |
+### Charles Mccallum
+| Contribution | Discussion notes |
+| --- | --- |
+| *(each row is an individual contribution)* | |
+### Pete Sankar
+| Contribution | Discussion notes |
+| --- | --- |
+| Added "Initial Thoughts" | The initial ideas and features we talked about in the first meeting on 09/02/26 |
+### Tommy Truong
+| Contribution | Discussion notes |
+| --- | --- |
+| Added System Context Diagram | Agreed to design the system context diagram and added it under `Assignment 1/diagrams` |
