@@ -34,6 +34,7 @@ https://github.com/tommy-truo/queue-smart
 ### 4.1 Authentication Screens
 
 **Login Screen**
+
 ![Login](./Frontend_Screenshots/Authentication_Screens/Frontend_Login.png) 
 
 ### 4.2 User Screens
