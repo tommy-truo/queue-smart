@@ -10,6 +10,23 @@ https://github.com/tommy-truo/queue-smart
 
 ## 3. Front-End Technologies and Responsibilities
 
+**Technologies**
+
+- **React** - Components let the three roles share layout and navigation. It also matches the MERN-style stack we plan to use for the backend.
+- **TypeScript** - Typed data (services, queue entries) catches mistakes early and carries into the API design in Assignment 3.
+- **Vite** - Fast dev server with almost no setup.
+- **React Router** - Navigation between screens, and keeps each role to its own screens.
+
+**Responsibilities**
+
+| Screens                                     | Team member |
+| ------------------------------------------- | ----------- |
+| Scaffold, routing, layout, mock data        | Charles     |
+| Login, Registration                         |             |
+| User screens                                |             |
+| Admin screens                               |             |
+| Service Employee screen                     |             |
+| Notifications                               |             |
 
 ## 4. Screenshots of Front End
 
@@ -35,9 +52,10 @@ https://github.com/tommy-truo/queue-smart
 ### Charles Mccallum
 
 
-| Contribution | Discussion notes |
-| ------------ | ---------------- |
-|              |                  |
+| Contribution         | Discussion notes                                                  |
+| -------------------- | ----------------------------------------------------------------- |
+| Front-end scaffold   | Vite + React + TypeScript app with routing and placeholder pages  |
+| Layout and mock data | Role-based nav, route guards and sample data                      |
 
 
 ### Pete Sankar
