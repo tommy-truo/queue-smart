@@ -2,3 +2,25 @@ body {
   margin: 0;
   font-family: system-ui, sans-serif;
 }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.app-header nav {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+}
+
+.app-header nav a.active {
+  font-weight: bold;
+}
+
+main {
+  padding: 1rem;
+}
