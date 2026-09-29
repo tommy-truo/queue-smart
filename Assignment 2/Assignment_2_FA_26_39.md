@@ -37,11 +37,55 @@ https://github.com/tommy-truo/queue-smart
 
 ![Login](./Frontend_Screenshots/Authentication_Screens/Login.png) 
 
+**Register Screen**
+
+![Register](./Frontend_Screenshots/Authentication_Screens/Register.png) 
+
+
+
 ### 4.2 User Screens
+
+**User Dashboard Screen**
+
+![User Dashboard](./Frontend_Screenshots/User_Screens/UserDashboard.png) 
+
+**Join Queue Screen**
+
+![Join Queue](./Frontend_Screenshots/User_Screens/JoinQueue.png) 
+
+**Queue Status Screen**
+
+![Queue Status](./Frontend_Screenshots/User_Screens/QueueStatus.png) 
+
+**History Screen**
+
+![History](./Frontend_Screenshots/User_Screens/History.png) 
+
+
 
 ### 4.3 Administrator Screens
 
+**Admin Dashboard Screen**
+
+![Admin Dashboard](./Frontend_Screenshots/Administrator_Screens/AdminDashboard.png) 
+
+**Service Management Screen**
+
+![Service Management](./Frontend_Screenshots/Administrator_Screens/ServiceManagement.png) 
+
+**Queue Management Screen**
+
+![Queue Management](./Frontend_Screenshots/Administrator_Screens/QueueManagement.png) 
+
+
+
 ### 4.4 Service Employee Screens
+
+**Employee Queue Screen**
+
+![Employee Queue](./Frontend_Screenshots/Service_Employee_Screens/EmployeeQueue.png) 
+
+
 
 ## Team Contribution Record
 
