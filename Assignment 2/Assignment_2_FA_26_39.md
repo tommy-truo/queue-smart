@@ -7,6 +7,9 @@ https://github.com/tommy-truo/queue-smart
 
 ## 2. Design and Development Methodology
 
+- Our methodology has not changed since Assignment 1. We are still using Agile with a light version of Scrum, and using a groupchat for informal updates and communication.
+- We kept it because it kept us updated on each other's tasks, responsibilities, and progress, and made task delegation easier.
+- We divided the UI/UX and implementation by user role. Each person owned the screens for one role and handled integration as needed.
 
 ## 3. Front-End Technologies and Responsibilities
 
