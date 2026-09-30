@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { homePath, useAuth } from '../../auth/AuthContext.ts'
 import { LIMITS, validateLogin } from '../../auth/validateAuth.ts'
+import './auth.css'
 
 export default function Login() {
   const { login } = useAuth()
@@ -29,12 +30,11 @@ export default function Login() {
   }
 
   return (
-    <>
+    <section className="auth">
       <h1>Login</h1>
       <form noValidate onSubmit={handleSubmit}>
-        <div>
+        <div className="auth-field">
           <label htmlFor="login-email">Email</label>
-          <br />
           <input
             id="login-email"
             name="email"
@@ -46,9 +46,8 @@ export default function Login() {
           />
           {fieldErrors.email ? <div role="alert">{fieldErrors.email}</div> : null}
         </div>
-        <div>
+        <div className="auth-field">
           <label htmlFor="login-password">Password</label>
-          <br />
           <input
             id="login-password"
             name="password"
@@ -66,6 +65,6 @@ export default function Login() {
       <p>
         Don&apos;t have an account? <Link to="/register">Register</Link>
       </p>
-    </>
+    </section>
   )
 }

@@ -1,0 +1,76 @@
+#root:has(.auth) {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root:has(.auth) main {
+  flex: 1;
+  display: flex;
+}
+
+.auth {
+  width: 100%;
+  max-width: 22rem;
+  margin: auto;
+}
+
+.auth h1 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.auth-required {
+  color: #9b2c2c;
+}
+
+.auth .auth-legend {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+.auth form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-field label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.auth-field input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #ddd;
+  font: inherit;
+}
+
+.auth-field input:focus {
+  outline: 1px solid #111;
+  outline-offset: 1px;
+}
+
+.auth button {
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.auth [role='alert'] {
+  margin-top: 0.25rem;
+  color: #9b2c2c;
+  font-size: 0.875rem;
+}
+
+.auth p {
+  margin: 1rem 0 0;
+}

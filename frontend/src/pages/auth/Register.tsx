@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { homePath, useAuth } from '../../auth/AuthContext.ts'
 import { LIMITS, validateRegister } from '../../auth/validateAuth.ts'
+import './auth.css'
 
 type RegisterField = 'fullName' | 'email' | 'password' | 'confirmPassword'
 
@@ -42,59 +43,85 @@ export default function Register() {
   }
 
   return (
-    <>
+    <section className="auth">
       <h1>Register</h1>
+      <p className="auth-legend">
+        <span className="auth-required" aria-hidden="true">
+          *
+        </span>{' '}
+        Required field
+      </p>
       <form noValidate onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="register-full-name">Full name</label>
-          <br />
+        <div className="auth-field">
+          <label htmlFor="register-full-name">
+            Full name{' '}
+            <span className="auth-required" aria-hidden="true">
+              *
+            </span>
+          </label>
           <input
             id="register-full-name"
             name="fullName"
             type="text"
             autoComplete="name"
+            required
             maxLength={LIMITS.name.max}
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
           />
           {fieldErrors.fullName ? <div role="alert">{fieldErrors.fullName}</div> : null}
         </div>
-        <div>
-          <label htmlFor="register-email">Email</label>
-          <br />
+        <div className="auth-field">
+          <label htmlFor="register-email">
+            Email{' '}
+            <span className="auth-required" aria-hidden="true">
+              *
+            </span>
+          </label>
           <input
             id="register-email"
             name="email"
             type="email"
             autoComplete="email"
+            required
             maxLength={LIMITS.email.max}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
           {fieldErrors.email ? <div role="alert">{fieldErrors.email}</div> : null}
         </div>
-        <div>
-          <label htmlFor="register-password">Password</label>
-          <br />
+        <div className="auth-field">
+          <label htmlFor="register-password">
+            Password{' '}
+            <span className="auth-required" aria-hidden="true">
+              *
+            </span>
+          </label>
           <input
             id="register-password"
             name="password"
             type="password"
             autoComplete="new-password"
+            required
             maxLength={LIMITS.password.max}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           {fieldErrors.password ? <div role="alert">{fieldErrors.password}</div> : null}
         </div>
-        <div>
-          <label htmlFor="register-confirm-password">Confirm password</label>
-          <br />
+        <div className="auth-field">
+          <label htmlFor="register-confirm-password">
+            Confirm password{' '}
+            <span className="auth-required" aria-hidden="true">
+              *
+            </span>
+          </label>
           <input
             id="register-confirm-password"
             name="confirmPassword"
             type="password"
             autoComplete="new-password"
+            required
             maxLength={LIMITS.password.max}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -108,6 +135,6 @@ export default function Register() {
       <p>
         Already have an account? <Link to="/login">Log in</Link>
       </p>
-    </>
+    </section>
   )
 }
