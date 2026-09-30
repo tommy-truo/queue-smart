@@ -22,7 +22,7 @@ https://github.com/tommy-truo/queue-smart
 | Screens                                     | Team member |
 | ------------------------------------------- | ----------- |
 | Scaffold, routing, layout, mock data        | Charles     |
-| Login, Registration                         |             |
+| Login, Registration                         | Tommy       |
 | User screens                                |             |
 | Admin screens                               |             |
 | Service Employee screen                     |             |
@@ -117,8 +117,10 @@ https://github.com/tommy-truo/queue-smart
 ### Tommy Truong
 
 
-| Contribution | Discussion notes |
-| ------------ | ---------------- |
-|              |                  |
+| Contribution                 | Discussion notes                                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Login and registration       | Mock login and register pages with client-side validation and inline error messages                      |
+| Mock accounts and session    | Seeded accounts for each role; new registrations saved in localStorage and signed in as a user           |
+| Auth page styling            | Shared form styles for the login and register screens, including required-field markers                  |
 
 
