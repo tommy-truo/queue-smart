@@ -2,12 +2,10 @@ export const LIMITS = {
   email: { max: 254 },
   password: { min: 8, max: 64 },
   name: { min: 1, max: 50 },
-  middleInitial: { max: 1 },
 } as const
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const NAME_PATTERN = /^[A-Za-z][A-Za-z' -]{0,49}$/
-const MI_PATTERN = /^[A-Za-z]$/
 
 export type FieldErrors = Partial<Record<string, string>>
 
@@ -17,9 +15,7 @@ export type LoginFields = {
 }
 
 export type RegisterFields = {
-  firstName: string
-  lastName: string
-  middleInitial: string
+  fullName: string
   email: string
   password: string
   confirmPassword: string
@@ -74,15 +70,6 @@ function validateNameField(value: string, label: string): string | undefined {
   return undefined
 }
 
-function validateMiddleInitialField(value: string): string | undefined {
-  const trimmed = value.trim()
-  if (trimmed.length === 0) return undefined
-  if (trimmed.length > LIMITS.middleInitial.max || !MI_PATTERN.test(trimmed)) {
-    return 'Middle initial must be a single letter.'
-  }
-  return undefined
-}
-
 export function validateLogin(fields: LoginFields): FieldErrors {
   const errors: FieldErrors = {}
 
@@ -105,14 +92,8 @@ export function validateLogin(fields: LoginFields): FieldErrors {
 export function validateRegister(fields: RegisterFields): FieldErrors {
   const errors: FieldErrors = {}
 
-  const firstNameError = validateNameField(fields.firstName, 'First name')
-  if (firstNameError) errors.firstName = firstNameError
-
-  const lastNameError = validateNameField(fields.lastName, 'Last name')
-  if (lastNameError) errors.lastName = lastNameError
-
-  const miError = validateMiddleInitialField(fields.middleInitial)
-  if (miError) errors.middleInitial = miError
+  const fullNameError = validateNameField(fields.fullName, 'Full name')
+  if (fullNameError) errors.fullName = fullNameError
 
   if (isBlank(fields.email)) {
     errors.email = 'Email is required.'
@@ -139,10 +120,4 @@ export function validateRegister(fields: RegisterFields): FieldErrors {
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
-}
-
-export function normalizeMiddleInitial(value: string): string | null {
-  const trimmed = value.trim()
-  if (trimmed.length === 0) return null
-  return trimmed.toUpperCase()
 }
