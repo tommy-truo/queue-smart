@@ -24,12 +24,17 @@ const navByRole: Record<Role, NavItem[]> = {
 }
 
 export default function Layout() {
-  const { role, setRole } = useAuth()
+  const { role, setRole, logout } = useAuth()
   const navigate = useNavigate()
 
   function switchRole(next: Role | null) {
     setRole(next)
     navigate(next ? homePath[next] : '/login')
+  }
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
   }
 
   return (
@@ -43,6 +48,11 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+        {role ? (
+          <button type="button" onClick={handleLogout}>
+            Log out
+          </button>
+        ) : null}
         <label>
           View as{' '}
           <select
