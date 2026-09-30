@@ -1,21 +1,17 @@
 import type { Role } from './AuthContext.ts'
-import { normalizeEmail, normalizeMiddleInitial } from './validateAuth.ts'
+import { normalizeEmail } from './validateAuth.ts'
 
 export type StoredAccount = {
   email: string
   password: string
-  firstName: string
-  lastName: string
-  middleInitial: string | null
+  fullName: string
   role: Role
 }
 
 export type SessionUser = Omit<StoredAccount, 'password'>
 
 export type RegisterInput = {
-  firstName: string
-  lastName: string
-  middleInitial: string
+  fullName: string
   email: string
   password: string
   confirmPassword: string
@@ -27,25 +23,19 @@ const SEED_ACCOUNTS: StoredAccount[] = [
   {
     email: 'alex.kim@example.com',
     password: 'UserPass1',
-    firstName: 'Alex',
-    lastName: 'Kim',
-    middleInitial: null,
+    fullName: 'Alex Kim',
     role: 'user',
   },
   {
     email: 'admin@queuesmart.local',
     password: 'AdminPass1',
-    firstName: 'Admin',
-    lastName: 'User',
-    middleInitial: null,
+    fullName: 'Admin User',
     role: 'admin',
   },
   {
     email: 'employee@queuesmart.local',
     password: 'EmployeePass1',
-    firstName: 'Employee',
-    lastName: 'User',
-    middleInitial: null,
+    fullName: 'Employee User',
     role: 'employee',
   },
 ]
@@ -94,9 +84,7 @@ export function saveRegisteredAccount(input: RegisterInput): StoredAccount {
   const account: StoredAccount = {
     email: normalizeEmail(input.email),
     password: input.password,
-    firstName: input.firstName.trim(),
-    lastName: input.lastName.trim(),
-    middleInitial: normalizeMiddleInitial(input.middleInitial),
+    fullName: input.fullName.trim(),
     role: 'user',
   }
   const registered = loadRegisteredAccounts()

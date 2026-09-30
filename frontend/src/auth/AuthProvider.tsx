@@ -63,9 +63,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   function register(input: RegisterInput) {
     const errors = validateRegister({
-      firstName: input.firstName,
-      lastName: input.lastName,
-      middleInitial: input.middleInitial,
+      fullName: input.fullName,
       email: input.email,
       password: input.password,
       confirmPassword: input.confirmPassword,
