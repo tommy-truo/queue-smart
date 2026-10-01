@@ -36,8 +36,8 @@ export const services: Service[] = [
 ]
 
 export const queueEntries: QueueEntry[] = [
-  { id: 'e1', serviceId: 's1', userId: 'u2', userName: 'Jordan Lee', status: 'almost-ready', joinedAt: '2026-09-29T09:05:00' },
-  { id: 'e2', serviceId: 's1', userId: 'u3', userName: 'Sam Patel', status: 'waiting', joinedAt: '2026-09-29T09:12:00' },
+  { id: 'e1', serviceId: 's1', userId: 'u2', userName: 'Jordan Lee', status: 'serving', joinedAt: '2026-09-29T09:05:00' },
+  { id: 'e2', serviceId: 's1', userId: 'u3', userName: 'Sam Patel', status: 'almost-ready', joinedAt: '2026-09-29T09:12:00' },
   { id: 'e3', serviceId: 's1', userId: 'u1', userName: 'Alex Kim', status: 'waiting', joinedAt: '2026-09-29T09:20:00' },
   { id: 'e4', serviceId: 's2', userId: 'u4', userName: 'Riley Chen', status: 'waiting', joinedAt: '2026-09-29T09:15:00' },
   { id: 'e5', serviceId: 's3', userId: 'u5', userName: 'Morgan Diaz', status: 'waiting', joinedAt: '2026-09-29T09:01:00' },
@@ -48,7 +48,7 @@ export const notifications: AppNotification[] = [
   {
     id: 'n1',
     type: 'queue-update',
-    message: 'You moved up to position 3 in Academic Advising.',
+    message: 'You moved up to position 2 in Academic Advising.',
     createdAt: '2026-09-29T09:25:00',
     read: false,
   },
