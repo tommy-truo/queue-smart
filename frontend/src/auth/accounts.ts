@@ -60,6 +60,10 @@ function saveRegisteredAccounts(accounts: StoredAccount[]): void {
   localStorage.setItem(REGISTERED_KEY, JSON.stringify(accounts))
 }
 
+function isUser(account: StoredAccount): boolean{
+  return account.role === 'user';
+}
+
 export function getAllAccounts(): StoredAccount[] {
   return [...SEED_ACCOUNTS, ...loadRegisteredAccounts()]
 }
@@ -82,10 +86,6 @@ export function verifyCredentials(email: string, password: string): StoredAccoun
   const account = findAccountByEmail(email)
   if (!account || account.password !== password) return null
   return account
-}
-
-export function isUser(account: StoredAccount): boolean{
-  return account.role === 'user';
 }
 
 export function saveRegisteredAccount(input: RegisterInput): StoredAccount {
