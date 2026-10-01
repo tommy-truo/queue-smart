@@ -1,6 +1,6 @@
 export type Priority = 'low' | 'medium' | 'high'
 
-export type QueueStatus = 'waiting' | 'almost-ready' | 'served'
+export type QueueStatus = 'waiting' | 'almost-ready' | 'serving' | 'served'
 
 export type Outcome = 'served' | 'left' | 'removed'
 
@@ -24,6 +24,10 @@ export type QueueEntry = {
   userName: string
   status: QueueStatus
   joinedAt: string
+  /** Set when the person enters the chair. */
+  calledAt?: string
+  /** Unset while still on the live board; set when finished or removed. */
+  outcome?: Outcome
 }
 
 export type AppNotification = {
