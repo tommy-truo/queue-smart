@@ -28,7 +28,7 @@ https://github.com/tommy-truo/queue-smart
 | Login, Registration                         | Tommy       |
 | User screens                                |             |
 | Admin screens                               |             |
-| Service Employee screen                     |             |
+| Service Employee screen                     | Tommy       |
 | Notifications                               |             |
 
 ## 4. Screenshots of Front End
@@ -125,5 +125,6 @@ https://github.com/tommy-truo/queue-smart
 | Login and registration       | Mock login and register pages with client-side validation and inline error messages                      |
 | Mock accounts and session    | Seeded accounts for each role; new registrations saved in localStorage and signed in as a user           |
 | Auth page styling            | Shared form styles for the login and register screens, including required-field markers                  |
+| Employee queue screen        | Initial queue page for employees: call the next person, finish serving, requeue them to the back, or remove someone still waiting, with live wait times |
 
 
