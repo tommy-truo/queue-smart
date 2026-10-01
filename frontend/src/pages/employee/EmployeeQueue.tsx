@@ -4,7 +4,7 @@ import type { QueueEntry } from '../../types.ts'
 import { waitSince } from './formatWait.ts'
 import './employeeQueue.css'
 
-const SERVICE_ID = 's1'
+const SERVICE_ID = 's1' //Hard-coded to Academic Advising, remove and change to allow dynamic queue selection
 
 function initEntries(): QueueEntry[] {
   return queueEntries
