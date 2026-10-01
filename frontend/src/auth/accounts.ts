@@ -6,6 +6,7 @@ export type StoredAccount = {
   password: string
   fullName: string
   role: Role
+  id: string
 }
 
 export type SessionUser = Omit<StoredAccount, 'password'>
@@ -25,18 +26,21 @@ const SEED_ACCOUNTS: StoredAccount[] = [
     password: 'UserPass1',
     fullName: 'Alex Kim',
     role: 'user',
+    id: 'u1',
   },
   {
     email: 'admin@queuesmart.local',
     password: 'AdminPass1',
     fullName: 'Admin User',
     role: 'admin',
+    id: 'a1',
   },
   {
     email: 'employee@queuesmart.local',
     password: 'EmployeePass1',
     fullName: 'Employee User',
     role: 'employee',
+    id: 'e1',
   },
 ]
 
@@ -80,12 +84,18 @@ export function verifyCredentials(email: string, password: string): StoredAccoun
   return account
 }
 
+export function isUser(account: StoredAccount): boolean{
+  return account.role === 'user';
+}
+
 export function saveRegisteredAccount(input: RegisterInput): StoredAccount {
+  let accounts = [...SEED_ACCOUNTS].sort((a, b)=> a.id === b.id ? 0:(a.id < b.id ? -1:1));
   const account: StoredAccount = {
     email: normalizeEmail(input.email),
     password: input.password,
     fullName: input.fullName.trim(),
     role: 'user',
+    id: 'u' + (Number(accounts.findLast(isUser)?.id.at(-1)) + 1),
   }
   const registered = loadRegisteredAccounts()
   registered.push(account)
