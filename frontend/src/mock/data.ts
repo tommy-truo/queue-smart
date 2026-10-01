@@ -1,7 +1,5 @@
 import type { AppNotification, HistoryEntry, QueueEntry, Service } from '../types.ts'
 
-export const currentUser = { id: 'u1', email: 'alex.kim@example.com' }
-
 export const services: Service[] = [
   {
     id: 's1',
