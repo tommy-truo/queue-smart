@@ -16,50 +16,40 @@ export default function History() {
   const sortedHistory = [...history].sort((a, b) => {
     if (sortConfig !== null){
       const { key, direction } = sortConfig;
-      if (a[key as keyof HistoryEntry] < b[key as keyof HistoryEntry]){
-        return direction === 'ascending' ? -1 : 1
-      }
-      if (a[key as keyof HistoryEntry] > b[key as keyof HistoryEntry]){
-        return direction === 'ascending' ? 1 : -1
-      }
+      if (a[key as keyof HistoryEntry] < b[key as keyof HistoryEntry]) return direction === 'ascending' ? -1 : 1
+      if (a[key as keyof HistoryEntry] > b[key as keyof HistoryEntry]) return direction === 'ascending' ? 1 : -1
     }
     return 0;
   });
 
   const currentHistory = sortedHistory.slice(indexOfFirstItem, indexOfLastItem);
-  const handleSort = (key : string) => {
+  function handleSort (key : string){
     let direction = 'ascending';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === direction){
-      direction = 'descending';
-    }
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === direction) direction = 'descending';
     setSortConfig({ key, direction });
-  };
+  }
 
   return (
     <div>
       <h1>History</h1>
       <table border= {1} style={{width: '50%', textAlign: 'left'}}>
         <thead>
-          <th onClick={() => handleSort('id')} style={{ cursor: 'pointer' }}>
-            ID {sortConfig.key === 'id' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
+          <th onClick={() => handleSort('serviceName')} style={{ cursor: 'pointer' }}>
+            Service {sortConfig.key === 'serviceName' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
           </th>
           <th onClick={() => handleSort('date')} style={{ cursor: 'pointer' }}>
             Date {sortConfig.key === 'date' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
-          </th>
-          <th onClick={() => handleSort('serviceName')} style={{ cursor: 'pointer' }}>
-            Service {sortConfig.key === 'serviceName' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
           </th>
           <th onClick={() => handleSort('outcome')} style={{ cursor: 'pointer' }}>
             Outcome {sortConfig.key === 'outcome' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
           </th>
         </thead>
         <tbody>
-          {currentHistory.map((val, key) => {
+          {currentHistory.map((val) => {
             return(
-              <tr key = {key}>
-                <td>{val.id}</td>
-                <td>{val.date}</td>
+              <tr key = {val.id}>
                 <td>{val.serviceName}</td>
+                <td>{val.date}</td>
                 <td>{val.outcome}</td>
               </tr>
             )
