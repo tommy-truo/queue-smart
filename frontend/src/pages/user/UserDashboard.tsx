@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { useAuth } from '../../auth/AuthContext.ts'
-import { notifications, queueEntries, services } from '../../mock/data.ts'
+import { queueEntries, services } from '../../mock/data.ts'
 import { waitRange } from './waitRange.ts'
 
 export default function UserDashboard() {
@@ -15,7 +15,6 @@ export default function UserDashboard() {
   const peopleAhead = Math.max(0, position - 1)
 
   const openServices = services.filter((s) => s.open)
-  const unread = notifications.filter((n) => !n.read)
 
   return (
     <div>
@@ -49,16 +48,6 @@ export default function UserDashboard() {
         </ul>
       </section>
 
-      <section>
-        <h2>Notifications ({unread.length} unread)</h2>
-        <ul>
-          {notifications.map((n) => (
-            <li key={n.id} style={{ fontWeight: n.read ? 'normal' : 'bold' }}>
-              {n.message} <small>{new Date(n.createdAt).toLocaleString()}</small>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   )
 }

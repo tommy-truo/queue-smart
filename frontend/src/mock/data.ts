@@ -1,4 +1,4 @@
-import type { AppNotification, HistoryEntry, QueueEntry, Service } from '../types.ts'
+import type { HistoryEntry, QueueEntry, Service } from '../types.ts'
 
 export const services: Service[] = [
   {
@@ -42,30 +42,6 @@ export const queueEntries: QueueEntry[] = [
   { id: 'e4', serviceId: 's2', userId: 'u4', userName: 'Riley Chen', status: 'waiting', joinedAt: '2026-09-29T09:15:00' },
   { id: 'e5', serviceId: 's3', userId: 'u5', userName: 'Morgan Diaz', status: 'waiting', joinedAt: '2026-09-29T09:01:00' },
   { id: 'e6', serviceId: 's3', userId: 'u6', userName: 'Casey Wong', status: 'waiting', joinedAt: '2026-09-29T09:18:00' },
-]
-
-export const notifications: AppNotification[] = [
-  {
-    id: 'n1',
-    type: 'queue-update',
-    message: 'You moved up to position 2 in Academic Advising.',
-    createdAt: '2026-09-29T09:25:00',
-    read: false,
-  },
-  {
-    id: 'n2',
-    type: 'status-change',
-    message: 'Financial Aid Help Desk is now open.',
-    createdAt: '2026-09-29T08:00:00',
-    read: false,
-  },
-  {
-    id: 'n3',
-    type: 'status-change',
-    message: 'Student ID Office queue is closed for today.',
-    createdAt: '2026-09-28T16:30:00',
-    read: true,
-  },
 ]
 
 export const history: HistoryEntry[] = [
