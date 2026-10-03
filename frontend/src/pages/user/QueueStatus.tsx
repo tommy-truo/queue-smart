@@ -40,13 +40,23 @@ export default function QueueStatus() {
   const user = useAuth().user
   const navigate = useNavigate()
   const [entries, setEntries] = useState<QueueEntry[]>(initEntries)
-  let pos = 0
-  let wTime = 0
   for (let entry of entries) {
     let s = findAtSID(entry.serviceId)
     if (s === undefined) continue
     if (entry.outcome) continue
     if (entry.userId === user?.id){
+      let pos = 0
+      let wTime = 0
+      for (let e of entries) {
+        if (e.id === entry.id) break
+        let ser = findAtSID(e.serviceId)
+        if (ser === undefined) continue
+        if (e.outcome) continue
+        if (ser.id === entry.serviceId){
+          pos++
+          wTime+= s.expectedDuration
+        }
+      }
       queueStats.push({
         id: entry.id,
         serviceName: s.name,
@@ -55,8 +65,6 @@ export default function QueueStatus() {
         wait: wTime // Wait-Time Estimation & Position Logic needs to be updated later
       })
     }
-    wTime += s.expectedDuration
-    pos++
   }
 
   function handleLeave(id: string, service: string|undefined) {
