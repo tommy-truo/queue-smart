@@ -1,0 +1,151 @@
+.notification-wrap {
+  position: relative;
+}
+
+.notification-bell {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.notification-panel {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: min(23rem, calc(100vw - 2rem));
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.notification-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-heading h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.notification-heading p,
+.notification-copy time,
+.notification-footnote {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.notification-heading p {
+  margin: 0.2rem 0 0;
+}
+
+.text-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #00e;
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.text-button:disabled {
+  color: #666;
+  text-decoration: none;
+  cursor: default;
+}
+
+.notification-filters {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-filters button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #00e;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.notification-filters button.selected {
+  color: #111;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-dot {
+  flex: 0 0 auto;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.4rem;
+  border: 1px solid #777;
+  border-radius: 50%;
+}
+
+.notification-dot.queue-update {
+  background: #777;
+}
+
+.notification-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-copy p {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.notification-item.is-unread .notification-copy p {
+  font-weight: 600;
+}
+
+.notification-copy time {
+  display: block;
+}
+
+.mark-read {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
+.empty-notifications {
+  margin: 0;
+  padding: 1rem;
+  color: #666;
+  text-align: center;
+}
+
+.notification-footnote {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  .notification-wrap { margin-left: auto; }
+  .notification-panel { right: -3rem; }
+}

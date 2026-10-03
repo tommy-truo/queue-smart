@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { homePath, useAuth, type Role } from '../auth/AuthContext.ts'
+import NotificationCenter from './NotificationCenter.tsx'
 
 type NavItem = { to: string; label: string }
 
@@ -48,6 +49,7 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+        {role ? <NotificationCenter key={role} role={role} /> : null}
         {role ? (
           <button type="button" onClick={handleLogout}>
             Log out
