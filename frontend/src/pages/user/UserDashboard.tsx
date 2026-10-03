@@ -4,7 +4,7 @@ import { notifications, queueEntries, services } from '../../mock/data.ts'
 
 export function formatWait(ms: number): string {
   if (ms < 0) ms = 0
-  const totalMinutes = (Math.floor((ms / 30000)) * 5)
+  const totalMinutes = (Math.floor((ms / 300000)) * 5)
   if (totalMinutes < 1) return '0 min'
   if (totalMinutes < 60) return `${totalMinutes} min`
 
