@@ -26,10 +26,12 @@ https://github.com/tommy-truo/queue-smart
 | ------------------------------------------- | ----------- |
 | Scaffold, routing, layout, mock data        | Charles     |
 | Login, Registration                         | Tommy       |
-| User screens                                |             |
-| Admin screens                               |             |
+| User Dashboard, Join Queue                  | Charles     |
+| Queue Status, History                       | Megan       |
+| Admin Dashboard, Service Management, Queue Management | Charles |
 | Service Employee screen                     | Tommy       |
-| Notifications                               |             |
+| Notifications (dashboard summary)           | Charles     |
+| Screenshots                                 | Megan, Charles |
 
 ## 4. Screenshots of Front End
 
@@ -95,9 +97,12 @@ https://github.com/tommy-truo/queue-smart
 ### Megan A Cowan
 
 
-| Contribution | Discussion notes |
-| ------------ | ---------------- |
-|              |                  |
+| Contribution          | Discussion notes                                                                 |
+| --------------------- | -------------------------------------------------------------------------------- |
+| History screen        | Table of past queues with date, service and outcome, with sorting and pagination |
+| Queue Status screen   | Shows the user's service, position, estimated wait and status, with a Leave button that adds the visit to history |
+| Mock data and accounts| Added user ids to accounts and updated queue statuses and notification messages  |
+| Screenshots           | Took the screenshots and set up the screenshot section of this document          |
 
 
 ### Charles Mccallum
@@ -107,6 +112,12 @@ https://github.com/tommy-truo/queue-smart
 | -------------------- | ----------------------------------------------------------------- |
 | Front-end scaffold   | Vite + React + TypeScript app with routing and placeholder pages  |
 | Layout and mock data | Role-based nav, route guards and sample data                      |
+| User Dashboard       | Current queue, open services and a notifications summary          |
+| Join Queue           | Pick an open service, see the people ahead and wait range, join or leave |
+| Admin Dashboard      | Services with queue lengths and open/close queue actions          |
+| Service Management   | Create and edit services with validation on every field           |
+| Queue Management     | View a service's queue, move people up or down, remove, serve next |
+| Admin screenshots    | Retook the admin screenshots once the screens were built          |
 
 
 ### Pete Sankar
