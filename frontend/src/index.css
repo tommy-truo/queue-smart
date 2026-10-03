@@ -17,10 +17,149 @@ body {
   gap: 1rem;
 }
 
+.app-header nav a {
+  color: #444;
+  text-decoration: none;
+}
+
+.app-header nav a:hover {
+  color: #111;
+}
+
 .app-header nav a.active {
   font-weight: bold;
+  color: #111;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 main {
   padding: 1rem;
+}
+
+/* Shared look for the user and admin screens, matching the auth and employee pages. */
+.page {
+  max-width: 56rem;
+  margin: 1.5rem auto 0;
+}
+
+.page h1 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.page h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.page table {
+  width: 100%;
+  margin: 0.75rem 0;
+  border: 1px solid #ccc;
+  border-collapse: collapse;
+}
+
+.page th,
+.page td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: left;
+}
+
+.page th {
+  background: #f6f6f6;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.page button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.page button:hover:not(:disabled) {
+  border-color: #111;
+}
+
+.page button.primary,
+.page button[type='submit'] {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.page button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.page input,
+.page textarea,
+.page select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.page-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 26rem;
+}
+
+.page-form input,
+.page-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.page [role='alert'] {
+  margin-top: 0.25rem;
+  color: #9b2c2c;
+  font-size: 0.875rem;
+}
+
+.page [role='status'] {
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #2f855a;
+  background: #f0fff4;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-waiting {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.badge-almost-ready {
+  background: #fefcbf;
+  color: #975a16;
+}
+
+.badge-serving {
+  background: #bee3f8;
+  color: #2c5282;
+}
+
+.badge-served {
+  background: #c6f6d5;
+  color: #276749;
 }

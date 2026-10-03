@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const openCount = services.filter((s) => s.open).length
 
   return (
-    <div>
+    <div className="page">
       <h1>Admin Dashboard</h1>
       <p>
         {openCount} of {services.length} queues open, {totalWaiting} people in line.
@@ -26,7 +26,7 @@ export default function AdminDashboard() {
 
       {message ? <p role="status">{message}</p> : null}
 
-      <table border={1} cellPadding={6} style={{ borderCollapse: 'collapse', textAlign: 'left' }}>
+      <table>
         <thead>
           <tr>
             <th>Service</th>

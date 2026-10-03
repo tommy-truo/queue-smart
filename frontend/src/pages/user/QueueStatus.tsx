@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/AuthContext"
 import { useNavigate } from 'react-router'
 import { useState } from "react"
 import { waitRange } from "./waitRange"
+import StatusBadge from "../../components/StatusBadge"
 
 type Stats = {
   id: string
@@ -85,7 +86,7 @@ export default function QueueStatus() {
   }
 
   return (
-    <div>
+    <div className="page">
       <h1>Queue Status</h1>
       {queueStats.length === 0 ? 
       (<div>
@@ -96,7 +97,7 @@ export default function QueueStatus() {
       </div>)
       :
       (<div>
-        <table border= {1} style={{width: '50%', textAlign: 'left'}}>
+        <table>
           <thead>
             <tr>
               <th> Service </th>
@@ -115,7 +116,7 @@ export default function QueueStatus() {
                   <td>{val.wait}</td>
                   <td>{val.position}</td>
                   <td>{val.peopleAhead}</td>
-                  <td>{val.status}</td>
+                  <td><StatusBadge status={val.status} /></td>
                   <td><button type="button" onClick={() => handleLeave(val.id, val.serviceName)}>Leave</button></td>
                 </tr>
               )

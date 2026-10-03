@@ -42,7 +42,7 @@ export default function JoinQueue() {
   }
 
   return (
-    <div>
+    <div className="page">
       <h1>Join Queue</h1>
 
       {message ? <p role="status">{message}</p> : null}
@@ -80,7 +80,7 @@ export default function JoinQueue() {
             <p>
               {peopleAhead(selected.id)} ahead of you. Estimated wait: {waitFor(selected.id)}.
             </p>
-            <button type="button" onClick={join} disabled={joined !== undefined}>
+            <button type="button" className="primary" onClick={join} disabled={joined !== undefined}>
               Join queue
             </button>
             {joined && joined.id !== selected.id ? (

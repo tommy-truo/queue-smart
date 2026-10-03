@@ -31,8 +31,6 @@ function validate(values: FormValues): FormErrors {
   return errors
 }
 
-const errorStyle = { color: '#b00020' }
-
 export default function ServiceManagement() {
   // UI only: changes are kept in local state, not saved to the mock data.
   const [services, setServices] = useState(mockServices)
@@ -87,12 +85,12 @@ export default function ServiceManagement() {
   }
 
   return (
-    <div>
+    <div className="page">
       <h1>Service Management</h1>
 
       {message ? <p role="status">{message}</p> : null}
 
-      <table border={1} cellPadding={6} style={{ borderCollapse: 'collapse', textAlign: 'left' }}>
+      <table>
         <thead>
           <tr>
             <th>Service</th>
@@ -121,7 +119,7 @@ export default function ServiceManagement() {
 
       <h2>{editingId ? 'Edit service' : 'Create service'}</h2>
       <p>* Required field</p>
-      <form noValidate onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem', maxWidth: 420 }}>
+      <form noValidate onSubmit={handleSubmit} className="page-form">
         <div>
           <label htmlFor="service-name">Service name *</label>
           <br />
@@ -136,7 +134,7 @@ export default function ServiceManagement() {
           <small>
             {values.name.length}/{NAME_MAX}
           </small>
-          {errors.name ? <div role="alert" style={errorStyle}>{errors.name}</div> : null}
+          {errors.name ? <div role="alert">{errors.name}</div> : null}
         </div>
 
         <div>
@@ -151,7 +149,7 @@ export default function ServiceManagement() {
             onChange={(e) => update('description', e.target.value)}
           />
           {errors.description ? (
-            <div role="alert" style={errorStyle}>{errors.description}</div>
+            <div role="alert">{errors.description}</div>
           ) : null}
         </div>
 
@@ -168,7 +166,7 @@ export default function ServiceManagement() {
             onChange={(e) => update('expectedDuration', e.target.value)}
           />
           {errors.expectedDuration ? (
-            <div role="alert" style={errorStyle}>{errors.expectedDuration}</div>
+            <div role="alert">{errors.expectedDuration}</div>
           ) : null}
         </div>
 
