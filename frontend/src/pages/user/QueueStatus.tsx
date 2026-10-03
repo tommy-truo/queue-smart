@@ -1,106 +1,122 @@
-import { useState } from 'react'
-import { Link } from 'react-router'
-import { useAuth } from '../../auth/AuthContext.ts'
-import { queueEntries, services } from '../../mock/data.ts'
-import type { QueueStatus as Status } from '../../types.ts'
-import { waitRange } from './waitRange.ts'
+import {queueEntries, services, history} from "../../mock/data"
+import type { QueueStatus, QueueEntry, HistoryEntry} from "../../types"
+import { useAuth } from "../../auth/AuthContext"
+import { useNavigate } from 'react-router'
+import { formatWaitDuration } from "../employee/formatWait"
+import { useState } from "react"
 
-const steps: { status: Status; label: string }[] = [
-  { status: 'waiting', label: 'Waiting' },
-  { status: 'almost-ready', label: 'Almost ready' },
-  { status: 'serving', label: 'Being served' },
-  { status: 'served', label: 'Served' },
-]
+type Stats = {
+  id: string
+  serviceName: string
+  status: QueueStatus
+  position: number
+  wait: number
+}
 
-function statusFor(peopleAhead: number, served: boolean): Status {
-  if (served) return 'served'
-  if (peopleAhead === 0) return 'serving'
-  if (peopleAhead === 1) return 'almost-ready'
-  return 'waiting'
+function findAtSID(id: string){
+  for (let s of services){
+    if (s.id === id) return s
+  }
+}
+
+function findAtQID(id: string){
+  for (let e of queueEntries){
+    if (e.id === id) return e
+  }
+}
+
+function isInQueue(entry: QueueEntry): boolean {
+  return !entry.outcome
+}
+
+function initEntries(): QueueEntry[] {
+  return queueEntries
+    .filter((e) => isInQueue(e))
+    .map((e) => ({ ...e }))
 }
 
 export default function QueueStatus() {
-  const { user } = useAuth()
-  // "View as" sets a role without a signed-in user, so fall back to the mock user.
-  const userId = user?.id ?? 'u1'
-
-  const myEntry = queueEntries.find((e) => e.userId === userId)
-  const service = services.find((s) => s.id === myEntry?.serviceId)
-  const startAhead = myEntry
-    ? queueEntries.filter((e) => e.serviceId === myEntry.serviceId).indexOf(myEntry)
-    : 0
-
-  // UI simulation: each update moves the line forward by one person.
-  const [peopleAhead, setPeopleAhead] = useState(startAhead)
-  const [served, setServed] = useState(false)
-  const [updates, setUpdates] = useState<string[]>([])
-
-  if (!myEntry || !service) {
-    return (
-      <div>
-        <h1>Queue Status</h1>
-        <p>
-          You are not in a queue. <Link to="/join">Join one</Link>
-        </p>
-      </div>
-    )
+  const queueStats: Stats[] = []
+  const user = useAuth().user
+  const navigate = useNavigate()
+  const [entries, setEntries] = useState<QueueEntry[]>(initEntries)
+  let pos = 0
+  let wTime = 0
+  for (let entry of entries) {
+    let s = findAtSID(entry.serviceId)
+    if (s === undefined) continue
+    if (entry.outcome) continue
+    if (entry.userId === user?.id){
+      queueStats.push({
+        id: entry.id,
+        serviceName: s.name,
+        status: entry.status,
+        position: pos,
+        wait: wTime // Wait-Time Estimation & Position Logic needs to be updated later
+      })
+    }
+    wTime += s.expectedDuration
+    pos++
   }
 
-  const status = statusFor(peopleAhead, served)
-  const currentStep = steps.findIndex((s) => s.status === status)
-
-  function simulateUpdate() {
-    let message: string
-    if (peopleAhead > 0) {
-      const next = peopleAhead - 1
-      setPeopleAhead(next)
-      message =
-        next === 0
-          ? "It's your turn. Please head to the desk."
-          : `You moved up. ${next} ${next === 1 ? 'person' : 'people'} ahead of you.`
-    } else {
-      setServed(true)
-      message = 'You have been served. Thanks for using QueueSmart.'
+  function handleLeave(id: string, service: string|undefined) {
+    const ok = window.confirm(`Leave the queue for ${service}?`)
+    if (!ok) return
+    let f = findAtQID(id) 
+    if(f !== undefined && service !== undefined){
+      let e: HistoryEntry = {
+        id: "",
+        date: f.joinedAt.substring(0, 10),
+        serviceName: service,
+        outcome: 'left'
+      }
+      history.push(e)
     }
-    setUpdates([message, ...updates])
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, outcome: 'left' } : e)),
+    )
+
+    for(let e of queueEntries){
+      if(e.serviceId === id) e.outcome = 'left'
+    }
   }
 
   return (
     <div>
       <h1>Queue Status</h1>
-      <h2>{service.name}</h2>
-
-      <p>
-        Position: <strong>{served ? '-' : `#${peopleAhead + 1}`}</strong>
-        <br />
-        People ahead of you: {served ? 0 : peopleAhead}
-        <br />
-        Estimated wait: {served ? 'done' : waitRange(peopleAhead, service.expectedDuration)}
-      </p>
-
-      <ol>
-        {steps.map((step, i) => (
-          <li key={step.status} style={{ fontWeight: i === currentStep ? 'bold' : 'normal' }}>
-            {step.label}
-            {i === currentStep ? ' (current)' : ''}
-          </li>
-        ))}
-      </ol>
-
-      <button type="button" onClick={simulateUpdate} disabled={served}>
-        Simulate next update
-      </button>
-
-      <h2>Updates</h2>
-      {updates.length === 0 ? (
-        <p>No updates yet.</p>
-      ) : (
-        <ul>
-          {updates.map((u, i) => (
-            <li key={i}>{u}</li>
-          ))}
-        </ul>
-      )}
+      {queueStats.length === 0 ? 
+      (<div>
+        You are not currently in a queue 
+        <div>
+          <button type="button" onClick={() => navigate('/join')}>Join a Queue</button>
+        </div>
+      </div>)
+      :
+      (<div>
+        <table border= {1} style={{width: '50%', textAlign: 'left'}}>
+          <thead>
+            <th> Service </th>
+            <th> Estimated Wait Time </th>
+            <th> Position </th>
+            <th> Status </th>
+            <th> </th>
+          </thead>
+          <tbody>
+            {queueStats.map((val) => {
+              return(
+                <tr key = {val.id}>
+                  <td>{val.serviceName}</td>
+                  <td>{formatWaitDuration((val.wait * 60000))}</td>
+                  <td>{val.position}</td>
+                  <td>{val.status}</td>
+                  <td><button type="button" onClick={() => handleLeave(val.id, val.serviceName)}>Leave</button></td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>)
+      }
     </div>
   )
 }
