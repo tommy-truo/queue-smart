@@ -2,7 +2,7 @@ import {queueEntries, services, history} from "../../mock/data"
 import type { QueueStatus, QueueEntry, HistoryEntry} from "../../types"
 import { useAuth } from "../../auth/AuthContext"
 import { useNavigate } from 'react-router'
-import { formatWaitDuration } from "../employee/formatWait"
+import { formatWait } from "./UserDashboard"
 import { useState } from "react"
 
 type Stats = {
@@ -114,7 +114,7 @@ export default function QueueStatus() {
               return(
                 <tr key = {val.id}>
                   <td>{val.serviceName}</td>
-                  <td>{formatWaitDuration((val.wait * 60000))}</td>
+                  <td>{formatWait((val.wait * 60000))}</td>
                   <td>{val.position}</td>
                   <td>{val.status}</td>
                   <td><button type="button" onClick={() => handleLeave(val.id, val.serviceName)}>Leave</button></td>

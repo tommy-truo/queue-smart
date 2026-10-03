@@ -3,6 +3,7 @@ import type { HistoryEntry, QueueEntry, Service} from '../../types.ts'
 import { useState, type SetStateAction } from "react";
 import { useAuth } from "../../auth/AuthContext"
 import type { SessionUser } from "../../auth/accounts.ts";
+import { formatWait } from "./UserDashboard.tsx";
 
 function findAtSID(id: string){
   for (let s of services){
@@ -132,12 +133,12 @@ export default function JoinQueue() {
               (<div>
                 {inQueue(service, user?.id) ? 
                   (<div>
-                    <div>Current Estimated Wait Time: {" "} {wTime}</div>
+                    <div>Current Estimated Wait Time: {" "} {formatWait(wTime)}</div>
                     <button type="button" onClick={() => handleLeave(service, findAtSID(service)?.name)}>Leave</button> *Already in queue
                   </div>)
                   :
                   (<div>
-                    <div>Current Estimated Wait Time: {" "} {(waitList.length*dur(findAtSID(service)?.expectedDuration))}</div>
+                    <div>Current Estimated Wait Time: {" "} {formatWait(waitList.length*dur(findAtSID(service)?.expectedDuration))}</div>
                     <button type="button" onClick={() => handleJoin(findAtSID(service), user)}>Join</button>
                   </div>)
                 }
