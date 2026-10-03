@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../auth/AuthContext.ts'
 import { queueEntries, services } from '../../mock/data.ts'
+import { waitRange } from './waitRange.ts'
 
 export default function JoinQueue() {
   const { user } = useAuth()
@@ -19,11 +20,13 @@ export default function JoinQueue() {
   const joined = services.find((s) => s.id === joinedId)
 
   // People ahead of you are everyone else already in that line.
+  function peopleAhead(serviceId: string) {
+    return queueEntries.filter((e) => e.serviceId === serviceId && e.userId !== userId).length
+  }
+
   function waitFor(serviceId: string) {
     const service = services.find((s) => s.id === serviceId)
-    if (!service) return 0
-    const ahead = queueEntries.filter((e) => e.serviceId === serviceId && e.userId !== userId)
-    return ahead.length * service.expectedDuration
+    return service ? waitRange(peopleAhead(serviceId), service.expectedDuration) : ''
   }
 
   function join() {
@@ -48,8 +51,8 @@ export default function JoinQueue() {
         <section>
           <h2>Your queue</h2>
           <p>
-            You are in line for <strong>{joined.name}</strong>. Estimated wait: about{' '}
-            {waitFor(joined.id)} min.
+            You are in line for <strong>{joined.name}</strong> with {peopleAhead(joined.id)} ahead
+            of you. Estimated wait: {waitFor(joined.id)}.
           </p>
           <button type="button" onClick={leave}>
             Leave queue
@@ -75,8 +78,7 @@ export default function JoinQueue() {
           <div>
             <p>{selected.description}</p>
             <p>
-              {queueEntries.filter((e) => e.serviceId === selected.id).length} in line, about{' '}
-              {waitFor(selected.id)} min wait.
+              {peopleAhead(selected.id)} ahead of you. Estimated wait: {waitFor(selected.id)}.
             </p>
             <button type="button" onClick={join} disabled={joined !== undefined}>
               Join queue

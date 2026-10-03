@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { useAuth } from '../../auth/AuthContext.ts'
 import { notifications, queueEntries, services } from '../../mock/data.ts'
+import { waitRange } from './waitRange.ts'
 
 export default function UserDashboard() {
   const { user } = useAuth()
@@ -11,7 +12,7 @@ export default function UserDashboard() {
   const myService = services.find((s) => s.id === myEntry?.serviceId)
   const serviceQueue = queueEntries.filter((e) => e.serviceId === myEntry?.serviceId)
   const position = myEntry ? serviceQueue.indexOf(myEntry) + 1 : 0
-  const estimatedWait = myService ? (position - 1) * myService.expectedDuration : 0
+  const peopleAhead = Math.max(0, position - 1)
 
   const openServices = services.filter((s) => s.open)
   const unread = notifications.filter((n) => !n.read)
@@ -24,8 +25,10 @@ export default function UserDashboard() {
         <h2>Current queue</h2>
         {myEntry && myService ? (
           <p>
-            You are <strong>#{position}</strong> in {myService.name} ({myEntry.status}).
-            Estimated wait: about {estimatedWait} min. <Link to="/status">View status</Link>
+            You are <strong>#{position}</strong> in {myService.name} ({myEntry.status}), with{' '}
+            {peopleAhead} {peopleAhead === 1 ? 'person' : 'people'} ahead of you. Estimated wait:{' '}
+            {waitRange(peopleAhead, myService.expectedDuration)}.{' '}
+            <Link to="/status">View status</Link>
           </p>
         ) : (
           <p>
