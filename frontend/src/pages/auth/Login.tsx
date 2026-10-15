@@ -12,7 +12,7 @@ export default function Login() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<'email' | 'password', string>>>({})
   const [formError, setFormError] = useState('')
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setFormError('')
 
@@ -20,9 +20,9 @@ export default function Login() {
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
-    const result = login(email, password)
+    const result = await login(email, password)
     if (!result.ok) {
-      setFormError('Email or password is incorrect.')
+      setFormError(result.message)
       return
     }
 

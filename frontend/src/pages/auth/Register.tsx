@@ -14,9 +14,11 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<RegisterField, string>>>({})
+  const [formError, setFormError] = useState('')
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    setFormError('')
 
     const input = {
       fullName,
@@ -29,12 +31,14 @@ export default function Register() {
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
-    const result = register(input)
+    const result = await register(input)
     if (!result.ok) {
       if (result.reason === 'email-taken') {
         setFieldErrors({ email: 'An account with this email already exists.' })
       } else if (result.reason === 'validation') {
         setFieldErrors(result.errors as Partial<Record<RegisterField, string>>)
+      } else {
+        setFormError(result.message)
       }
       return
     }
@@ -130,6 +134,7 @@ export default function Register() {
             <div role="alert">{fieldErrors.confirmPassword}</div>
           ) : null}
         </div>
+        {formError ? <div role="alert">{formError}</div> : null}
         <button type="submit">Create account</button>
       </form>
       <p>

@@ -2,7 +2,7 @@ import {queueEntries, services, history} from "../../mock/data"
 import type { HistoryEntry, QueueEntry, Service} from '../../types.ts'
 import { useState, type SetStateAction } from "react";
 import { useAuth } from "../../auth/AuthContext"
-import type { SessionUser } from "../../auth/accounts.ts";
+import type { SessionUser } from "../../auth/AuthContext.ts";
 import { formatWait } from "./UserDashboard.tsx";
 
 function findAtSID(id: string){

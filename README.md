@@ -3,7 +3,7 @@ Fall 2026
 
 ## Frontend
 
-React + TypeScript app built with Vite, in `frontend/`. Queue data is mocked (`src/mock/`); authentication uses mock seeded accounts plus accounts saved in the browser (`localStorage`). There is no backend yet.
+React + TypeScript app built with Vite, in `frontend/`. Login and registration go through the backend API (start it first, see below); the dev server proxies `/api` to it. Queue screens still use mock data (`src/mock/`).
 
 ```
 cd frontend

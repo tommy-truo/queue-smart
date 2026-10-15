@@ -1,18 +1,17 @@
 import { useState, type ReactNode } from 'react'
+import { api, ApiError, SESSION_USER_KEY } from '../api.ts'
 import {
-  findAccountByEmail,
-  isEmailTaken,
-  saveRegisteredAccount,
-  toSessionUser,
-  verifyCredentials,
+  AuthContext,
+  homePath,
+  type LoginResult,
   type RegisterInput,
+  type RegisterResult,
+  type Role,
   type SessionUser,
-} from './accounts.ts'
-import { AuthContext, homePath, type Role } from './AuthContext.ts'
+} from './AuthContext.ts'
 import { validateRegister } from './validateAuth.ts'
 
 const ROLE_KEY = 'queuesmart.role'
-const SESSION_EMAIL_KEY = 'queuesmart.sessionEmail'
 
 function loadRole(): Role | null {
   const stored = localStorage.getItem(ROLE_KEY)
@@ -21,31 +20,31 @@ function loadRole(): Role | null {
 
 function loadSessionUser(role: Role | null): SessionUser | null {
   if (!role) return null
-  const sessionEmail = localStorage.getItem(SESSION_EMAIL_KEY)
-  if (!sessionEmail) return null
-  const account = findAccountByEmail(sessionEmail)
-  if (!account || account.role !== role) return null
-  return toSessionUser(account)
+  try {
+    const raw = localStorage.getItem(SESSION_USER_KEY)
+    const user = raw ? (JSON.parse(raw) as SessionUser) : null
+    return user && user.role === role ? user : null
+  } catch {
+    return null
+  }
 }
 
-function persistSession(role: Role | null, email: string | null): void {
+function persistSession(role: Role | null, user: SessionUser | null): void {
   if (role) localStorage.setItem(ROLE_KEY, role)
   else localStorage.removeItem(ROLE_KEY)
 
-  if (email) localStorage.setItem(SESSION_EMAIL_KEY, email)
-  else localStorage.removeItem(SESSION_EMAIL_KEY)
+  if (user) localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user))
+  else localStorage.removeItem(SESSION_USER_KEY)
 }
 
-// Stand-in for real authentication until the backend API exists.
-// Passwords are stored in plaintext in mock data / localStorage for Assignment 2 only.
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<Role | null>(() => loadRole())
   const [user, setUser] = useState<SessionUser | null>(() => loadSessionUser(loadRole()))
 
-  function startSession(account: ReturnType<typeof toSessionUser>): void {
+  function startSession(account: SessionUser): void {
     setRoleState(account.role)
     setUser(account)
-    persistSession(account.role, account.email)
+    persistSession(account.role, account)
   }
 
   function setRole(next: Role | null) {
@@ -54,29 +53,39 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     persistSession(next, null)
   }
 
-  function login(email: string, password: string) {
-    const account = verifyCredentials(email, password)
-    if (!account) return { ok: false as const }
-    startSession(toSessionUser(account))
-    return { ok: true as const, role: account.role }
+  async function login(email: string, password: string): Promise<LoginResult> {
+    try {
+      const account = await api<SessionUser>('/auth/login', { method: 'POST', body: { email, password } })
+      startSession(account)
+      return { ok: true, role: account.role }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        return { ok: false, message: 'Email or password is incorrect.' }
+      }
+      return { ok: false, message: err instanceof Error ? err.message : 'Login failed.' }
+    }
   }
 
-  function register(input: RegisterInput) {
-    const errors = validateRegister({
-      fullName: input.fullName,
-      email: input.email,
-      password: input.password,
-      confirmPassword: input.confirmPassword,
-    })
+  async function register(input: RegisterInput): Promise<RegisterResult> {
+    const errors = validateRegister(input)
     if (Object.keys(errors).length > 0) {
-      return { ok: false as const, reason: 'validation' as const, errors }
+      return { ok: false, reason: 'validation', errors }
     }
-    if (isEmailTaken(input.email)) {
-      return { ok: false as const, reason: 'email-taken' as const }
+    try {
+      const { fullName, email, password } = input
+      const account = await api<SessionUser>('/auth/register', {
+        method: 'POST',
+        body: { fullName, email, password },
+      })
+      startSession(account)
+      return { ok: true, role: account.role }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) return { ok: false, reason: 'email-taken' }
+      if (err instanceof ApiError && err.status === 400 && err.fields) {
+        return { ok: false, reason: 'validation', errors: err.fields }
+      }
+      return { ok: false, reason: 'error', message: err instanceof Error ? err.message : 'Registration failed.' }
     }
-    const account = saveRegisteredAccount(input)
-    startSession(toSessionUser(account))
-    return { ok: true as const, role: account.role }
   }
 
   function logout() {
