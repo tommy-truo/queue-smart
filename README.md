@@ -1,6 +1,17 @@
 ## COSC4353 Software Design Team 39
 Fall 2026
 
+## Quick start
+
+Run the API and the frontend together from the repo root:
+
+```
+npm install
+npm --prefix backend install
+npm --prefix frontend install
+npm run dev
+```
+
 ## Frontend
 
 React + TypeScript app built with Vite, in `frontend/`. Login and registration go through the backend API (start it first, see below); the dev server proxies `/api` to it. Queue screens still use mock data (`src/mock/`).
