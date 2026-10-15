@@ -101,7 +101,7 @@ export default function JoinQueue() {
   }
 
   return (
-    <div>
+    <div className="page">
       <h1>Join Queue</h1>
       <div style={{ width: '300px', marginLeft: 'auto' }}>
         <b><i>Choose a service:</i></b> {" "}

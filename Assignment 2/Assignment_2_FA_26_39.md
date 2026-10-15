@@ -9,7 +9,7 @@ https://github.com/tommy-truo/queue-smart
 
 - Our methodology has not changed since Assignment 1. We are still using Agile with a light version of Scrum, and using a groupchat for informal updates and communication.
 - We kept it because it kept us updated on each other's tasks, responsibilities, and progress, and made task delegation easier.
-- We divided the UI/UX and implementation by user role. Each person owned the screens for one role and handled integration as needed.
+- We divided the UI/UX and implementation by screen, grouped mostly by user role. Each person built their screens on the shared layout and mock data, and we checked each other's work in the group chat.
 
 ## 3. Front-End Technologies and Responsibilities
 
@@ -117,7 +117,8 @@ https://github.com/tommy-truo/queue-smart
 | Admin Dashboard      | Services with queue lengths and open/close queue actions          |
 | Service Management   | Create and edit services with validation on every field           |
 | Queue Management     | View a service's queue, move people up or down, remove, serve next |
-| Admin screenshots    | Retook the admin screenshots once the screens were built          |
+| Queue Status fixes   | Position and wait now count only the same service's line; wait shown as a range |
+| Screenshots          | Retook the admin and user screenshots once the screens were built |
 
 
 ### Pete Sankar

@@ -30,9 +30,9 @@ export default function History() {
   }
 
   return (
-    <div>
+    <div className="page">
       <h1>History</h1>
-      <table border= {1} style={{width: '50%', textAlign: 'left'}}>
+      <table>
         <thead>
           <th onClick={() => handleSort('serviceName')} style={{ cursor: 'pointer' }}>
             Service {sortConfig.key === 'serviceName' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import StatusBadge from '../../components/StatusBadge.tsx'
 import { queueEntries, services } from '../../mock/data.ts'
 import type { QueueEntry, QueueStatus } from '../../types.ts'
 
@@ -47,7 +48,7 @@ export default function QueueManagement() {
   }
 
   return (
-    <div>
+    <div className="page">
       <h1>Queue Management</h1>
 
       <label>
@@ -78,14 +79,10 @@ export default function QueueManagement() {
         <p>No one is in this queue.</p>
       ) : (
         <>
-          <button type="button" onClick={serveNext}>
+          <button type="button" className="primary" onClick={serveNext}>
             Serve next
           </button>
-          <table
-            border={1}
-            cellPadding={6}
-            style={{ borderCollapse: 'collapse', textAlign: 'left', marginTop: '0.75rem' }}
-          >
+          <table>
             <thead>
               <tr>
                 <th>#</th>
@@ -100,7 +97,9 @@ export default function QueueManagement() {
                 <tr key={e.id}>
                   <td>{i + 1}</td>
                   <td>{e.userName}</td>
-                  <td>{e.status}</td>
+                  <td>
+                    <StatusBadge status={e.status} />
+                  </td>
                   <td>{new Date(e.joinedAt).toLocaleTimeString([], { timeStyle: 'short' })}</td>
                   <td>
                     <button type="button" onClick={() => move(i, -1)} disabled={i === 0}>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { useAuth } from '../../auth/AuthContext.ts'
+import StatusBadge from '../../components/StatusBadge.tsx'
 import { notifications, queueEntries, services } from '../../mock/data.ts'
 
 export function formatWait(ms: number): string {
@@ -36,16 +37,16 @@ export default function UserDashboard() {
   
 
   return (
-    <div>
+    <div className="page">
       <h1>Welcome{user ? `, ${user.fullName}` : ''}</h1>
 
       <section>
         <h2>Current queue</h2>
         {myEntry && myService ? (
           <p>
-            You are <strong>#{position}</strong> in {myService.name} ({myEntry.status}), with{' '}
+            You are <strong>#{position}</strong> in {myService.name} <StatusBadge status={myEntry.status} />, with{' '}
             {peopleAhead} {peopleAhead === 1 ? 'person' : 'people'} ahead of you. Estimated wait:{' '}
-            {formatWait(myService.expectedDuration)}.{' '}
+            {formatWait(peopleAhead * myService.expectedDuration * 60000)}.{' '}
             <Link to="/status">View status</Link>
           </p>
         ) : (

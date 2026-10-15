@@ -4,12 +4,14 @@ import { useAuth } from "../../auth/AuthContext"
 import { useNavigate } from 'react-router'
 import { formatWait } from "./UserDashboard"
 import { useState } from "react"
+import StatusBadge from "../../components/StatusBadge"
 
 type Stats = {
   id: string
   serviceName: string
   status: QueueStatus
   position: number
+  peopleAhead: number
   wait: number
 }
 
@@ -38,31 +40,25 @@ function initEntries(): QueueEntry[] {
 export default function QueueStatus() {
   const queueStats: Stats[] = []
   const user = useAuth().user
+  // "View as" sets a role without a signed-in user, so fall back to the mock user.
+  const userId = user?.id ?? 'u1'
   const navigate = useNavigate()
   const [entries, setEntries] = useState<QueueEntry[]>(initEntries)
   for (let entry of entries) {
     let s = findAtSID(entry.serviceId)
     if (s === undefined) continue
     if (entry.outcome) continue
-    if (entry.userId === user?.id){
-      let pos = 0
-      let wTime = 0
-      for (let e of entries) {
-        if (e.id === entry.id) break
-        let ser = findAtSID(e.serviceId)
-        if (ser === undefined) continue
-        if (e.outcome) continue
-        if (ser.id === entry.serviceId){
-          pos++
-          wTime+= s.expectedDuration
-        }
-      }
+    if (entry.userId === userId){
+      // Position only counts people in the same service's line.
+      const line = entries.filter((e) => e.serviceId === entry.serviceId && !e.outcome)
+      const ahead = line.indexOf(entry)
       queueStats.push({
         id: entry.id,
         serviceName: s.name,
         status: entry.status,
-        position: pos,
-        wait: wTime // Wait-Time Estimation & Position Logic needs to be updated later
+        position: ahead + 1,
+        peopleAhead: ahead,
+        wait: ahead * s.expectedDuration,
       })
     }
   }
@@ -85,12 +81,12 @@ export default function QueueStatus() {
     )
 
     for(let e of queueEntries){
-      if(e.serviceId === id) e.outcome = 'left'
+      if(e.id === id) e.outcome = 'left'
     }
   }
 
   return (
-    <div>
+    <div className="page">
       <h1>Queue Status</h1>
       {queueStats.length === 0 ? 
       (<div>
@@ -101,13 +97,16 @@ export default function QueueStatus() {
       </div>)
       :
       (<div>
-        <table border= {1} style={{width: '50%', textAlign: 'left'}}>
+        <table>
           <thead>
-            <th> Service </th>
-            <th> Estimated Wait Time </th>
-            <th> Position </th>
-            <th> Status </th>
-            <th> </th>
+            <tr>
+              <th> Service </th>
+              <th> Estimated Wait Time </th>
+              <th> Position </th>
+              <th> People Ahead </th>
+              <th> Status </th>
+              <th> </th>
+            </tr>
           </thead>
           <tbody>
             {queueStats.map((val) => {
@@ -116,7 +115,8 @@ export default function QueueStatus() {
                   <td>{val.serviceName}</td>
                   <td>{formatWait((val.wait * 60000))}</td>
                   <td>{val.position}</td>
-                  <td>{val.status}</td>
+                  <td>{val.peopleAhead}</td>
+                  <td><StatusBadge status={val.status} /></td>
                   <td><button type="button" onClick={() => handleLeave(val.id, val.serviceName)}>Leave</button></td>
                 </tr>
               )
