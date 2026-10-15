@@ -40,7 +40,7 @@ export default function UserDashboard() {
     <div className="page">
       <h1>Welcome{user ? `, ${user.fullName}` : ''}</h1>
 
-      <section>
+      <section className="card">
         <h2>Current queue</h2>
         {myEntry && myService ? (
           <p>
@@ -56,7 +56,7 @@ export default function UserDashboard() {
         )}
       </section>
 
-      <section>
+      <section className="card">
         <h2>Open services</h2>
         <ul>
           {openServices.map((s) => (
@@ -68,11 +68,11 @@ export default function UserDashboard() {
         </ul>
       </section>
 
-      <section>
+      <section className="card">
         <h2>Notifications ({unread.length} unread)</h2>
         <ul>
           {notifications.map((n) => (
-            <li key={n.id} style={{ fontWeight: n.read ? 'normal' : 'bold' }}>
+            <li key={n.id} className={n.read ? undefined : 'unread'}>
               {n.message} <small>{new Date(n.createdAt).toLocaleString()}</small>
             </li>
           ))}

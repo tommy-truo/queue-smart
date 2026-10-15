@@ -34,15 +34,17 @@ export default function History() {
       <h1>History</h1>
       <table>
         <thead>
-          <th onClick={() => handleSort('serviceName')} style={{ cursor: 'pointer' }}>
+          <tr>
+          <th className="sortable" onClick={() => handleSort('serviceName')}>
             Service {sortConfig.key === 'serviceName' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
           </th>
-          <th onClick={() => handleSort('date')} style={{ cursor: 'pointer' }}>
+          <th className="sortable" onClick={() => handleSort('date')}>
             Date {sortConfig.key === 'date' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
           </th>
-          <th onClick={() => handleSort('outcome')} style={{ cursor: 'pointer' }}>
+          <th className="sortable" onClick={() => handleSort('outcome')}>
             Outcome {sortConfig.key === 'outcome' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
           </th>
+          </tr>
         </thead>
         <tbody>
           {currentHistory.map((val) => {
@@ -56,17 +58,15 @@ export default function History() {
           })}
         </tbody>
       </table>
-      <div className="mt-4 flex justify-between items-center">
+      <div className="pager">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-700 disabled:opacity-50"
         >
           Previous
         </button> Page {currentPage} of {Math.ceil(history.length / itemsPerPage)} <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === Math.ceil(history.length / itemsPerPage)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-700 disabled:opacity-50"
         >
           Next
         </button>

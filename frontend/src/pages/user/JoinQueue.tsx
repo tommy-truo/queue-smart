@@ -100,53 +100,45 @@ export default function JoinQueue() {
     }
   }
 
+  const selected = findAtSID(service)
+
   return (
     <div className="page">
       <h1>Join Queue</h1>
-      <div style={{ width: '300px', marginLeft: 'auto' }}>
-        <b><i>Choose a service:</i></b> {" "}
-        <label>
-          <select value={service} onChange={handleChangeService}>
-            <option value="Select">Select a Service</option>
-            {services.map((val) => {
-              return (
-                <option value={val.id}>{val.name}</option>
-              )
-            })}
-          </select>
-        </label>
-      </div>
-      {(findAtSID(service) === undefined) ? "": 
-        <div>
-          <dl>
-            <dt><h3>{findAtSID(service)?.name} </h3></dt>
-            <dd>{findAtSID(service)?.description}</dd>
-          </dl>
-          <p> 
-            <div>Expected Duration: {" "} {findAtSID(service)?.expectedDuration}</div>
-            {findAtSID(service)?.open === false ? 
-              (<div>
-                <div>Current Estimated Wait Time: N/A</div>
-                <button type="button" disabled={findAtSID(service)?.open}><del>Join</del></button> *Queue not open. Try again later
-              </div>)
-              :
-              (<div>
-                {inQueue(service, user?.id) ? 
-                  (<div>
-                    <div>Current Estimated Wait Time: {" "} {formatWait(wTime)}</div>
-                    <button type="button" onClick={() => handleLeave(service, findAtSID(service)?.name)}>Leave</button> *Already in queue
-                  </div>)
-                  :
-                  (<div>
-                    <div>Current Estimated Wait Time: {" "} {formatWait(waitList.length*dur(findAtSID(service)?.expectedDuration))}</div>
-                    <button type="button" onClick={() => handleJoin(findAtSID(service), user)}>Join</button>
-                  </div>)
-                }
-              </div>)
-            }  
-          </p>
+      <label className="field">
+        Service
+        <select value={service} onChange={handleChangeService}>
+          <option value="Select">Select a service</option>
+          {services.map((val) => (
+            <option key={val.id} value={val.id}>{val.name}</option>
+          ))}
+        </select>
+      </label>
+      {selected && (
+        <div className="card">
+          <h2>{selected.name}</h2>
+          <p>{selected.description}</p>
+          <p>Expected duration: {selected.expectedDuration} min</p>
+          {selected.open === false ? (
+            <>
+              <p>Estimated wait: N/A</p>
+              <button type="button" disabled>Join</button>
+              <span className="note">Queue not open. Try again later.</span>
+            </>
+          ) : inQueue(service, user?.id) ? (
+            <>
+              <p>Estimated wait: {formatWait(wTime)}</p>
+              <button type="button" onClick={() => handleLeave(service, selected.name)}>Leave</button>
+              <span className="note">You are already in this queue.</span>
+            </>
+          ) : (
+            <>
+              <p>Estimated wait: {formatWait(waitList.length * dur(selected.expectedDuration))}</p>
+              <button type="button" className="primary" onClick={() => handleJoin(selected, user)}>Join</button>
+            </>
+          )}
         </div>
-      }
+      )}
     </div>
   )
 }

@@ -175,3 +175,55 @@ main {
   background: #c6f6d5;
   color: #276749;
 }
+
+.page .card {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.page .card + .card {
+  margin-top: 1rem;
+}
+
+.page .card h2 {
+  margin-top: 0;
+}
+
+.page .card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.page .card p {
+  margin: 0.5rem 0;
+}
+
+.page .field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.page .note {
+  margin-left: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.page .unread {
+  font-weight: 600;
+}
+
+.page th.sortable {
+  cursor: pointer;
+}
+
+.page .pager {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
