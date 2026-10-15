@@ -2,8 +2,8 @@ import {queueEntries, services, history} from "../../mock/data"
 import type { QueueStatus, QueueEntry, HistoryEntry} from "../../types"
 import { useAuth } from "../../auth/AuthContext"
 import { useNavigate } from 'react-router'
+import { formatWait } from "./UserDashboard"
 import { useState } from "react"
-import { waitRange } from "./waitRange"
 import StatusBadge from "../../components/StatusBadge"
 
 type Stats = {
@@ -12,7 +12,7 @@ type Stats = {
   status: QueueStatus
   position: number
   peopleAhead: number
-  wait: string
+  wait: number
 }
 
 function findAtSID(id: string){
@@ -58,7 +58,7 @@ export default function QueueStatus() {
         status: entry.status,
         position: ahead + 1,
         peopleAhead: ahead,
-        wait: waitRange(ahead, s.expectedDuration),
+        wait: ahead * s.expectedDuration,
       })
     }
   }
@@ -113,7 +113,7 @@ export default function QueueStatus() {
               return(
                 <tr key = {val.id}>
                   <td>{val.serviceName}</td>
-                  <td>{val.wait}</td>
+                  <td>{formatWait((val.wait * 60000))}</td>
                   <td>{val.position}</td>
                   <td>{val.peopleAhead}</td>
                   <td><StatusBadge status={val.status} /></td>

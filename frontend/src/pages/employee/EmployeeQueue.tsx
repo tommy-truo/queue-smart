@@ -50,6 +50,12 @@ export default function EmployeeQueue() {
           e.id === serving.id ? { ...e, status: 'served', outcome: 'served' } : e,
         ),
       )
+      for(let e of queueEntries){
+        if(e.id === serving.id) {
+          e.status = 'served'
+          e.outcome = 'served'
+        }
+      }
       serveNextBlockedUntil.current = Date.now() + 400
       return
     }
@@ -60,6 +66,9 @@ export default function EmployeeQueue() {
     setEntries((prev) =>
       prev.map((e) => (e.id === next.id ? { ...e, status: 'serving', calledAt } : e)),
     )
+    for(let e of queueEntries){
+      if(e.id === next.id) e.status = 'serving'
+    }
   }, [serving, waiting])
 
   function handleRemove(entry: QueueEntry) {
@@ -68,6 +77,9 @@ export default function EmployeeQueue() {
     setEntries((prev) =>
       prev.map((e) => (e.id === entry.id ? { ...e, outcome: 'removed' } : e)),
     )
+    for(let e of queueEntries){
+      if(e.id === entry.id) e.outcome = 'removed'
+    }
   }
 
   function handleRequeue(entry: QueueEntry) {
@@ -79,6 +91,12 @@ export default function EmployeeQueue() {
           : e,
       ),
     )
+    for(let e of queueEntries){
+      if(e.id === entry.id){ 
+        e.status = 'waiting'
+        e.calledAt = undefined
+      }
+    }
   }
 
   const title = service ? `${service.name}` : 'Queue'
