@@ -22,3 +22,29 @@ Open http://localhost:3939
 | Employee | `employee@queuesmart.local`| `EmployeePass1` |
 
 Register creates new **user** accounts only. The **View as** dropdown in the header still works for quick role switching without a password (demo / development).
+
+## Backend
+
+Node + Express + TypeScript API, in `backend/`. Data is kept in memory (no database yet).
+
+```
+cd backend
+npm install
+npm run dev
+```
+
+The API runs on http://localhost:3940. Run tests with `npm test`, or `npm run coverage` for a coverage report.
+
+Requests that need a signed-in user send the `x-user-id` header with the `id` returned by login.
+
+| Method | Path | Who |
+| ------ | ---- | --- |
+| POST | `/api/auth/register`, `/api/auth/login` | anyone |
+| GET | `/api/services` | signed in |
+| POST / PUT | `/api/services`, `/api/services/:id` | admin |
+| GET | `/api/queues/mine` | user |
+| POST | `/api/queues/:serviceId/join`, `/api/queues/:serviceId/leave` | user |
+| GET | `/api/queues/:serviceId` | admin, employee |
+| POST | `/api/queues/:serviceId/serve-next` | admin, employee |
+| GET | `/api/me/notifications` | signed in |
+| GET | `/api/me/history` | user |
