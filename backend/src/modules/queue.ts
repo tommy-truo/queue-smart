@@ -1,0 +1,145 @@
+import { HttpError } from '../errors.ts'
+import { db, nextId } from '../store.ts'
+import type { Priority, QueueEntry, Service, User } from '../types.ts'
+import { assertValid } from '../validation.ts'
+import { recordHistory } from './history.ts'
+import { notify } from './notifications.ts'
+import { getService, PRIORITIES } from './services.ts'
+import { estimateWait } from './waitTime.ts'
+
+/** People at or above this position (1 = next up) are marked almost ready. */
+export const ALMOST_READY_POSITION = 1
+
+const PRIORITY_RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
+
+export type QueueView = QueueEntry & {
+  /** 0 while being served, otherwise 1-based place in line. */
+  position: number
+  /** Minutes. */
+  estimatedWait: number
+}
+
+/** Active entries for a service: the person being served first, then by priority, then by arrival. */
+export function orderedEntries(serviceId: string): QueueEntry[] {
+  return db.entries
+    .filter((e) => e.serviceId === serviceId && !e.outcome)
+    .sort((a, b) => {
+      if (a.status === 'serving') return -1
+      if (b.status === 'serving') return 1
+      const byPriority = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
+      return byPriority !== 0 ? byPriority : a.joinedAt.localeCompare(b.joinedAt)
+    })
+}
+
+export function getQueue(serviceId: string): QueueView[] {
+  const service = getService(serviceId)
+  const entries = orderedEntries(serviceId)
+  const someoneServing = entries[0]?.status === 'serving'
+
+  return entries.map((entry, index) => ({
+    ...entry,
+    position: someoneServing ? index : index + 1,
+    estimatedWait: estimateWait(index, service.expectedDuration),
+  }))
+}
+
+/** Queue length and the wait someone joining now would get. */
+export function queueSummary(service: Service) {
+  const length = orderedEntries(service.id).length
+  return { queueLength: length, estimatedWait: estimateWait(length, service.expectedDuration) }
+}
+
+/** Marks people near the front as almost ready and notifies them once. */
+function updateStatuses(service: Service): void {
+  for (const entry of getQueue(service.id)) {
+    if (entry.status === 'serving') continue
+    const stored = db.entries.find((e) => e.id === entry.id)!
+    const close = entry.position <= ALMOST_READY_POSITION
+
+    if (close && stored.status === 'waiting') {
+      stored.status = 'almost-ready'
+      notify(stored.userId, 'status-change', `You are almost up for ${service.name}.`)
+    } else if (!close && stored.status === 'almost-ready') {
+      stored.status = 'waiting'
+    }
+  }
+}
+
+function findActiveEntry(userId: string, serviceId: string): QueueEntry | undefined {
+  return db.entries.find((e) => e.userId === userId && e.serviceId === serviceId && !e.outcome)
+}
+
+function viewOf(entryId: string, serviceId: string): QueueView {
+  return getQueue(serviceId).find((e) => e.id === entryId)!
+}
+
+export function joinQueue(user: User, serviceId: string, body: unknown): QueueView {
+  const service = getService(serviceId)
+  assertValid(body, { priority: { type: 'string', oneOf: PRIORITIES } })
+  const priority = (body as { priority?: Priority } | undefined)?.priority ?? 'medium'
+
+  if (!service.open) throw new HttpError(409, `${service.name} is not accepting people right now.`)
+  if (findActiveEntry(user.id, serviceId)) throw new HttpError(409, `You are already in line for ${service.name}.`)
+
+  const entry: QueueEntry = {
+    id: nextId('q'),
+    serviceId,
+    userId: user.id,
+    userName: user.fullName,
+    status: 'waiting',
+    priority,
+    joinedAt: new Date().toISOString(),
+  }
+  db.entries.push(entry)
+
+  const view = viewOf(entry.id, serviceId)
+  notify(
+    user.id,
+    'queue-update',
+    `You joined the queue for ${service.name}. Position ${view.position}, about ${view.estimatedWait} min.`,
+  )
+  updateStatuses(service)
+  return viewOf(entry.id, serviceId)
+}
+
+export function leaveQueue(user: User, serviceId: string): QueueEntry {
+  const service = getService(serviceId)
+  const entry = findActiveEntry(user.id, serviceId)
+  if (!entry) throw new HttpError(404, `You are not in line for ${service.name}.`)
+
+  entry.outcome = 'left'
+  recordHistory(user.id, service.name, 'left')
+  updateStatuses(service)
+  return entry
+}
+
+/** Finishes whoever is being served and calls the next person in line. */
+export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?: QueueEntry } {
+  const service = getService(serviceId)
+  const entries = orderedEntries(serviceId)
+  if (entries.length === 0) throw new HttpError(409, `No one is waiting for ${service.name}.`)
+
+  let served: QueueEntry | undefined
+  if (entries[0].status === 'serving') {
+    served = entries.shift()!
+    served.status = 'served'
+    served.outcome = 'served'
+    recordHistory(served.userId, service.name, 'served')
+  }
+
+  const nowServing = entries[0]
+  if (nowServing) {
+    nowServing.status = 'serving'
+    nowServing.calledAt = new Date().toISOString()
+    notify(nowServing.userId, 'status-change', `It is your turn for ${service.name}.`)
+  }
+
+  updateStatuses(service)
+  return { served, nowServing }
+}
+
+/** The user's active entries across all services. */
+export function myQueues(userId: string): QueueView[] {
+  const serviceIds = new Set(db.entries.filter((e) => e.userId === userId && !e.outcome).map((e) => e.serviceId))
+  return [...serviceIds].flatMap((id) => getQueue(id).filter((e) => e.userId === userId))
+}

@@ -1,6 +1,10 @@
 import express from 'express'
 import type { NextFunction, Request, Response } from 'express'
 import { HttpError } from './errors.ts'
+import { authRouter } from './routes/auth.ts'
+import { meRouter } from './routes/me.ts'
+import { queuesRouter } from './routes/queues.ts'
+import { servicesRouter } from './routes/services.ts'
 
 export function createApp() {
   const app = express()
@@ -9,6 +13,11 @@ export function createApp() {
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' })
   })
+
+  app.use('/api/auth', authRouter)
+  app.use('/api/services', servicesRouter)
+  app.use('/api/queues', queuesRouter)
+  app.use('/api/me', meRouter)
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' })
