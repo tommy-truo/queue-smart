@@ -33,41 +33,70 @@ a:hover {
 .app-header {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-light);
+  gap: 2rem;
+  padding: 1.25rem 2rem 0;
+  border-bottom: 3px solid var(--link);
+  background: linear-gradient(to bottom, #ebf4ff, var(--bg));
+}
+
+.app-header strong {
+  align-self: center;
+  padding-bottom: 1rem;
+  color: var(--link);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .app-header nav {
   display: flex;
   flex: 1;
-  gap: 1rem;
+  align-self: stretch;
+  align-items: flex-end;
+  gap: 0.25rem;
 }
 
 .app-header nav a {
+  padding: 0.7rem 1.1rem;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
   color: var(--text-muted);
+  font-size: 1.05rem;
   text-decoration: none;
 }
 
 .app-header nav a:hover {
   color: var(--text);
+  border-bottom-color: var(--border);
 }
 
 .app-header nav a.active {
-  font-weight: bold;
+  border-bottom-color: var(--text);
   color: var(--text);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  font-weight: 600;
+}
+
+.app-header label {
+  align-self: center;
+  padding-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .app-header button,
 .app-header select {
-  padding: 0.3rem 0.7rem;
+  align-self: center;
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--bg);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
+}
+
+.app-header label select {
+  margin-bottom: 0;
 }
 
 .app-header button {
