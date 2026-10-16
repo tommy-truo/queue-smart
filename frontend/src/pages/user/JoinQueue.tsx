@@ -4,6 +4,7 @@ import { useState, type SetStateAction } from "react";
 import { useAuth } from "../../auth/AuthContext"
 import type { SessionUser } from "../../auth/AuthContext.ts";
 import { formatWait } from "./UserDashboard.tsx";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function findAtSID(id: string){
   for (let s of services){
@@ -31,6 +32,7 @@ export default function JoinQueue() {
   const [service, setService] = useState("Select");
   const user = useAuth().user
   const [entries, setEntries] = useState<QueueEntry[]>(initEntries)
+  const [leaving, setLeaving] = useState<{ id: string; service: string | undefined } | null>(null)
 
   function handleChangeService(event: { target: { value: SetStateAction<string>; }; }){
     setService(event.target.value)
@@ -44,9 +46,14 @@ export default function JoinQueue() {
   }
 
   function handleLeave(id: string, service: string|undefined) {
-    const ok = window.confirm(`Leave the queue for ${service}?`)
-    if (!ok) return
-    let f = findAtQID(id) 
+    setLeaving({ id, service })
+  }
+
+  function confirmLeave() {
+    if (!leaving) return
+    const { id, service } = leaving
+    setLeaving(null)
+    let f = findAtQID(id)
     if(f !== undefined && service !== undefined){
       let e: HistoryEntry = {
         id: "",
@@ -139,6 +146,14 @@ export default function JoinQueue() {
           )}
         </div>
       )}
+      <ConfirmModal
+        open={leaving !== null}
+        title="Leave queue?"
+        message={`Leave the queue for ${leaving?.service}?`}
+        confirmLabel="Leave"
+        onConfirm={confirmLeave}
+        onCancel={() => setLeaving(null)}
+      />
     </div>
   )
 }

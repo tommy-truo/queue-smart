@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { queueEntries, services } from '../../mock/data.ts'
 import type { QueueEntry } from '../../types.ts'
 import { waitSince } from './formatWait.ts'
+import ConfirmModal from '../../components/ConfirmModal.tsx'
 import './employeeQueue.css'
 
 const SERVICE_ID = 's1' //Hard-coded to Academic Advising, remove and change to allow dynamic queue selection
@@ -25,6 +26,7 @@ export default function EmployeeQueue() {
   const service = services.find((s) => s.id === SERVICE_ID)
   const [entries, setEntries] = useState<QueueEntry[]>(initEntries)
   const [nowMs, setNowMs] = useState(() => Date.now())
+  const [removing, setRemoving] = useState<QueueEntry | null>(null)
   const serveNextBlockedUntil = useRef(0)
 
   useEffect(() => {
@@ -71,9 +73,10 @@ export default function EmployeeQueue() {
     }
   }, [serving, waiting])
 
-  function handleRemove(entry: QueueEntry) {
-    const ok = window.confirm(`Remove ${entry.userName} from the queue?`)
-    if (!ok) return
+  function confirmRemove() {
+    if (!removing) return
+    const entry = removing
+    setRemoving(null)
     setEntries((prev) =>
       prev.map((e) => (e.id === entry.id ? { ...e, outcome: 'removed' } : e)),
     )
@@ -149,7 +152,7 @@ export default function EmployeeQueue() {
               <button
                 type="button"
                 className="employee-queue__remove-btn"
-                onClick={() => handleRemove(entry)}
+                onClick={() => setRemoving(entry)}
               >
                 Remove
               </button>
@@ -157,6 +160,15 @@ export default function EmployeeQueue() {
           ))}
         </ul>
       )}
+
+      <ConfirmModal
+        open={removing !== null}
+        title="Remove from queue?"
+        message={`Remove ${removing?.userName} from the queue?`}
+        confirmLabel="Remove"
+        onConfirm={confirmRemove}
+        onCancel={() => setRemoving(null)}
+      />
     </section>
   )
 }

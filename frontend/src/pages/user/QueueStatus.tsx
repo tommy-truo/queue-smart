@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router'
 import { formatWait } from "./UserDashboard"
 import { useState } from "react"
 import StatusBadge from "../../components/StatusBadge"
+import ConfirmModal from "../../components/ConfirmModal"
 
 type Stats = {
   id: string
@@ -44,6 +45,7 @@ export default function QueueStatus() {
   const userId = user?.id ?? 'u1'
   const navigate = useNavigate()
   const [entries, setEntries] = useState<QueueEntry[]>(initEntries)
+  const [leaving, setLeaving] = useState<{ id: string; service: string | undefined } | null>(null)
   for (let entry of entries) {
     let s = findAtSID(entry.serviceId)
     if (s === undefined) continue
@@ -64,9 +66,14 @@ export default function QueueStatus() {
   }
 
   function handleLeave(id: string, service: string|undefined) {
-    const ok = window.confirm(`Leave the queue for ${service}?`)
-    if (!ok) return
-    let f = findAtQID(id) 
+    setLeaving({ id, service })
+  }
+
+  function confirmLeave() {
+    if (!leaving) return
+    const { id, service } = leaving
+    setLeaving(null)
+    let f = findAtQID(id)
     if(f !== undefined && service !== undefined){
       let e: HistoryEntry = {
         id: "",
@@ -125,6 +132,14 @@ export default function QueueStatus() {
         </table>
       </div>)
       }
+      <ConfirmModal
+        open={leaving !== null}
+        title="Leave queue?"
+        message={`Leave the queue for ${leaving?.service}?`}
+        confirmLabel="Leave"
+        onConfirm={confirmLeave}
+        onCancel={() => setLeaving(null)}
+      />
     </div>
   )
 }
