@@ -53,6 +53,7 @@ export default function Layout() {
             Log out
           </button>
         ) : null}
+        {import.meta.env.DEV && (
         <label>
           View as{' '}
           <select
@@ -65,6 +66,7 @@ export default function Layout() {
             <option value="employee">Employee</option>
           </select>
         </label>
+        )}
       </header>
       <main>
         <Outlet />
