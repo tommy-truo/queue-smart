@@ -6,7 +6,7 @@ Repository: https://github.com/tommy-truo/queue-smart
 
 | Group Member Name | What is your contribution? | Discussion Notes |
 | --- | --- | --- |
-| Pete Sankar | Connected the administrator service screens, user queue joining/leaving, administrator and employee serving, and user history to the existing backend APIs. Added loading, error, Retry, and save feedback; preserved history sorting and pagination; guarded duplicate serving requests. | Reused the team's backend, authentication, API client, and styling. Verified the actual UI flow from joining/leaving and staff serving to the correct user's history, account isolation, pagination, failed-request recovery, and double-click handling. The frontend build and all 67 existing backend tests passed. |
+| Pete Sankar | Connected the administrator service screens, user dashboard, queue joining/leaving, administrator and employee serving, and user history to the existing backend APIs. The user dashboard displays backend queue positions, wait estimates, service counts, and account-specific notifications. Added loading, error, Retry, refresh, and save feedback; preserved history sorting and pagination; guarded duplicate serving requests. | Reused the team's backend, authentication, API client, and styling. Verified the actual UI flow from joining/leaving and staff serving to the correct user's history and dashboard, account isolation, pagination, failed-request recovery, and double-click handling. The frontend build and all 67 existing backend tests passed. |
 
 ## Commit evidence
 
@@ -21,5 +21,5 @@ Commits use the configured Git author `mcisaura`. All of this work is consolidat
 ## Scope and handoff
 
 - This contribution integrates existing backend APIs; it does not claim authorship of the team's backend modules or existing unit tests.
-- Queue reordering, removal, and requeue controls are disabled because corresponding backend operations are not implemented. The User Dashboard remains a separate mock-data integration task.
+- Queue reordering, removal, and requeue controls are disabled because corresponding backend operations are not implemented.
 - Copy Pete's row into the group's final A3 Word/PDF contribution table. Other members should add their own verified contributions; this record is not the complete group submission.

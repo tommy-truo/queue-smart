@@ -14,7 +14,7 @@ npm run dev
 
 ## Frontend
 
-React + TypeScript app built with Vite, in `frontend/`. Login, registration, queue screens, and History call the backend API (start it first, see below); the dev server proxies `/api` to it. The User Dashboard still uses mock data (`src/mock/`). Queue reordering, removal, and requeue controls are disabled until their backend operations are implemented.
+React + TypeScript app built with Vite, in `frontend/`. Login, registration, dashboards, service management, queue screens, notifications, and History call the backend API (start it first, see below); the dev server proxies `/api` to it. Queue reordering, removal, and requeue controls are disabled until their backend operations are implemented.
 
 ```
 cd frontend
