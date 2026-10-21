@@ -12,11 +12,11 @@ Repository: https://github.com/tommy-truo/queue-smart
 
 | Commit | Work | Branch |
 | --- | --- | --- |
-| [a76be34](https://github.com/tommy-truo/queue-smart/commit/a76be34) | Connected Service Management and Admin Dashboard to the existing service API, including backend queue counts and open/close actions. | `feat/admin-service-integration` |
-| [252236d](https://github.com/tommy-truo/queue-smart/commit/252236d) | Connected History to the signed-in user's backend records, with sorting, pagination, empty/error states, and Retry. | `feat/history-integration` |
-| [0c15423](https://github.com/tommy-truo/queue-smart/commit/0c15423) | Connected both user queue screens and both staff queue screens to backend operations that produce history records; removed their mock mutations. | `feat/history-integration` |
+| [a76be34](https://github.com/tommy-truo/queue-smart/commit/a76be34) | Connected Service Management and Admin Dashboard to the existing service API, including backend queue counts and open/close actions. | `pete-a3` |
+| [252236d](https://github.com/tommy-truo/queue-smart/commit/252236d) | Connected History to the signed-in user's backend records, with sorting, pagination, empty/error states, and Retry. | `pete-a3` |
+| [0c15423](https://github.com/tommy-truo/queue-smart/commit/0c15423) | Connected both user queue screens and both staff queue screens to backend operations that produce history records; removed their mock mutations. | `pete-a3` |
 
-Commits use the configured Git author `mcisaura`. The administrator service work and History/queue work are on separate feature branches for review.
+Commits use the configured Git author `mcisaura`. All of this work is consolidated on `pete-a3`, with the original contribution commits preserved.
 
 ## Scope and handoff
 
