@@ -1,145 +1,56 @@
-import {queueEntries, services, history} from "../../mock/data"
-import type { QueueStatus, QueueEntry, HistoryEntry} from "../../types"
-import { useAuth } from "../../auth/AuthContext"
-import { useNavigate } from 'react-router'
-import { formatWait } from "./UserDashboard"
-import { useState } from "react"
-import StatusBadge from "../../components/StatusBadge"
-import ConfirmModal from "../../components/ConfirmModal"
-
-type Stats = {
-  id: string
-  serviceName: string
-  status: QueueStatus
-  position: number
-  peopleAhead: number
-  wait: number
-}
-
-function findAtSID(id: string){
-  for (let s of services){
-    if (s.id === id) return s
-  }
-}
-
-function findAtQID(id: string){
-  for (let e of queueEntries){
-    if (e.id === id) return e
-  }
-}
-
-function isInQueue(entry: QueueEntry): boolean {
-  return !entry.outcome
-}
-
-function initEntries(): QueueEntry[] {
-  return queueEntries
-    .filter((e) => isInQueue(e))
-    .map((e) => ({ ...e }))
-}
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { leaveQueue, useQueues } from '../../queues.ts'
+import type { QueueView } from '../../queues.ts'
+import StatusBadge from '../../components/StatusBadge.tsx'
+import ConfirmModal from '../../components/ConfirmModal.tsx'
 
 export default function QueueStatus() {
-  const queueStats: Stats[] = []
-  const user = useAuth().user
-  // "View as" sets a role without a signed-in user, so fall back to the mock user.
-  const userId = user?.id ?? 'u1'
-  const navigate = useNavigate()
-  const [entries, setEntries] = useState<QueueEntry[]>(initEntries)
-  const [leaving, setLeaving] = useState<{ id: string; service: string | undefined } | null>(null)
-  for (let entry of entries) {
-    let s = findAtSID(entry.serviceId)
-    if (s === undefined) continue
-    if (entry.outcome) continue
-    if (entry.userId === userId){
-      // Position only counts people in the same service's line.
-      const line = entries.filter((e) => e.serviceId === entry.serviceId && !e.outcome)
-      const ahead = line.indexOf(entry)
-      queueStats.push({
-        id: entry.id,
-        serviceName: s.name,
-        status: entry.status,
-        position: ahead + 1,
-        peopleAhead: ahead,
-        wait: ahead * s.expectedDuration,
-      })
-    }
-  }
-
-  function handleLeave(id: string, service: string|undefined) {
-    setLeaving({ id, service })
+  const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues()
+  const [leaving, setLeaving] = useState<QueueView | null>(null)
+  const serviceName = (id: string) => services.find(service => service.id === id)?.name ?? 'Service'
+  // Position excludes the serving chair; the estimate counts everyone ahead.
+  const peopleAhead = (entry: QueueView) => {
+    const duration = services.find(service => service.id === entry.serviceId)?.expectedDuration
+    return duration ? Math.max(0, Math.round(entry.estimatedWait / duration)) : 0
   }
 
   function confirmLeave() {
     if (!leaving) return
-    const { id, service } = leaving
+    const entry = leaving
+    const name = serviceName(entry.serviceId)
     setLeaving(null)
-    let f = findAtQID(id)
-    if(f !== undefined && service !== undefined){
-      let e: HistoryEntry = {
-        id: "",
-        date: f.joinedAt.substring(0, 10),
-        serviceName: service,
-        outcome: 'left'
-      }
-      history.push(e)
-    }
-    setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, outcome: 'left' } : e)),
-    )
-
-    for(let e of queueEntries){
-      if(e.id === id) e.outcome = 'left'
-    }
+    void runAction(async () => {
+      await leaveQueue(entry.serviceId)
+      return `You left ${name}.`
+    })
   }
+
+  if (loading) return <div className="page"><h1>Queue Status</h1><p role="status">Loading queues…</p></div>
+  if (error) return <div className="page"><h1>Queue Status</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (
     <div className="page">
       <h1>Queue Status</h1>
-      {queueStats.length === 0 ? 
-      (<div>
-        You are not currently in a queue 
-        <div>
-          <button type="button" onClick={() => navigate('/join')}>Join a Queue</button>
-        </div>
-      </div>)
-      :
-      (<div>
+      {message ? <p role="status">{message}</p> : null}
+      {actionError ? <p role="alert">{actionError}</p> : null}
+      {entries.length === 0 ? <p>You are not currently in a queue. <Link to="/join">Join a Queue</Link></p> : (
         <table>
-          <thead>
-            <tr>
-              <th> Service </th>
-              <th> Estimated Wait Time </th>
-              <th> Position </th>
-              <th> People Ahead </th>
-              <th> Status </th>
-              <th> </th>
+          <thead><tr><th>Service</th><th>Estimated Wait Time</th><th>Position</th><th>People Ahead</th><th>Status</th><th /></tr></thead>
+          <tbody>{entries.map(entry => (
+            <tr key={entry.id}>
+              <td>{serviceName(entry.serviceId)}</td>
+              <td>{entry.estimatedWait} min</td>
+              <td>{entry.position === 0 ? 'Being served' : entry.position}</td>
+              <td>{peopleAhead(entry)}</td>
+              <td><StatusBadge status={entry.status} /></td>
+              <td><button type="button" disabled={busy} onClick={() => setLeaving(entry)}>Leave</button></td>
             </tr>
-          </thead>
-          <tbody>
-            {queueStats.map((val) => {
-              return(
-                <tr key = {val.id}>
-                  <td>{val.serviceName}</td>
-                  <td>{formatWait((val.wait * 60000))}</td>
-                  <td>{val.position}</td>
-                  <td>{val.peopleAhead}</td>
-                  <td><StatusBadge status={val.status} /></td>
-                  <td><button type="button" onClick={() => handleLeave(val.id, val.serviceName)}>Leave</button></td>
-                </tr>
-              )
-            })}
-          </tbody>
+          ))}</tbody>
         </table>
-      </div>)
-      }
-      <ConfirmModal
-        open={leaving !== null}
-        title="Leave queue?"
-        message={`Leave the queue for ${leaving?.service}?`}
-        confirmLabel="Leave"
-        onConfirm={confirmLeave}
-        onCancel={() => setLeaving(null)}
-      />
+      )}
+      <ConfirmModal open={leaving !== null} title="Leave queue?" message={`Leave the queue for ${leaving ? serviceName(leaving.serviceId) : ''}?`}
+        confirmLabel="Leave" onConfirm={confirmLeave} onCancel={() => setLeaving(null)} />
     </div>
   )
 }
