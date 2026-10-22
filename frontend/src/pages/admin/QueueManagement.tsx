@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
 import StatusBadge from '../../components/StatusBadge.tsx'
-import { removeFromQueue, reorderQueueEntry, serveNext, useQueues, type QueueView } from '../../queues.ts'
+import { removeFromQueue, reorderQueueEntry, requeue, serveNext, useQueues, type QueueView } from '../../queues.ts'
 
 type PendingReorder = { entry: QueueView; direction: 'up' | 'down' }
 
@@ -9,8 +9,19 @@ export default function QueueManagement() {
   const [serviceId, setServiceId] = useState('s1')
   const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(serviceId)
   const [removing, setRemoving] = useState<QueueView | null>(null)
+  const [requeuing, setRequeuing] = useState<QueueView | null>(null)
   const [reordering, setReordering] = useState<PendingReorder | null>(null)
   const service = services.find(service => service.id === serviceId)
+
+  function confirmRequeue() {
+    if (!requeuing || requeuing.status !== 'serving') return
+    const entry = requeuing
+    setRequeuing(null)
+    void runAction(async () => {
+      await requeue(entry.serviceId)
+      return `Placed ${entry.userName} back in line.`
+    })
+  }
   const servingIndex = entries.findIndex(entry => entry.status === 'serving')
   const firstWaitingIndex = servingIndex >= 0 ? servingIndex + 1 : 0
   const lastIndex = entries.length - 1
@@ -88,6 +99,9 @@ export default function QueueManagement() {
                       </button>
                     )
                   })}{' '}
+                  {entry.status === 'serving' ? (
+                    <button type="button" disabled={busy} onClick={() => setRequeuing(entry)}>Requeue</button>
+                  ) : null}{' '}
                   <button type="button" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
                 </td>
               </tr>
@@ -95,6 +109,8 @@ export default function QueueManagement() {
           </table>
         </>
       )}
+      <ConfirmModal open={requeuing !== null} title="Place back in line?" message={`Place ${requeuing?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
+        confirmLabel="Requeue" onConfirm={confirmRequeue} onCancel={() => setRequeuing(null)} />
       <ConfirmModal open={removing !== null} title="Remove from queue?" message={`Remove ${removing?.userName ?? ''} from ${service?.name ?? 'this queue'}?`}
         confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
       <ConfirmModal
