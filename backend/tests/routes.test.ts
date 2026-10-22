@@ -141,6 +141,53 @@ describe('queue routes', () => {
     expect(again.status).toBe(409)
   })
 
+  it('lets an admin reorder and blocks employees, users, and illegal moves', async () => {
+    const forbiddenEmployee = await request(app)
+      .post('/api/queues/s1/entries/q3/reorder')
+      .set('x-user-id', 'e1')
+      .send({ direction: 'up' })
+    expect(forbiddenEmployee.status).toBe(403)
+
+    const forbiddenUser = await request(app)
+      .post('/api/queues/s1/entries/q3/reorder')
+      .set('x-user-id', 'u1')
+      .send({ direction: 'up' })
+    expect(forbiddenUser.status).toBe(403)
+
+    const moved = await request(app)
+      .post('/api/queues/s1/entries/q3/reorder')
+      .set('x-user-id', 'a1')
+      .send({ direction: 'up' })
+    expect(moved.status).toBe(200)
+    expect(moved.body).toMatchObject({ userName: 'Alex Kim', position: 1, status: 'almost-ready' })
+
+    const queue = await request(app).get('/api/queues/s1').set('x-user-id', 'a1')
+    expect(queue.body.map((entry: { userName: string }) => entry.userName)).toEqual([
+      'Jordan Lee',
+      'Alex Kim',
+      'Sam Patel',
+    ])
+
+    const serving = await request(app)
+      .post('/api/queues/s1/entries/q1/reorder')
+      .set('x-user-id', 'a1')
+      .send({ direction: 'down' })
+    expect(serving.status).toBe(409)
+
+    const missingService = await request(app)
+      .post('/api/queues/missing/entries/q3/reorder')
+      .set('x-user-id', 'a1')
+      .send({ direction: 'up' })
+    expect(missingService.status).toBe(404)
+
+    await request(app).post('/api/queues/s1/entries/q3/remove').set('x-user-id', 'a1')
+    const gone = await request(app)
+      .post('/api/queues/s1/entries/q3/reorder')
+      .set('x-user-id', 'a1')
+      .send({ direction: 'up' })
+    expect(gone.status).toBe(404)
+  })
+
   it('blocks users from removing people and rejects someone already gone', async () => {
     const forbidden = await request(app).post('/api/queues/s1/entries/q3/remove').set('x-user-id', 'u1')
     expect(forbidden.status).toBe(403)

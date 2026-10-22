@@ -86,3 +86,10 @@ export function removeFromQueue(serviceId: string, entryId: string) {
 export function requeue(serviceId: string) {
   return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/requeue`, { method: 'POST' })
 }
+
+export function reorderQueueEntry(serviceId: string, entryId: string, direction: 'up' | 'down') {
+  return api<QueueView>(
+    `/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/reorder`,
+    { method: 'POST', body: { direction } },
+  )
+}
