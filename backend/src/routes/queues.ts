@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { currentUser, requireRole } from '../middleware.ts'
-import { getQueue, joinQueue, leaveQueue, myQueues, removeFromQueue, requeue, serveNext } from '../modules/queue.ts'
+import { getQueue, joinQueue, leaveQueue, myQueues, removeFromQueue, reorder, requeue, serveNext } from '../modules/queue.ts'
 
 export const queuesRouter = Router()
 
@@ -30,4 +30,8 @@ queuesRouter.post('/:serviceId/requeue', requireRole('admin', 'employee'), (req,
 
 queuesRouter.post('/:serviceId/entries/:entryId/remove', requireRole('admin', 'employee'), (req, res) => {
   res.json(removeFromQueue(String(req.params.serviceId), String(req.params.entryId)))
+})
+
+queuesRouter.post('/:serviceId/entries/:entryId/reorder', requireRole('admin'), (req, res) => {
+  res.json(reorder(String(req.params.serviceId), String(req.params.entryId), req.body))
 })

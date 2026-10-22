@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { findUserById } from '../src/modules/auth.ts'
 import { listHistory } from '../src/modules/history.ts'
 import { listNotifications } from '../src/modules/notifications.ts'
-import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, requeue, serveNext } from '../src/modules/queue.ts'
+import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, reorder, requeue, serveNext } from '../src/modules/queue.ts'
 import { getService } from '../src/modules/services.ts'
 import { estimateWait } from '../src/modules/waitTime.ts'
 import { resetStore } from '../src/store.ts'
@@ -188,6 +188,69 @@ describe('requeue', () => {
     expect(() => requeue('s3')).toThrow(/No one is being served/)
     expect(() => requeue('s4')).toThrow(/No one is being served/)
     expect(() => requeue('missing')).toThrow(/not found/i)
+  })
+})
+
+describe('reorder', () => {
+  it('moves a waiting person down and back up within the same priority group', () => {
+    const down = reorder('s1', 'q2', { direction: 'down' })
+    expect(down).toMatchObject({ userName: 'Sam Patel', position: 2, status: 'waiting' })
+    expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Alex Kim', 'Sam Patel'])
+
+    const up = reorder('s1', 'q2', { direction: 'up' })
+    expect(up).toMatchObject({ userName: 'Sam Patel', position: 1, status: 'almost-ready' })
+    expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Sam Patel', 'Alex Kim'])
+  })
+
+  it('keeps a cross-priority move on the next read', () => {
+    joinQueue(user('u4'), 's1', { priority: 'high' })
+    reorder('s1', 'q2', { direction: 'up' })
+    expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Sam Patel', 'Riley Chen', 'Alex Kim'])
+    expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Sam Patel', 'Riley Chen', 'Alex Kim'])
+  })
+
+  it('refuses to move the person being served or past the ends', () => {
+    expect(() => reorder('s1', 'q1', { direction: 'down' })).toThrow(/being served/)
+    expect(() => reorder('s1', 'q2', { direction: 'up' })).toThrow(/cannot move up/)
+    expect(() => reorder('s1', 'q3', { direction: 'down' })).toThrow(/cannot move down/)
+  })
+
+  it('updates almost-ready for the new next person without a reorder notification', () => {
+    reorder('s1', 'q3', { direction: 'up' })
+    const queue = getQueue('s1')
+    expect(queue.map((e) => [e.userName, e.position, e.status])).toEqual([
+      ['Jordan Lee', 0, 'serving'],
+      ['Alex Kim', 1, 'almost-ready'],
+      ['Sam Patel', 2, 'waiting'],
+    ])
+    expect(listNotifications('u1').some((n) => n.message.match(/almost up for Academic Advising/))).toBe(true)
+    expect(listNotifications('u3').some((n) => n.message.match(/reorder|moved/i))).toBe(false)
+  })
+
+  it('slots a new join by priority without undoing manual order', () => {
+    joinQueue(user('u4'), 's1', { priority: 'high' })
+    reorder('s1', 'q2', { direction: 'up' })
+    joinQueue(user('u5'), 's1', { priority: 'high' })
+    expect(getQueue('s1').map((e) => e.userName)).toEqual([
+      'Jordan Lee',
+      'Morgan Diaz',
+      'Sam Patel',
+      'Riley Chen',
+      'Alex Kim',
+    ])
+  })
+
+  it('requeue still lands at the end of the same priority group when ranks exist', () => {
+    reorder('s1', 'q3', { direction: 'up' })
+    requeue('s1')
+    expect(getQueue('s1').map((e) => e.userName)).toEqual(['Alex Kim', 'Sam Patel', 'Jordan Lee'])
+  })
+
+  it('fails when that person is not in the line', () => {
+    expect(() => reorder('missing', 'q1', { direction: 'up' })).toThrow(/not found/i)
+    expect(() => reorder('s1', 'missing', { direction: 'up' })).toThrow(/not in line/)
+    removeFromQueue('s1', 'q3')
+    expect(() => reorder('s1', 'q3', { direction: 'up' })).toThrow(/not in line/)
   })
 })
 
