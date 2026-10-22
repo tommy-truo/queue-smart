@@ -34,7 +34,7 @@ Commits use the configured Git author `mcisaura`. All of this work is consolidat
 | Commit | Work | Branch |
 | --- | --- | --- |
 | [404115b](https://github.com/tommy-truo/queue-smart/commit/404115b849e1da0427249cdd50580320680e9100) | Added staff removal from a live queue. | `feat/queue-removal` Merged to `main` in pull request #10. |
-| Not committed yet | Added staff requeue for the person being served. | `feat/requeue` |
+| [f993f62](https://github.com/tommy-truo/queue-smart/commit/f993f621ecad0d9ed26528f703d9cf4c73a791bf) | Added staff requeue for the person being served. | `feat/requeue` Merged to `main` in pull request #12. |
 
 ## Scope and handoff
 
