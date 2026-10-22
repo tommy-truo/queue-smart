@@ -126,6 +126,20 @@ export function removeFromQueue(serviceId: string, entryId: string): QueueEntry 
   return entry
 }
 
+/** Puts the person being served at the end of their priority group without calling the next person. */
+export function requeue(serviceId: string): QueueView {
+  const service = getService(serviceId)
+  const serving = orderedEntries(serviceId).find((entry) => entry.status === 'serving')
+  if (!serving) throw new HttpError(409, `No one is being served for ${service.name}.`)
+
+  serving.status = 'waiting'
+  delete serving.calledAt
+  serving.joinedAt = new Date().toISOString()
+  notify(serving.userId, 'queue-update', `You were placed back in line for ${service.name}.`)
+  updateStatuses(service)
+  return viewOf(serving.id, serviceId)
+}
+
 /** Finishes whoever is being served and calls the next person in line. */
 export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?: QueueEntry } {
   const service = getService(serviceId)

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { findUserById } from '../src/modules/auth.ts'
 import { listHistory } from '../src/modules/history.ts'
 import { listNotifications } from '../src/modules/notifications.ts'
-import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, serveNext } from '../src/modules/queue.ts'
+import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, requeue, serveNext } from '../src/modules/queue.ts'
 import { getService } from '../src/modules/services.ts'
 import { estimateWait } from '../src/modules/waitTime.ts'
 import { resetStore } from '../src/store.ts'
@@ -131,6 +131,63 @@ describe('removeFromQueue', () => {
     expect(() => removeFromQueue('s2', 'q1')).toThrow(/not in line/)
     removeFromQueue('s1', 'q3')
     expect(() => removeFromQueue('s1', 'q3')).toThrow(/not in line/)
+  })
+})
+
+describe('requeue', () => {
+  it('moves the person being served to the end of their priority group', () => {
+    const moved = requeue('s1')
+    expect(moved).toMatchObject({ userName: 'Jordan Lee', status: 'waiting', priority: 'medium', position: 3 })
+    expect(moved.calledAt).toBeUndefined()
+    expect(moved.joinedAt > '2026-09-29T09:20:00').toBe(true)
+    expect(getQueue('s1').map((entry) => [entry.userName, entry.position, entry.status])).toEqual([
+      ['Sam Patel', 1, 'almost-ready'],
+      ['Alex Kim', 2, 'waiting'],
+      ['Jordan Lee', 3, 'waiting'],
+    ])
+    expect(listHistory('u2')).toEqual([])
+    expect(listNotifications('u2').map((note) => note.message)).toEqual([
+      'You were placed back in line for Academic Advising.',
+    ])
+    expect(myQueues('u2')).toEqual([expect.objectContaining({ serviceId: 's1', position: 3 })])
+  })
+
+  it('keeps a higher priority ahead and sends the requeued person behind their own group', () => {
+    joinQueue(user('u4'), 's1', { priority: 'high' })
+    requeue('s1')
+    expect(getQueue('s1').map((entry) => entry.userName)).toEqual(['Riley Chen', 'Sam Patel', 'Alex Kim', 'Jordan Lee'])
+  })
+
+  it('calls the next person in the same priority group instead of the requeued person', () => {
+    requeue('s1')
+    const { served, nowServing } = serveNext('s1')
+    expect(served).toBeUndefined()
+    expect(nowServing?.userName).toBe('Sam Patel')
+    expect(getQueue('s1').map((entry) => entry.userName)).toEqual(['Sam Patel', 'Alex Kim', 'Jordan Lee'])
+  })
+
+  it('notifies them again when they land at the front, and serve next calls them before a lower priority', () => {
+    joinQueue(user('u1'), 's2', { priority: 'low' })
+    serveNext('s2')
+    const moved = requeue('s2')
+    expect(moved).toMatchObject({ userName: 'Riley Chen', position: 1, status: 'almost-ready' })
+    expect(getQueue('s2').some((entry) => entry.status === 'serving')).toBe(false)
+    const messages = listNotifications('u4').map((note) => note.message)
+    expect(messages).toEqual(expect.arrayContaining([
+      'You were placed back in line for Financial Aid Help Desk.',
+      'You are almost up for Financial Aid Help Desk.',
+    ]))
+    expect(listHistory('u4')).toEqual([])
+
+    const { served, nowServing } = serveNext('s2')
+    expect(served).toBeUndefined()
+    expect(nowServing?.userName).toBe('Riley Chen')
+  })
+
+  it('fails when no one is being served', () => {
+    expect(() => requeue('s3')).toThrow(/No one is being served/)
+    expect(() => requeue('s4')).toThrow(/No one is being served/)
+    expect(() => requeue('missing')).toThrow(/not found/i)
   })
 })
 

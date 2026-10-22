@@ -110,6 +110,37 @@ describe('queue routes', () => {
     expect(queue.body.map((entry: { id: string }) => entry.id)).toEqual(['q1', 'q2'])
   })
 
+  it('lets an employee requeue the person being served', async () => {
+    const requeued = await request(app).post('/api/queues/s1/requeue').set('x-user-id', 'e1')
+    expect(requeued.status).toBe(200)
+    expect(requeued.body).toMatchObject({ userName: 'Jordan Lee', status: 'waiting', position: 3 })
+    expect(requeued.body.calledAt).toBeUndefined()
+
+    const queue = await request(app).get('/api/queues/s1').set('x-user-id', 'a1')
+    expect(queue.body.map((entry: { userName: string }) => entry.userName)).toEqual(['Sam Patel', 'Alex Kim', 'Jordan Lee'])
+    expect(queue.body.some((entry: { status: string }) => entry.status === 'serving')).toBe(false)
+
+    const history = await request(app).get('/api/me/history').set('x-user-id', 'u2')
+    expect(history.body).toEqual([])
+    const notes = await request(app).get('/api/me/notifications').set('x-user-id', 'u2')
+    expect(notes.body).toEqual([
+      expect.objectContaining({ type: 'queue-update', message: 'You were placed back in line for Academic Advising.' }),
+    ])
+  })
+
+  it('lets an admin requeue and rejects an empty chair or a user', async () => {
+    const empty = await request(app).post('/api/queues/s3/requeue').set('x-user-id', 'e1')
+    expect(empty.status).toBe(409)
+
+    const forbidden = await request(app).post('/api/queues/s1/requeue').set('x-user-id', 'u1')
+    expect(forbidden.status).toBe(403)
+
+    const requeued = await request(app).post('/api/queues/s1/requeue').set('x-user-id', 'a1')
+    expect(requeued.status).toBe(200)
+    const again = await request(app).post('/api/queues/s1/requeue').set('x-user-id', 'a1')
+    expect(again.status).toBe(409)
+  })
+
   it('blocks users from removing people and rejects someone already gone', async () => {
     const forbidden = await request(app).post('/api/queues/s1/entries/q3/remove').set('x-user-id', 'u1')
     expect(forbidden.status).toBe(403)

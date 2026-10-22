@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
-import { removeFromQueue, serveNext, useQueues, type QueueView } from '../../queues.ts'
+import { removeFromQueue, requeue, serveNext, useQueues, type QueueView } from '../../queues.ts'
 import { waitSince } from './formatWait.ts'
 import './employeeQueue.css'
 
@@ -9,6 +9,7 @@ const SERVICE_ID = 's1'
 export default function EmployeeQueue() {
   const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(SERVICE_ID)
   const [removing, setRemoving] = useState<QueueView | null>(null)
+  const [requeuing, setRequeuing] = useState(false)
   const [nowMs, setNowMs] = useState(() => Date.now())
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 30_000)
@@ -18,6 +19,16 @@ export default function EmployeeQueue() {
   // Preserve the backend's priority/arrival ordering.
   const waiting = entries.filter(entry => entry.status !== 'serving')
   const service = services.find(service => service.id === SERVICE_ID)
+
+  function confirmRequeue() {
+    if (!serving) return
+    const name = serving.userName
+    setRequeuing(false)
+    void runAction(async () => {
+      await requeue(SERVICE_ID)
+      return `Placed ${name} back in line.`
+    })
+  }
 
   function confirmRemove() {
     if (!removing) return
@@ -42,7 +53,7 @@ export default function EmployeeQueue() {
         {serving ? (
           <div className="employee-queue__serving-row">
             <span className="employee-queue__serving-name">{serving.userName}</span>
-            <button type="button" className="employee-queue__remove-btn" disabled title="Requeue is not available yet">Requeue</button>
+            <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRequeuing(true)}>Requeue</button>
           </div>
         ) : <p className="employee-queue__now-serving-empty">No one being served</p>}
       </div>
@@ -66,6 +77,8 @@ export default function EmployeeQueue() {
           </li>
         ))}</ul>
       )}
+      <ConfirmModal open={requeuing} title="Place back in line?" message={`Place ${serving?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
+        confirmLabel="Requeue" onConfirm={confirmRequeue} onCancel={() => setRequeuing(false)} />
       <ConfirmModal open={removing !== null} title="Remove from queue?" message={`Remove ${removing?.userName ?? ''} from ${service?.name ?? 'this queue'}?`}
         confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
     </section>
