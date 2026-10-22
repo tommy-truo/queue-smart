@@ -1,11 +1,23 @@
 import { useState } from 'react'
+import ConfirmModal from '../../components/ConfirmModal.tsx'
 import StatusBadge from '../../components/StatusBadge.tsx'
-import { serveNext, useQueues } from '../../queues.ts'
+import { removeFromQueue, serveNext, useQueues, type QueueView } from '../../queues.ts'
 
 export default function QueueManagement() {
   const [serviceId, setServiceId] = useState('s1')
   const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(serviceId)
+  const [removing, setRemoving] = useState<QueueView | null>(null)
   const service = services.find(service => service.id === serviceId)
+
+  function confirmRemove() {
+    if (!removing) return
+    const entry = removing
+    setRemoving(null)
+    void runAction(async () => {
+      await removeFromQueue(entry.serviceId, entry.id)
+      return `Removed ${entry.userName}.`
+    })
+  }
 
   if (loading) return <div className="page"><h1>Queue Management</h1><p role="status">Loading queue…</p></div>
   if (error) return <div className="page"><h1>Queue Management</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
@@ -40,13 +52,15 @@ export default function QueueManagement() {
                 <td>
                   <button type="button" disabled title="Reordering is not available yet">Up</button>{' '}
                   <button type="button" disabled title="Reordering is not available yet">Down</button>{' '}
-                  <button type="button" disabled title="Removal is not available yet">Remove</button>
+                  <button type="button" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
                 </td>
               </tr>
             ))}</tbody>
           </table>
         </>
       )}
+      <ConfirmModal open={removing !== null} title="Remove from queue?" message={`Remove ${removing?.userName ?? ''} from ${service?.name ?? 'this queue'}?`}
+        confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
     </div>
   )
 }

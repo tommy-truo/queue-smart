@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { findUserById } from '../src/modules/auth.ts'
 import { listHistory } from '../src/modules/history.ts'
 import { listNotifications } from '../src/modules/notifications.ts'
-import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, serveNext } from '../src/modules/queue.ts'
+import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, serveNext } from '../src/modules/queue.ts'
 import { getService } from '../src/modules/services.ts'
 import { estimateWait } from '../src/modules/waitTime.ts'
 import { resetStore } from '../src/store.ts'
@@ -88,6 +88,49 @@ describe('leaveQueue', () => {
 
   it('fails when the user is not in line', () => {
     expect(() => leaveQueue(user('u1'), 's2')).toThrow(/not in line/)
+  })
+})
+
+describe('removeFromQueue', () => {
+  it('drops a waiting person, records history, and notifies them', () => {
+    const removed = removeFromQueue('s1', 'q3')
+    expect(removed).toMatchObject({ userName: 'Alex Kim', status: 'waiting', outcome: 'removed' })
+    expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Sam Patel'])
+    expect(listHistory('u1')[0]).toMatchObject({ serviceName: 'Academic Advising', outcome: 'removed' })
+    expect(listNotifications('u1')[0].message).toMatch(/removed from the queue for Academic Advising/)
+    expect(myQueues('u1')).toEqual([])
+  })
+
+  it('promotes the next waiting person without calling them up', () => {
+    removeFromQueue('s1', 'q2')
+    const queue = getQueue('s1')
+    expect(queue.map((e) => e.userName)).toEqual(['Jordan Lee', 'Alex Kim'])
+    expect(queue[0].status).toBe('serving')
+    expect(queue[1]).toMatchObject({ status: 'almost-ready', position: 1 })
+    expect(listNotifications('u1')[0].message).toMatch(/almost up for Academic Advising/)
+    expect(listNotifications('u3')[0].message).toMatch(/removed from the queue/)
+  })
+
+  it('clears the serving chair without serving that person or calling the next', () => {
+    const removed = removeFromQueue('s1', 'q1')
+    expect(removed).toMatchObject({ status: 'serving', outcome: 'removed' })
+    expect(listHistory('u2')[0].outcome).toBe('removed')
+    const queue = getQueue('s1')
+    expect(queue.map((e) => [e.userName, e.position, e.status])).toEqual([
+      ['Sam Patel', 1, 'almost-ready'],
+      ['Alex Kim', 2, 'waiting'],
+    ])
+
+    const { served, nowServing } = serveNext('s1')
+    expect(served).toBeUndefined()
+    expect(nowServing?.userName).toBe('Sam Patel')
+  })
+
+  it('fails when that person is not in the line', () => {
+    expect(() => removeFromQueue('s1', 'missing')).toThrow(/not in line/)
+    expect(() => removeFromQueue('s2', 'q1')).toThrow(/not in line/)
+    removeFromQueue('s1', 'q3')
+    expect(() => removeFromQueue('s1', 'q3')).toThrow(/not in line/)
   })
 })
 

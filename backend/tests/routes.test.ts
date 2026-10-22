@@ -100,6 +100,24 @@ describe('queue routes', () => {
     expect(served.body.served.userName).toBe('Jordan Lee')
     expect(served.body.nowServing.userName).toBe('Sam Patel')
   })
+
+  it('lets staff remove someone from the line', async () => {
+    const removed = await request(app).post('/api/queues/s1/entries/q3/remove').set('x-user-id', 'e1')
+    expect(removed.status).toBe(200)
+    expect(removed.body).toMatchObject({ id: 'q3', outcome: 'removed', status: 'waiting' })
+
+    const queue = await request(app).get('/api/queues/s1').set('x-user-id', 'a1')
+    expect(queue.body.map((entry: { id: string }) => entry.id)).toEqual(['q1', 'q2'])
+  })
+
+  it('blocks users from removing people and rejects someone already gone', async () => {
+    const forbidden = await request(app).post('/api/queues/s1/entries/q3/remove').set('x-user-id', 'u1')
+    expect(forbidden.status).toBe(403)
+
+    await request(app).post('/api/queues/s1/entries/q3/remove').set('x-user-id', 'a1')
+    const again = await request(app).post('/api/queues/s1/entries/q3/remove').set('x-user-id', 'a1')
+    expect(again.status).toBe(404)
+  })
 })
 
 describe('me routes', () => {

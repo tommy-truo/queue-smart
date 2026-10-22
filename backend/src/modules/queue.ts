@@ -113,6 +113,19 @@ export function leaveQueue(user: User, serviceId: string): QueueEntry {
   return entry
 }
 
+/** Staff take someone off the line without marking them served or calling the next person. */
+export function removeFromQueue(serviceId: string, entryId: string): QueueEntry {
+  const service = getService(serviceId)
+  const entry = db.entries.find((e) => e.id === entryId && e.serviceId === serviceId && !e.outcome)
+  if (!entry) throw new HttpError(404, `That person is not in line for ${service.name}.`)
+
+  entry.outcome = 'removed'
+  recordHistory(entry.userId, service.name, 'removed')
+  notify(entry.userId, 'queue-update', `You were removed from the queue for ${service.name}.`)
+  updateStatuses(service)
+  return entry
+}
+
 /** Finishes whoever is being served and calls the next person in line. */
 export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?: QueueEntry } {
   const service = getService(serviceId)
