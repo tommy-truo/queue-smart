@@ -27,7 +27,7 @@ Commits use the configured Git author `mcisaura`. All of this work is consolidat
 
 | Group Member Name | What is your contribution? | Discussion Notes |
 | --- | --- | --- |
-| Tommy Truong | Added queue removal for administrators and employees, so staff can take someone off a live queue without marking them served, notifies the person of their removal and adds the removal to their history. Added requeue so staff can send the person being served back into the waiting line, behind others of the same priority, notifying the person and keeping them in the queue. | Reused the existing queue, history, notifications, and role checks. Verified both features with backend tests and in the browser. |
+| Tommy Truong | Implemented queue removal for administrators and employees, so staff can take someone off a live queue without marking them served, notifies the person of their removal and adds the removal to their history. Implemented requeue so staff can send the person being served back into the waiting line, behind others of the same priority, notifying the person and keeping them in the queue. Added requeue to administrator queue management page. | Reused the existing queue, history, notifications, and role checks. Verified both features with backend tests and in the browser. |
 
 ### Commit evidence
 
@@ -35,8 +35,9 @@ Commits use the configured Git author `mcisaura`. All of this work is consolidat
 | --- | --- | --- |
 | [404115b](https://github.com/tommy-truo/queue-smart/commit/404115b849e1da0427249cdd50580320680e9100) | Added staff removal from a live queue. | `feat/queue-removal` Merged to `main` in pull request #10. |
 | [f993f62](https://github.com/tommy-truo/queue-smart/commit/f993f621ecad0d9ed26528f703d9cf4c73a791bf) | Added staff requeue for the person being served. | `feat/requeue` Merged to `main` in pull request #12. |
+| [958cf65](https://github.com/tommy-truo/queue-smart/commit/958cf65bbabcb57204e50080ee194435e627fe53) | Added requeue to the administrator queue management page. | `feat/admin-requeue-button` |
 
 ## Scope and handoff
 
 - Administrators and employees can remove someone from a live queue. Employees remove waiting people. Administrators can also remove the person being served.
-- Administrators and employees can requeue the person being served. The employee queue shows the control. The administrator screen does not yet.
+- Administrators and employees can requeue the person being served. Both queue screens show the control for that person only.
