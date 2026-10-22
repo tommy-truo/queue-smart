@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { serveNext, useQueues } from '../../queues.ts'
+import ConfirmModal from '../../components/ConfirmModal.tsx'
+import { removeFromQueue, serveNext, useQueues, type QueueView } from '../../queues.ts'
 import { waitSince } from './formatWait.ts'
 import './employeeQueue.css'
 
@@ -7,6 +8,7 @@ const SERVICE_ID = 's1'
 
 export default function EmployeeQueue() {
   const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(SERVICE_ID)
+  const [removing, setRemoving] = useState<QueueView | null>(null)
   const [nowMs, setNowMs] = useState(() => Date.now())
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 30_000)
@@ -16,6 +18,16 @@ export default function EmployeeQueue() {
   // Preserve the backend's priority/arrival ordering.
   const waiting = entries.filter(entry => entry.status !== 'serving')
   const service = services.find(service => service.id === SERVICE_ID)
+
+  function confirmRemove() {
+    if (!removing) return
+    const entry = removing
+    setRemoving(null)
+    void runAction(async () => {
+      await removeFromQueue(SERVICE_ID, entry.id)
+      return `Removed ${entry.userName}.`
+    })
+  }
 
   if (loading) return <section className="employee-queue"><h1>Queue</h1><p role="status">Loading queue…</p></section>
   if (error) return <section className="employee-queue"><h1>Queue</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></section>
@@ -50,10 +62,12 @@ export default function EmployeeQueue() {
             <span className="employee-queue__position">{index + 1}.</span>
             <span className="employee-queue__serving-name">{entry.userName}</span>
             <span className="employee-queue__wait">{waitSince(entry.joinedAt, nowMs)}</span>
-            <button type="button" className="employee-queue__remove-btn" disabled title="Removal is not available yet">Remove</button>
+            <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
           </li>
         ))}</ul>
       )}
+      <ConfirmModal open={removing !== null} title="Remove from queue?" message={`Remove ${removing?.userName ?? ''} from ${service?.name ?? 'this queue'}?`}
+        confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
     </section>
   )
 }
