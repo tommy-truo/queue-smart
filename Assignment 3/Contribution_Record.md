@@ -27,14 +27,16 @@ Commits use the configured Git author `mcisaura`. All of this work is consolidat
 
 | Group Member Name | What is your contribution? | Discussion Notes |
 | --- | --- | --- |
-| Tommy Truong | Implemented live queue removal feature for employees and administrators queue. Removal sets the entry outcome to `removed`, records that outcome in the user's history, and sends one in-app queue update. Admin Queue Management can remove any active entry, including the person being served. The employee queue can remove people on the waiting list. Both screens confirm before removing. | Reused the existing queue module, history, notifications, role checks, confirm modal, and shared queue actions. |
+| Tommy Truong | Added queue removal for administrators and employees, so staff can take someone off a live queue without marking them served, notifies the person of their removal and adds the removal to their history. Added requeue so staff can send the person being served back into the waiting line, behind others of the same priority, notifying the person and keeping them in the queue. | Reused the existing queue, history, notifications, and role checks. Verified both features with backend tests and in the browser. |
 
 ### Commit evidence
 
 | Commit | Work | Branch |
 | --- | --- | --- |
-| [404115b](https://github.com/tommy-truo/queue-smart/commit/404115b849e1da0427249cdd50580320680e9100) | Added queue removal for the admin and employee screens without marking the person served. | `feat/queue-removal` Merged to `main` in pull request #10. |
+| [404115b](https://github.com/tommy-truo/queue-smart/commit/404115b849e1da0427249cdd50580320680e9100) | Added staff removal from a live queue. | `feat/queue-removal` Merged to `main` in pull request #10. |
+| Not committed yet | Added staff requeue for the person being served. | `feat/requeue` |
 
 ## Scope and handoff
 
-- This contribution implements the backend logic for the queue removal button from the frontend UI for the staff and administrator views of the live queue.
+- Administrators and employees can remove someone from a live queue. Employees remove waiting people. Administrators can also remove the person being served.
+- Administrators and employees can requeue the person being served. The employee queue shows the control. The administrator screen does not yet.

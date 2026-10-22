@@ -82,3 +82,7 @@ export function serveNext(id: string) {
 export function removeFromQueue(serviceId: string, entryId: string) {
   return api<QueueEntry>(`/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/remove`, { method: 'POST' })
 }
+
+export function requeue(serviceId: string) {
+  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/requeue`, { method: 'POST' })
+}

@@ -14,7 +14,7 @@ npm run dev
 
 ## Frontend
 
-React + TypeScript app built with Vite, in `frontend/`. Login, registration, dashboards, service management, queue screens, notifications, and History call the backend API (start it first, see below); the dev server proxies `/api` to it. Queue reordering and requeue controls are disabled until their backend operations are implemented.
+React + TypeScript app built with Vite, in `frontend/`. Login, registration, dashboards, service management, queue screens, notifications, and History call the backend API (start it first, see below); the dev server proxies `/api` to it. Queue reordering is disabled until that backend operation is implemented. Requeue is on the employee queue; the admin screen does not show it yet.
 
 ```
 cd frontend
@@ -57,6 +57,7 @@ Requests that need a signed-in user send the `x-user-id` header with the `id` re
 | POST | `/api/queues/:serviceId/join`, `/api/queues/:serviceId/leave` | user |
 | GET | `/api/queues/:serviceId` | admin, employee |
 | POST | `/api/queues/:serviceId/serve-next` | admin, employee |
+| POST | `/api/queues/:serviceId/requeue` | admin, employee |
 | POST | `/api/queues/:serviceId/entries/:entryId/remove` | admin, employee |
 | GET | `/api/me/notifications` | signed in |
 | GET | `/api/me/history` | user |
