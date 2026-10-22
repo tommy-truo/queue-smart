@@ -36,7 +36,7 @@ Commits use the configured Git author `mcisaura`. All of this work is consolidat
 | [404115b](https://github.com/tommy-truo/queue-smart/commit/404115b849e1da0427249cdd50580320680e9100) | Added staff removal from a live queue. | `feat/queue-removal` Merged to `main` in pull request #10. |
 | [f993f62](https://github.com/tommy-truo/queue-smart/commit/f993f621ecad0d9ed26528f703d9cf4c73a791bf) | Added staff requeue for the person being served. | `feat/requeue` Merged to `main` in pull request #12. |
 | [958cf65](https://github.com/tommy-truo/queue-smart/commit/958cf65bbabcb57204e50080ee194435e627fe53) | Added requeue to the administrator queue management page. | `feat/admin-requeue-button` Merged to `main` in pull request #13. |
-| [ec135fa](https://github.com/tommy-truo/queue-smart/commit/ec135faaf9e59f46513aaa8add30f6bf5eba61d5) | Added administrator queue reordering. | `feat/queue-reorder` |
+| [ec135fa](https://github.com/tommy-truo/queue-smart/commit/ec135faaf9e59f46513aaa8add30f6bf5eba61d5) | Added administrator queue reordering. | `feat/queue-reorder` Merged to `main` in pull request #14. |
 
 ## Scope and handoff
 
