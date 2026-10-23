@@ -124,7 +124,7 @@ describe('queue routes', () => {
     expect(history.body).toEqual([])
     const notes = await request(app).get('/api/me/notifications').set('x-user-id', 'u2')
     expect(notes.body).toEqual([
-      expect.objectContaining({ type: 'queue-update', message: 'You were placed back in line for Academic Advising.' }),
+      expect.objectContaining({ type: 'queue-update', message: 'You were placed back in line for Academic Advising. Please bring your student ID.' }),
     ])
   })
 
