@@ -147,7 +147,7 @@ describe('requeue', () => {
     ])
     expect(listHistory('u2')).toEqual([])
     expect(listNotifications('u2').map((note) => note.message)).toEqual([
-      'You were placed back in line for Academic Advising.',
+      'You were placed back in line for Academic Advising. Please bring your student ID.',
     ])
     expect(myQueues('u2')).toEqual([expect.objectContaining({ serviceId: 's1', position: 3 })])
   })
@@ -174,8 +174,8 @@ describe('requeue', () => {
     expect(getQueue('s2').some((entry) => entry.status === 'serving')).toBe(false)
     const messages = listNotifications('u4').map((note) => note.message)
     expect(messages).toEqual(expect.arrayContaining([
-      'You were placed back in line for Financial Aid Help Desk.',
-      'You are almost up for Financial Aid Help Desk.',
+      'You were placed back in line for Financial Aid Help Desk. Please bring your student ID.',
+      'You are almost up for Financial Aid Help Desk. Please bring your student ID.',
     ]))
     expect(listHistory('u4')).toEqual([])
 
