@@ -13,6 +13,7 @@ export type Service = {
   /** Minutes per person. */
   expectedDuration: number
   priority: Priority
+  notification?: string
   open: boolean
 }
 
