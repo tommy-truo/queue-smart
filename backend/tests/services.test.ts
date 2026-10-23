@@ -35,8 +35,12 @@ describe('services', () => {
   })
 
   it('updates only the given fields', () => {
-    const service = updateService('s1', { expectedDuration: 25, open: false })
-    expect(service).toMatchObject({ name: 'Academic Advising', expectedDuration: 25, open: false })
+    const ser1 = updateService('s1', { expectedDuration: 25, open: false })
+    expect(ser1).toMatchObject({ name: 'Academic Advising', expectedDuration: 25, open: false })
+    const ser2 = updateService('s2', { name: 'Financial Aid', priority: 'high'})
+    expect(ser2).toMatchObject({ name: 'Financial Aid', description: 'Questions about aid packages, deadlines and paperwork.', priority: 'high'})
+    const ser3 = updateService('s3', { description: 'Device troubleshooting.', notification: 'Please bring your student ID and laptop.'})
+    expect(ser3).toMatchObject({ name: 'IT Support', description: 'Device troubleshooting.', notification: 'Please bring your student ID and laptop.'})
   })
 
   it('validates fields on update', () => {
