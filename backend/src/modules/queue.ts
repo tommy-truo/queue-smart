@@ -109,7 +109,8 @@ function updateStatuses(service: Service): void {
 
     if (close && stored.status === 'waiting') {
       stored.status = 'almost-ready'
-      notify(stored.userId, 'status-change', `You are almost up for ${service.name}.`)
+      let note = 'You are almost up for ' + service.name + '. ' + service.notification
+      notify(stored.userId, 'status-change', note)
     } else if (!close && stored.status === 'almost-ready') {
       stored.status = 'waiting'
     }
@@ -145,11 +146,8 @@ export function joinQueue(user: User, serviceId: string, body: unknown): QueueVi
   if (serviceUsesSortRank(serviceId)) placeJoinedEntryByPriority(serviceId, entry, priority)
 
   const view = viewOf(entry.id, serviceId)
-  notify(
-    user.id,
-    'queue-update',
-    `You joined the queue for ${service.name}. Position ${view.position}, about ${view.estimatedWait} min.`,
-  )
+  let note = 'You joined the queue for ' + service.name + '. Position ' + view.position + ', about '+ view.estimatedWait + 'min. ' + service.notification
+  notify(user.id, 'queue-update', note)
   updateStatuses(service)
   return viewOf(entry.id, serviceId)
 }
@@ -188,7 +186,8 @@ export function requeue(serviceId: string): QueueView {
   delete serving.calledAt
   serving.joinedAt = new Date().toISOString()
   if (serviceUsesSortRank(serviceId)) placeRequeuedAtPriorityGroupEnd(serviceId, serving)
-  notify(serving.userId, 'queue-update', `You were placed back in line for ${service.name}.`)
+  let note = 'You were placed back in line for ' + service.name + ". " + service.notification
+  notify(serving.userId, 'queue-update', note)
   updateStatuses(service)
   return viewOf(serving.id, serviceId)
 }
@@ -246,7 +245,8 @@ export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?
   if (nowServing) {
     nowServing.status = 'serving'
     nowServing.calledAt = new Date().toISOString()
-    notify(nowServing.userId, 'status-change', `It is your turn for ${service.name}.`)
+    let note = 'It is your turn for ' + service.name + ". " + service.notification
+    notify(nowServing.userId, 'status-change', note)
   }
 
   updateStatuses(service)
