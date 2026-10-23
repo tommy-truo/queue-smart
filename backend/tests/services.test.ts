@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createService, getService, listServices, updateService } from '../src/modules/services.ts'
 import { resetStore } from '../src/store.ts'
 
-const valid = { name: 'Library Help', description: 'Book holds and renewals.', expectedDuration: 5, priority: 'low' }
+const valid = { name: 'Library Help', description: 'Book holds and renewals.', expectedDuration: 5, priority: 'low', notification: 'please bring library card' }
 
 beforeEach(resetStore)
 
