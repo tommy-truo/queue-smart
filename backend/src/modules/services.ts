@@ -11,6 +11,7 @@ export const serviceSchema: Schema = {
   description: { type: 'string', required: true, max: 500 },
   expectedDuration: { type: 'number', required: true, integer: true, min: 1, max: 480 },
   priority: { type: 'string', required: true, oneOf: PRIORITIES },
+  notification: { type: 'string', required: false, max: 500 },
   open: { type: 'boolean' },
 }
 
@@ -34,6 +35,7 @@ export function createService(body: unknown): Service {
     description: input.description.trim(),
     expectedDuration: input.expectedDuration,
     priority: input.priority,
+    notification: input.notification?.trim(),
     open: input.open ?? true,
   }
   db.services.push(service)
@@ -49,6 +51,7 @@ export function updateService(id: string, body: unknown): Service {
   if (input.description !== undefined) service.description = input.description.trim()
   if (input.expectedDuration !== undefined) service.expectedDuration = input.expectedDuration
   if (input.priority !== undefined) service.priority = input.priority
+  if (input.notification !== undefined) service.notification = input.notification.trim()
   if (input.open !== undefined) service.open = input.open
   return service
 }
