@@ -7,6 +7,7 @@ type FormValues = {
   description: string
   expectedDuration: string
   priority: Priority
+  notification?: string
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
@@ -33,6 +34,10 @@ function validate(values: FormValues): FormErrors {
 
   if (!['low', 'medium', 'high'].includes(values.priority)) errors.priority = 'Choose low, medium, or high.'
 
+  if (!(values.notification === undefined))
+    if (values.notification.trim().length > DESCRIPTION_MAX)
+      errors.notification = `Notification must be ${DESCRIPTION_MAX} characters or less.`
+  
   return errors
 }
 
@@ -70,6 +75,7 @@ export default function ServiceManagement() {
       description: service.description,
       expectedDuration: String(service.expectedDuration),
       priority: service.priority,
+      notification: service.notification
     })
     setErrors({})
     setMessage('')
@@ -97,6 +103,7 @@ export default function ServiceManagement() {
       description: values.description.trim(),
       expectedDuration: Number(values.expectedDuration),
       priority: values.priority,
+      notification: values.notification,
     }
 
     setSaving(true)
@@ -234,6 +241,23 @@ export default function ServiceManagement() {
             <option value="high">High</option>
           </select>
           {errors.priority ? <div role="alert">{errors.priority}</div> : null}
+        </div>
+
+        <div>
+          <label htmlFor="service-notification">Notification Message</label>
+          <br />
+          <textarea
+            id="service-notification"
+            rows={3}
+            maxLength={DESCRIPTION_MAX}
+            disabled={saving}
+            cols={40}
+            value={values.notification}
+            onChange={(e) => update('notification', e.target.value)}
+          />
+          {errors.notification ? (
+            <div role="alert">{errors.notification}</div>
+          ) : null}
         </div>
 
         <div>
