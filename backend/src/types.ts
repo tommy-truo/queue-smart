@@ -11,12 +11,9 @@ export type NotificationType = 'queue-update' | 'status-change'
 export type User = {
   id: string
   email: string
-  password: string
   fullName: string
   role: Role
 }
-
-export type PublicUser = Omit<User, 'password'>
 
 export type Service = {
   id: string

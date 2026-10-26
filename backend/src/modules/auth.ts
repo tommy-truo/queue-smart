@@ -1,6 +1,8 @@
 import { HttpError } from '../errors.ts'
-import { db, nextId } from '../store.ts'
-import type { PublicUser, User } from '../types.ts'
+import { getDb } from '../db.ts'
+import { hashPassword, verifyPassword } from '../password.ts'
+import { nextId } from '../store.ts'
+import type { Role, User } from '../types.ts'
 import { assertValid } from '../validation.ts'
 import type { Schema } from '../validation.ts'
 
@@ -39,37 +41,50 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
-export function toPublicUser(user: User): PublicUser {
-  const { password: _password, ...rest } = user
-  return rest
+type UserRow = { userId: string; email: string; role: Role; fullName: string; passwordHash: string }
+
+const USER_QUERY = `
+  SELECT c.userId, c.email, c.role, c.passwordHash, p.fullName
+  FROM UserCredentials c JOIN UserProfile p ON p.userId = c.userId`
+
+function toUser(row: UserRow): User {
+  return { id: row.userId, email: row.email, fullName: row.fullName, role: row.role }
 }
 
 export function findUserById(id: string): User | undefined {
-  return db.users.find((user) => user.id === id)
+  const row = getDb().prepare(`${USER_QUERY} WHERE c.userId = ?`).get(id) as UserRow | undefined
+  return row && toUser(row)
 }
 
-export function register(body: unknown): PublicUser {
+export function register(body: unknown): User {
   assertValid(body, registerSchema)
   const { fullName, email, password } = body as { fullName: string; email: string; password: string }
 
+  const db = getDb()
   const normalized = normalizeEmail(email)
-  if (db.users.some((user) => user.email === normalized)) {
+  if (db.prepare('SELECT 1 FROM UserCredentials WHERE email = ?').get(normalized)) {
     throw new HttpError(409, 'An account with this email already exists.', { email: 'Email is already registered.' })
   }
 
   // Registration always creates a regular user; admins and employees are seeded.
-  const user: User = { id: nextId('u'), email: normalized, password, fullName: fullName.trim(), role: 'user' }
-  db.users.push(user)
-  return toPublicUser(user)
+  const user: User = { id: nextId('u'), email: normalized, fullName: fullName.trim(), role: 'user' }
+  db.prepare('INSERT INTO UserCredentials (userId, email, passwordHash, role) VALUES (?, ?, ?, ?)').run(
+    user.id,
+    user.email,
+    hashPassword(password),
+    user.role,
+  )
+  db.prepare('INSERT INTO UserProfile (userId, fullName) VALUES (?, ?)').run(user.id, user.fullName)
+  return user
 }
 
-export function login(body: unknown): PublicUser {
+export function login(body: unknown): User {
   assertValid(body, loginSchema)
   const { email, password } = body as { email: string; password: string }
 
-  const user = db.users.find((u) => u.email === normalizeEmail(email))
-  if (!user || user.password !== password) {
+  const row = getDb().prepare(`${USER_QUERY} WHERE c.email = ?`).get(normalizeEmail(email)) as UserRow | undefined
+  if (!row || !verifyPassword(password, row.passwordHash)) {
     throw new HttpError(401, 'Invalid email or password.')
   }
-  return toPublicUser(user)
+  return toUser(row)
 }

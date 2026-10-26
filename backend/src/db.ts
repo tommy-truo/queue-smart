@@ -1,4 +1,6 @@
 import { DatabaseSync } from 'node:sqlite'
+import { hashPassword } from './password.ts'
+import type { Role } from './types.ts'
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS UserCredentials (
@@ -53,4 +55,43 @@ export function openDatabase(file = process.env.DB_FILE ?? 'queuesmart.db'): Dat
   database.exec('PRAGMA foreign_keys = ON')
   database.exec(SCHEMA)
   return database
+}
+
+let database: DatabaseSync | undefined
+
+export function getDb(): DatabaseSync {
+  database ??= openDatabase()
+  if (!database.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) seedUsers(database)
+  return database
+}
+
+const SEED_USERS: { id: string; email: string; password: string; fullName: string; role: Role }[] = [
+  { id: 'u1', email: 'alex.kim@example.com', password: 'UserPass1', fullName: 'Alex Kim', role: 'user' },
+  { id: 'u2', email: 'jordan.lee@example.com', password: 'UserPass1', fullName: 'Jordan Lee', role: 'user' },
+  { id: 'u3', email: 'sam.patel@example.com', password: 'UserPass1', fullName: 'Sam Patel', role: 'user' },
+  { id: 'u4', email: 'riley.chen@example.com', password: 'UserPass1', fullName: 'Riley Chen', role: 'user' },
+  { id: 'u5', email: 'morgan.diaz@example.com', password: 'UserPass1', fullName: 'Morgan Diaz', role: 'user' },
+  { id: 'u6', email: 'casey.wong@example.com', password: 'UserPass1', fullName: 'Casey Wong', role: 'user' },
+  { id: 'a1', email: 'admin@queuesmart.local', password: 'AdminPass1', fullName: 'Admin User', role: 'admin' },
+  { id: 'e1', email: 'employee@queuesmart.local', password: 'EmployeePass1', fullName: 'Employee User', role: 'employee' },
+]
+
+// Hashing is slow on purpose, so hash each distinct seed password once.
+const seedHashes = new Map<string, string>()
+
+function seedUsers(target: DatabaseSync): void {
+  const addCredentials = target.prepare('INSERT INTO UserCredentials (userId, email, passwordHash, role) VALUES (?, ?, ?, ?)')
+  const addProfile = target.prepare('INSERT INTO UserProfile (userId, fullName) VALUES (?, ?)')
+  for (const user of SEED_USERS) {
+    if (!seedHashes.has(user.password)) seedHashes.set(user.password, hashPassword(user.password))
+    addCredentials.run(user.id, user.email, seedHashes.get(user.password)!, user.role)
+    addProfile.run(user.id, user.fullName)
+  }
+}
+
+/** Empties the user tables and puts the seed users back. Used by tests. */
+export function resetDatabase(): void {
+  const target = getDb()
+  target.exec('DELETE FROM UserCredentials')
+  seedUsers(target)
 }

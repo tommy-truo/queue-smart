@@ -1,7 +1,7 @@
-import type { AppNotification, HistoryEntry, QueueEntry, Service, User } from './types.ts'
+import { resetDatabase } from './db.ts'
+import type { AppNotification, HistoryEntry, QueueEntry, Service } from './types.ts'
 
 type Store = {
-  users: User[]
   services: Service[]
   entries: QueueEntry[]
   notifications: AppNotification[]
@@ -10,16 +10,6 @@ type Store = {
 
 function seed(): Store {
   return {
-    users: [
-      { id: 'u1', email: 'alex.kim@example.com', password: 'UserPass1', fullName: 'Alex Kim', role: 'user' },
-      { id: 'u2', email: 'jordan.lee@example.com', password: 'UserPass1', fullName: 'Jordan Lee', role: 'user' },
-      { id: 'u3', email: 'sam.patel@example.com', password: 'UserPass1', fullName: 'Sam Patel', role: 'user' },
-      { id: 'u4', email: 'riley.chen@example.com', password: 'UserPass1', fullName: 'Riley Chen', role: 'user' },
-      { id: 'u5', email: 'morgan.diaz@example.com', password: 'UserPass1', fullName: 'Morgan Diaz', role: 'user' },
-      { id: 'u6', email: 'casey.wong@example.com', password: 'UserPass1', fullName: 'Casey Wong', role: 'user' },
-      { id: 'a1', email: 'admin@queuesmart.local', password: 'AdminPass1', fullName: 'Admin User', role: 'admin' },
-      { id: 'e1', email: 'employee@queuesmart.local', password: 'EmployeePass1', fullName: 'Employee User', role: 'employee' },
-    ],
     services: [
       {
         id: 's1',
@@ -90,4 +80,5 @@ export function nextId(prefix: string): string {
 /** Puts the seed data back. Used by tests so each one starts fresh. */
 export function resetStore(): void {
   Object.assign(db, seed())
+  resetDatabase()
 }

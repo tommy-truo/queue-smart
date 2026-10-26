@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { getDb } from '../src/db.ts'
 import { login, register } from '../src/modules/auth.ts'
 import { resetStore } from '../src/store.ts'
 
@@ -11,6 +12,13 @@ describe('register', () => {
     const user = register(valid)
     expect(user).toMatchObject({ fullName: 'Taylor Smith', email: 'taylor@example.com', role: 'user' })
     expect(user).not.toHaveProperty('password')
+  })
+
+  it('stores a hash instead of the plain password', () => {
+    const user = register(valid)
+    const row = getDb().prepare('SELECT passwordHash FROM UserCredentials WHERE userId = ?').get(user.id) as { passwordHash: string }
+    expect(row.passwordHash).not.toContain('Secret123')
+    expect(login(valid).id).toBe(user.id)
   })
 
   it('ignores a role in the request', () => {
