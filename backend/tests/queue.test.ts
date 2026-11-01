@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getDb } from '../src/db.ts'
 import { findUserById } from '../src/modules/auth.ts'
 import { listHistory } from '../src/modules/history.ts'
 import { listNotifications } from '../src/modules/notifications.ts'
@@ -286,6 +287,38 @@ describe('serveNext', () => {
 
   it('fails on an empty queue', () => {
     expect(() => serveNext('s4')).toThrow(/No one is waiting/)
+  })
+})
+
+describe('database storage', () => {
+  const rows = () =>
+    getDb()
+      .prepare("SELECT entryId, status, position FROM QueueEntry WHERE queueId = 'qu1' ORDER BY position")
+      .all()
+      .map((row) => ({ ...row }))
+
+  it('stores positions that stay in line order as people join and leave', () => {
+    joinQueue(user('u4'), 's1', { priority: 'high' })
+    leaveQueue(user('u3'), 's1')
+    const active = rows().filter((row) => row.status === 'waiting')
+    expect(active.map((row) => row.position)).toEqual([1, 2, 3])
+    expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Riley Chen', 'Alex Kim'])
+  })
+
+  it('marks entries served or canceled instead of deleting them', () => {
+    serveNext('s1')
+    removeFromQueue('s1', 'q3')
+    expect(rows().map((row) => [row.entryId, row.status])).toEqual(
+      expect.arrayContaining([
+        ['q1', 'served'],
+        ['q3', 'canceled'],
+      ]),
+    )
+  })
+
+  it('lets someone rejoin after leaving', () => {
+    leaveQueue(user('u1'), 's1')
+    expect(joinQueue(user('u1'), 's1', {}).position).toBe(2)
   })
 })
 

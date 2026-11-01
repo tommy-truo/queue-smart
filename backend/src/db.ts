@@ -22,25 +22,33 @@ CREATE TABLE IF NOT EXISTS Service (
   description      TEXT NOT NULL CHECK (length(description) <= 500),
   expectedDuration INTEGER NOT NULL CHECK (expectedDuration > 0),
   priority         TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
-  notification     TEXT CHECK (notification IS NULL OR length(notification) <= 500),
-  open             INTEGER NOT NULL DEFAULT 1 CHECK (open IN (0, 1))
+  notification     TEXT CHECK (notification IS NULL OR length(notification) <= 500)
 );
 
+-- One queue per service. A closed queue stops new people from joining.
 CREATE TABLE IF NOT EXISTS Queue (
   queueId   TEXT PRIMARY KEY,
-  serviceId TEXT NOT NULL REFERENCES Service(serviceId) ON DELETE CASCADE,
+  serviceId TEXT NOT NULL UNIQUE REFERENCES Service(serviceId) ON DELETE CASCADE,
   status    TEXT NOT NULL CHECK (status IN ('open', 'closed')),
   createdAt TEXT NOT NULL
 );
 
+-- 'waiting' means still in line. calledAt is set while the person is being served,
+-- and almostReady marks the next person up (so they are only notified once).
+-- position is the place among people still in line, with 1 first.
 CREATE TABLE IF NOT EXISTS QueueEntry (
-  entryId  TEXT PRIMARY KEY,
-  queueId  TEXT NOT NULL REFERENCES Queue(queueId) ON DELETE CASCADE,
-  userId   TEXT NOT NULL REFERENCES UserCredentials(userId) ON DELETE CASCADE,
-  position INTEGER NOT NULL CHECK (position > 0),
-  joinedAt TEXT NOT NULL,
-  status   TEXT NOT NULL CHECK (status IN ('waiting', 'served', 'canceled'))
+  entryId     TEXT PRIMARY KEY,
+  queueId     TEXT NOT NULL REFERENCES Queue(queueId) ON DELETE CASCADE,
+  userId      TEXT NOT NULL REFERENCES UserCredentials(userId) ON DELETE CASCADE,
+  position    INTEGER NOT NULL CHECK (position > 0),
+  priority    TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
+  joinedAt    TEXT NOT NULL,
+  calledAt    TEXT,
+  almostReady INTEGER NOT NULL DEFAULT 0 CHECK (almostReady IN (0, 1)),
+  status      TEXT NOT NULL CHECK (status IN ('waiting', 'served', 'canceled'))
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS OneActiveEntry ON QueueEntry (queueId, userId) WHERE status = 'waiting';
 
 CREATE TABLE IF NOT EXISTS Notification (
   notificationId TEXT PRIMARY KEY,
@@ -61,9 +69,10 @@ export function openDatabase(file = process.env.DB_FILE ?? 'queuesmart.db'): Dat
 let database: DatabaseSync | undefined
 
 export function getDb(): DatabaseSync {
-  database ??= openDatabase()
-  if (!database.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) seedUsers(database)
-  if (!database.prepare('SELECT 1 FROM Service LIMIT 1').get()) seedServices(database)
+  if (!database) {
+    database = openDatabase()
+    if (!database.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) seedAll(database)
+  }
   return database
 }
 
@@ -94,56 +103,83 @@ function seedUsers(target: DatabaseSync): void {
 const SEED_SERVICES = [
   {
     id: 's1',
+    queueId: 'qu1',
     name: 'Academic Advising',
     description: 'Walk-in advising for degree plans and course registration.',
     expectedDuration: 15,
     priority: 'high',
     notification: 'Please bring your student ID.',
-    open: 1,
+    queueStatus: 'open',
   },
   {
     id: 's2',
+    queueId: 'qu2',
     name: 'Financial Aid Help Desk',
     description: 'Questions about aid packages, deadlines and paperwork.',
     expectedDuration: 10,
     priority: 'medium',
     notification: 'Please bring your student ID.',
-    open: 1,
+    queueStatus: 'open',
   },
   {
     id: 's3',
+    queueId: 'qu3',
     name: 'IT Support',
     description: 'Password resets and device troubleshooting.',
     expectedDuration: 20,
     priority: 'low',
     notification: null,
-    open: 1,
+    queueStatus: 'open',
   },
   {
     id: 's4',
+    queueId: 'qu4',
     name: 'Student ID Office',
     description: 'New and replacement student ID cards.',
     expectedDuration: 5,
     priority: 'low',
     notification: 'Please double check that your photo for the id has been approved. Replacement IDs will cost $10.',
-    open: 0,
+    queueStatus: 'closed',
   },
 ]
 
 function seedServices(target: DatabaseSync): void {
-  const add = target.prepare(
-    'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification, open) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  const addService = target.prepare(
+    'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification) VALUES (?, ?, ?, ?, ?, ?)',
   )
+  const addQueue = target.prepare('INSERT INTO Queue (queueId, serviceId, status, createdAt) VALUES (?, ?, ?, ?)')
   for (const s of SEED_SERVICES) {
-    add.run(s.id, s.name, s.description, s.expectedDuration, s.priority, s.notification, s.open)
+    addService.run(s.id, s.name, s.description, s.expectedDuration, s.priority, s.notification)
+    addQueue.run(s.queueId, s.id, s.queueStatus, '2026-09-29T08:00:00')
   }
 }
 
-/** Empties the user and service tables and puts the seed data back. Used by tests. */
+const SEED_ENTRIES = [
+  { id: 'q1', queueId: 'qu1', userId: 'u2', position: 1, joinedAt: '2026-09-29T09:05:00', calledAt: '2026-09-29T09:25:00', almostReady: 0 },
+  { id: 'q2', queueId: 'qu1', userId: 'u3', position: 2, joinedAt: '2026-09-29T09:12:00', calledAt: null, almostReady: 1 },
+  { id: 'q3', queueId: 'qu1', userId: 'u1', position: 3, joinedAt: '2026-09-29T09:20:00', calledAt: null, almostReady: 0 },
+  { id: 'q4', queueId: 'qu2', userId: 'u4', position: 1, joinedAt: '2026-09-29T09:15:00', calledAt: null, almostReady: 1 },
+  { id: 'q5', queueId: 'qu3', userId: 'u5', position: 1, joinedAt: '2026-09-29T09:01:00', calledAt: null, almostReady: 1 },
+  { id: 'q6', queueId: 'qu3', userId: 'u6', position: 2, joinedAt: '2026-09-29T09:18:00', calledAt: null, almostReady: 0 },
+]
+
+function seedEntries(target: DatabaseSync): void {
+  const add = target.prepare(
+    "INSERT INTO QueueEntry (entryId, queueId, userId, position, priority, joinedAt, calledAt, almostReady, status) VALUES (?, ?, ?, ?, 'medium', ?, ?, ?, 'waiting')",
+  )
+  for (const e of SEED_ENTRIES) add.run(e.id, e.queueId, e.userId, e.position, e.joinedAt, e.calledAt, e.almostReady)
+}
+
+function seedAll(target: DatabaseSync): void {
+  seedUsers(target)
+  seedServices(target)
+  seedEntries(target)
+}
+
+/** Empties the user and service tables (which clears queues and entries) and puts the seed data back. Used by tests. */
 export function resetDatabase(): void {
   const target = getDb()
   target.exec('DELETE FROM UserCredentials')
   target.exec('DELETE FROM Service')
-  seedUsers(target)
-  seedServices(target)
+  seedAll(target)
 }

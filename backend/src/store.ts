@@ -1,22 +1,13 @@
 import { resetDatabase } from './db.ts'
-import type { AppNotification, HistoryEntry, QueueEntry } from './types.ts'
+import type { AppNotification, HistoryEntry } from './types.ts'
 
 type Store = {
-  entries: QueueEntry[]
   notifications: AppNotification[]
   history: HistoryEntry[]
 }
 
 function seed(): Store {
   return {
-    entries: [
-      { id: 'q1', serviceId: 's1', userId: 'u2', userName: 'Jordan Lee', status: 'serving', priority: 'medium', joinedAt: '2026-09-29T09:05:00', calledAt: '2026-09-29T09:25:00' },
-      { id: 'q2', serviceId: 's1', userId: 'u3', userName: 'Sam Patel', status: 'almost-ready', priority: 'medium', joinedAt: '2026-09-29T09:12:00' },
-      { id: 'q3', serviceId: 's1', userId: 'u1', userName: 'Alex Kim', status: 'waiting', priority: 'medium', joinedAt: '2026-09-29T09:20:00' },
-      { id: 'q4', serviceId: 's2', userId: 'u4', userName: 'Riley Chen', status: 'almost-ready', priority: 'medium', joinedAt: '2026-09-29T09:15:00' },
-      { id: 'q5', serviceId: 's3', userId: 'u5', userName: 'Morgan Diaz', status: 'almost-ready', priority: 'medium', joinedAt: '2026-09-29T09:01:00' },
-      { id: 'q6', serviceId: 's3', userId: 'u6', userName: 'Casey Wong', status: 'waiting', priority: 'medium', joinedAt: '2026-09-29T09:18:00' },
-    ],
     notifications: [
       { id: 'n1', userId: 'u1', type: 'queue-update', message: 'You joined the queue for Academic Advising.', createdAt: '2026-09-29T09:20:00', read: false },
       { id: 'n2', userId: 'u1', type: 'status-change', message: 'Student ID Office queue is closed for today.', createdAt: '2026-09-28T16:30:00', read: true },

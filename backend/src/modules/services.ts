@@ -23,8 +23,11 @@ type ServiceRow = {
   expectedDuration: number
   priority: Priority
   notification: string | null
-  open: number
+  /** The service's queue status. A service is open when its queue is open. */
+  status: 'open' | 'closed'
 }
+
+const SERVICE_QUERY = 'SELECT s.*, q.status FROM Service s JOIN Queue q ON q.serviceId = s.serviceId'
 
 function toService(row: ServiceRow): Service {
   return {
@@ -34,7 +37,7 @@ function toService(row: ServiceRow): Service {
     expectedDuration: row.expectedDuration,
     priority: row.priority,
     notification: row.notification ?? undefined,
-    open: row.open === 1,
+    open: row.status === 'open',
   }
 }
 
@@ -44,12 +47,12 @@ function assertNameFree(name: string, exceptId?: string): void {
 }
 
 export function listServices(): Service[] {
-  const rows = getDb().prepare('SELECT * FROM Service ORDER BY rowid').all() as ServiceRow[]
+  const rows = getDb().prepare(`${SERVICE_QUERY} ORDER BY s.rowid`).all() as ServiceRow[]
   return rows.map(toService)
 }
 
 export function getService(id: string): Service {
-  const row = getDb().prepare('SELECT * FROM Service WHERE serviceId = ?').get(id) as ServiceRow | undefined
+  const row = getDb().prepare(`${SERVICE_QUERY} WHERE s.serviceId = ?`).get(id) as ServiceRow | undefined
   if (!row) throw new HttpError(404, 'Service not found.')
   return toService(row)
 }
@@ -68,19 +71,24 @@ export function createService(body: unknown): Service {
     open: input.open ?? true,
   }
   assertNameFree(service.name)
-  getDb()
-    .prepare(
-      'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification, open) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    )
-    .run(
-      service.id,
-      service.name,
-      service.description,
-      service.expectedDuration,
-      service.priority,
-      service.notification ?? null,
-      service.open ? 1 : 0,
-    )
+  const db = getDb()
+  db.prepare(
+    'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification) VALUES (?, ?, ?, ?, ?, ?)',
+  ).run(
+    service.id,
+    service.name,
+    service.description,
+    service.expectedDuration,
+    service.priority,
+    service.notification ?? null,
+  )
+  // Every service gets its own queue.
+  db.prepare('INSERT INTO Queue (queueId, serviceId, status, createdAt) VALUES (?, ?, ?, ?)').run(
+    nextId('qu'),
+    service.id,
+    service.open ? 'open' : 'closed',
+    new Date().toISOString(),
+  )
   return service
 }
 
@@ -97,18 +105,10 @@ export function updateService(id: string, body: unknown): Service {
   if (input.open !== undefined) service.open = input.open
 
   assertNameFree(service.name, id)
-  getDb()
-    .prepare(
-      'UPDATE Service SET name = ?, description = ?, expectedDuration = ?, priority = ?, notification = ?, open = ? WHERE serviceId = ?',
-    )
-    .run(
-      service.name,
-      service.description,
-      service.expectedDuration,
-      service.priority,
-      service.notification ?? null,
-      service.open ? 1 : 0,
-      id,
-    )
+  const db = getDb()
+  db.prepare(
+    'UPDATE Service SET name = ?, description = ?, expectedDuration = ?, priority = ?, notification = ? WHERE serviceId = ?',
+  ).run(service.name, service.description, service.expectedDuration, service.priority, service.notification ?? null, id)
+  db.prepare('UPDATE Queue SET status = ? WHERE serviceId = ?').run(service.open ? 'open' : 'closed', id)
   return service
 }

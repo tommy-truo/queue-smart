@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { findUserById } from '../src/modules/auth.ts'
+import { getQueue, joinQueue } from '../src/modules/queue.ts'
 import { createService, getService, listServices, updateService } from '../src/modules/services.ts'
 import { resetStore } from '../src/store.ts'
 
@@ -49,6 +51,15 @@ describe('services', () => {
     expect(getService('s3').notification).toBeUndefined()
     updateService(created.id, { open: false })
     expect(getService(created.id).open).toBe(false)
+  })
+
+  it('gives a new service its own queue, and closing it blocks joining', () => {
+    const created = createService(valid)
+    expect(getQueue(created.id)).toEqual([])
+    expect(joinQueue(findUserById('u1')!, created.id, {}).position).toBe(1)
+
+    updateService(created.id, { open: false })
+    expect(() => joinQueue(findUserById('u2')!, created.id, {})).toThrow(/not accepting/)
   })
 
   it('rejects a duplicate name on create and update', () => {

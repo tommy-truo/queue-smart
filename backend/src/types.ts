@@ -34,8 +34,6 @@ export type QueueEntry = {
   status: QueueStatus
   priority: Priority
   joinedAt: string
-  /** Manual line order after staff reorder; lower is closer to the front (after the serving chair). */
-  sortRank?: number
   calledAt?: string
   outcome?: Outcome
 }
