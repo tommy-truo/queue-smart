@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS Service (
   description      TEXT NOT NULL CHECK (length(description) <= 500),
   expectedDuration INTEGER NOT NULL CHECK (expectedDuration > 0),
   priority         TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
-  notification     TEXT CHECK (notification IS NULL OR length(notification) <= 500)
+  notification     TEXT CHECK (notification IS NULL OR length(notification) <= 500),
+  open             INTEGER NOT NULL DEFAULT 1 CHECK (open IN (0, 1))
 );
 
 CREATE TABLE IF NOT EXISTS Queue (
@@ -62,6 +63,7 @@ let database: DatabaseSync | undefined
 export function getDb(): DatabaseSync {
   database ??= openDatabase()
   if (!database.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) seedUsers(database)
+  if (!database.prepare('SELECT 1 FROM Service LIMIT 1').get()) seedServices(database)
   return database
 }
 
@@ -89,9 +91,59 @@ function seedUsers(target: DatabaseSync): void {
   }
 }
 
-/** Empties the user tables and puts the seed users back. Used by tests. */
+const SEED_SERVICES = [
+  {
+    id: 's1',
+    name: 'Academic Advising',
+    description: 'Walk-in advising for degree plans and course registration.',
+    expectedDuration: 15,
+    priority: 'high',
+    notification: 'Please bring your student ID.',
+    open: 1,
+  },
+  {
+    id: 's2',
+    name: 'Financial Aid Help Desk',
+    description: 'Questions about aid packages, deadlines and paperwork.',
+    expectedDuration: 10,
+    priority: 'medium',
+    notification: 'Please bring your student ID.',
+    open: 1,
+  },
+  {
+    id: 's3',
+    name: 'IT Support',
+    description: 'Password resets and device troubleshooting.',
+    expectedDuration: 20,
+    priority: 'low',
+    notification: null,
+    open: 1,
+  },
+  {
+    id: 's4',
+    name: 'Student ID Office',
+    description: 'New and replacement student ID cards.',
+    expectedDuration: 5,
+    priority: 'low',
+    notification: 'Please double check that your photo for the id has been approved. Replacement IDs will cost $10.',
+    open: 0,
+  },
+]
+
+function seedServices(target: DatabaseSync): void {
+  const add = target.prepare(
+    'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification, open) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  )
+  for (const s of SEED_SERVICES) {
+    add.run(s.id, s.name, s.description, s.expectedDuration, s.priority, s.notification, s.open)
+  }
+}
+
+/** Empties the user and service tables and puts the seed data back. Used by tests. */
 export function resetDatabase(): void {
   const target = getDb()
   target.exec('DELETE FROM UserCredentials')
+  target.exec('DELETE FROM Service')
   seedUsers(target)
+  seedServices(target)
 }

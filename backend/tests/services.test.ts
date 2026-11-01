@@ -43,6 +43,20 @@ describe('services', () => {
     expect(ser3).toMatchObject({ name: 'IT Support', description: 'Device troubleshooting.', notification: 'Please bring your student ID and laptop.'})
   })
 
+  it('stores services in the database', () => {
+    const created = createService(valid)
+    expect(getService(created.id)).toEqual(created)
+    expect(getService('s3').notification).toBeUndefined()
+    updateService(created.id, { open: false })
+    expect(getService(created.id).open).toBe(false)
+  })
+
+  it('rejects a duplicate name on create and update', () => {
+    expect(() => createService({ ...valid, name: 'IT Support' })).toThrow('already exists')
+    expect(() => updateService('s1', { name: 'IT Support' })).toThrow('already exists')
+    expect(updateService('s1', { name: 'Academic Advising' }).name).toBe('Academic Advising')
+  })
+
   it('validates fields on update', () => {
     expect(() => updateService('s1', { name: '' })).toThrow('Invalid input')
   })

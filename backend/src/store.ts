@@ -1,8 +1,7 @@
 import { resetDatabase } from './db.ts'
-import type { AppNotification, HistoryEntry, QueueEntry, Service } from './types.ts'
+import type { AppNotification, HistoryEntry, QueueEntry } from './types.ts'
 
 type Store = {
-  services: Service[]
   entries: QueueEntry[]
   notifications: AppNotification[]
   history: HistoryEntry[]
@@ -10,43 +9,6 @@ type Store = {
 
 function seed(): Store {
   return {
-    services: [
-      {
-        id: 's1',
-        name: 'Academic Advising',
-        description: 'Walk-in advising for degree plans and course registration.',
-        expectedDuration: 15,
-        priority: 'high',
-        notification: 'Please bring your student ID.',
-        open: true,
-      },
-      {
-        id: 's2',
-        name: 'Financial Aid Help Desk',
-        description: 'Questions about aid packages, deadlines and paperwork.',
-        notification: 'Please bring your student ID.',
-        expectedDuration: 10,
-        priority: 'medium',
-        open: true,
-      },
-      {
-        id: 's3',
-        name: 'IT Support',
-        description: 'Password resets and device troubleshooting.',
-        expectedDuration: 20,
-        priority: 'low',
-        open: true,
-      },
-      {
-        id: 's4',
-        name: 'Student ID Office',
-        description: 'New and replacement student ID cards.',
-        expectedDuration: 5,
-        priority: 'low',
-        notification: 'Please double check that your photo for the id has been approved. Replacement IDs will cost $10.',
-        open: false,
-      },
-    ],
     entries: [
       { id: 'q1', serviceId: 's1', userId: 'u2', userName: 'Jordan Lee', status: 'serving', priority: 'medium', joinedAt: '2026-09-29T09:05:00', calledAt: '2026-09-29T09:25:00' },
       { id: 'q2', serviceId: 's1', userId: 'u3', userName: 'Sam Patel', status: 'almost-ready', priority: 'medium', joinedAt: '2026-09-29T09:12:00' },
