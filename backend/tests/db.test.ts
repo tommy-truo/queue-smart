@@ -108,4 +108,33 @@ describe('database schema', () => {
       fs.rmSync(dir, { recursive: true, force: true })
     }
   })
+
+  it('keeps history on disk after reopening the same database file', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'queuesmart-db-'))
+    const file = path.join(dir, 'test-history.db')
+    const write = openDatabase(file)
+    try {
+      write.prepare('INSERT INTO UserCredentials VALUES (?, ?, ?, ?)').run('ux', 'persist@example.com', 'hash', 'user')
+      write.prepare('INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)').run(
+        'h-persist',
+        'ux',
+        'IT Support',
+        '2026-09-22',
+        'served',
+      )
+    } finally {
+      write.close()
+    }
+
+    const read = openDatabase(file)
+    try {
+      const row = read
+        .prepare('SELECT historyId, serviceName, occurredOn, outcome FROM History WHERE historyId = ?')
+        .get('h-persist') as { historyId: string; serviceName: string; occurredOn: string; outcome: string }
+      expect(row).toEqual({ historyId: 'h-persist', serviceName: 'IT Support', occurredOn: '2026-09-22', outcome: 'served' })
+    } finally {
+      read.close()
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
 })

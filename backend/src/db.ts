@@ -208,9 +208,26 @@ function seedNotifications(target: DatabaseSync): void {
   }
 }
 
+const SEED_HISTORY = [
+  { id: 'h1', userId: 'u1', occurredOn: '2026-09-22', serviceName: 'IT Support', outcome: 'served' as const },
+  { id: 'h2', userId: 'u1', occurredOn: '2026-09-15', serviceName: 'Financial Aid Help Desk', outcome: 'left' as const },
+  { id: 'h3', userId: 'u1', occurredOn: '2026-09-08', serviceName: 'Academic Advising', outcome: 'served' as const },
+  { id: 'h4', userId: 'u1', occurredOn: '2026-09-02', serviceName: 'Student ID Office', outcome: 'removed' as const },
+]
+
+function seedHistory(target: DatabaseSync): void {
+  const add = target.prepare(
+    'INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)',
+  )
+  for (const h of SEED_HISTORY) {
+    add.run(h.id, h.userId, h.serviceName, h.occurredOn, h.outcome)
+  }
+}
+
 function seedAll(target: DatabaseSync): void {
   seedUsers(target)
   seedNotifications(target)
+  seedHistory(target)
   seedServices(target)
   seedEntries(target)
 }

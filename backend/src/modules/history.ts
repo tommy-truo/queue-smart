@@ -1,5 +1,24 @@
-import { db, nextId } from '../store.ts'
+import { getDb } from '../db.ts'
+import { nextId } from '../store.ts'
 import type { HistoryEntry, Outcome } from '../types.ts'
+
+type HistoryRow = {
+  historyId: string
+  userId: string
+  serviceName: string
+  occurredOn: string
+  outcome: Outcome
+}
+
+function rowToHistory(row: HistoryRow): HistoryEntry {
+  return {
+    id: row.historyId,
+    userId: row.userId,
+    date: row.occurredOn,
+    serviceName: row.serviceName,
+    outcome: row.outcome,
+  }
+}
 
 export function recordHistory(userId: string, serviceName: string, outcome: Outcome): HistoryEntry {
   const entry: HistoryEntry = {
@@ -9,13 +28,18 @@ export function recordHistory(userId: string, serviceName: string, outcome: Outc
     serviceName,
     outcome,
   }
-  db.history.push(entry)
+  getDb()
+    .prepare('INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)')
+    .run(entry.id, entry.userId, entry.serviceName, entry.date, entry.outcome)
   return entry
 }
 
 /** Newest first. */
 export function listHistory(userId: string): HistoryEntry[] {
-  return db.history
-    .filter((h) => h.userId === userId)
-    .sort((a, b) => b.date.localeCompare(a.date))
+  const rows = getDb()
+    .prepare(
+      'SELECT historyId, userId, serviceName, occurredOn, outcome FROM History WHERE userId = ? ORDER BY occurredOn DESC, rowid DESC',
+    )
+    .all(userId) as HistoryRow[]
+  return rows.map(rowToHistory)
 }
