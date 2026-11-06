@@ -36,7 +36,7 @@ Register creates new **user** accounts only. The **View as** dropdown in the hea
 
 ## Backend
 
-Node + Express + TypeScript API, in `backend/`. Data is kept in memory (no database yet).
+Node + Express + TypeScript API, in `backend/`. Users, services, queues, notifications, and history are in SQLite.
 
 ```
 cd backend
