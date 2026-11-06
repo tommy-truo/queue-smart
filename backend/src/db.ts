@@ -180,8 +180,37 @@ function seedEntries(target: DatabaseSync): void {
   for (const e of SEED_ENTRIES) add.run(e.id, e.queueId, e.userId, e.position, e.joinedAt, e.calledAt, e.almostReady)
 }
 
+const SEED_NOTIFICATIONS = [
+  {
+    id: 'n1',
+    userId: 'u1',
+    type: 'queue-update' as const,
+    message: 'You joined the queue for Academic Advising.',
+    createdAt: '2026-09-29T09:20:00',
+    status: 'sent' as const,
+  },
+  {
+    id: 'n2',
+    userId: 'u1',
+    type: 'status-change' as const,
+    message: 'Student ID Office queue is closed for today.',
+    createdAt: '2026-09-28T16:30:00',
+    status: 'viewed' as const,
+  },
+]
+
+function seedNotifications(target: DatabaseSync): void {
+  const add = target.prepare(
+    'INSERT INTO Notification (notificationId, userId, type, message, createdAt, status) VALUES (?, ?, ?, ?, ?, ?)',
+  )
+  for (const n of SEED_NOTIFICATIONS) {
+    add.run(n.id, n.userId, n.type, n.message, n.createdAt, n.status)
+  }
+}
+
 function seedAll(target: DatabaseSync): void {
   seedUsers(target)
+  seedNotifications(target)
   seedServices(target)
   seedEntries(target)
 }

@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { openDatabase } from '../src/db.ts'
 
@@ -74,5 +77,35 @@ describe('database schema', () => {
     insert.run('s2', 'B', 'd', 480, 'low')
     expect(() => insert.run('s3', 'C', 'd', 0, 'low')).toThrow()
     expect(() => insert.run('s4', 'D', 'd', 481, 'low')).toThrow()
+  })
+
+  it('keeps notifications on disk after reopening the same database file', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'queuesmart-db-'))
+    const file = path.join(dir, 'test-notifications.db')
+    const write = openDatabase(file)
+    try {
+      write.prepare('INSERT INTO UserCredentials VALUES (?, ?, ?, ?)').run('ux', 'persist@example.com', 'hash', 'user')
+      write.prepare('INSERT INTO Notification (notificationId, userId, type, message, createdAt, status) VALUES (?, ?, ?, ?, ?, ?)').run(
+        'n-persist',
+        'ux',
+        'queue-update',
+        'Survives restart',
+        '2026-01-02T10:00:00',
+        'sent',
+      )
+    } finally {
+      write.close()
+    }
+
+    const read = openDatabase(file)
+    try {
+      const row = read
+        .prepare('SELECT notificationId, message, status FROM Notification WHERE notificationId = ?')
+        .get('n-persist') as { notificationId: string; message: string; status: string }
+      expect(row).toEqual({ notificationId: 'n-persist', message: 'Survives restart', status: 'sent' })
+    } finally {
+      read.close()
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
   })
 })
