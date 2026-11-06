@@ -13,6 +13,12 @@ export const ALMOST_READY_POSITION = 1
 
 const PRIORITY_RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
 
+/** Append the service notification only when set (avoids the literal "undefined" in SQLite text). */
+function withServiceNotification(body: string, service: Service): string {
+  const extra = service.notification
+  return extra ? body + ' ' + extra : body
+}
+
 export type QueueView = QueueEntry & {
   /** 0 while being served, otherwise 1-based place in line. */
   position: number
@@ -121,7 +127,7 @@ function updateStatuses(service: Service): void {
 
     if (close && entry.status === 'waiting') {
       setAlmostReady.run(1, entry.id)
-      let note = 'You are almost up for ' + service.name + '. ' + service.notification
+      const note = withServiceNotification('You are almost up for ' + service.name + '.', service)
       notify(entry.userId, 'status-change', note)
     } else if (!close && entry.status === 'almost-ready') {
       setAlmostReady.run(0, entry.id)
@@ -164,7 +170,10 @@ export function joinQueue(user: User, serviceId: string, body: unknown): QueueVi
   savePositions([...serving, ...waiting.slice(0, insertAt), entry, ...waiting.slice(insertAt)])
 
   const view = viewOf(entry.id, serviceId)
-  let note = 'You joined the queue for ' + service.name + '. Position ' + view.position + ', about '+ view.estimatedWait + 'min. ' + service.notification
+  const note = withServiceNotification(
+    'You joined the queue for ' + service.name + '. Position ' + view.position + ', about ' + view.estimatedWait + 'min.',
+    service,
+  )
   notify(user.id, 'queue-update', note)
   updateStatuses(service)
   return viewOf(entry.id, serviceId)
@@ -212,7 +221,7 @@ export function requeue(serviceId: string): QueueView {
   const insertAt = lastInGroup === -1 ? insertionIndex(waiting, serving.priority) : lastInGroup + 1
   savePositions([...waiting.slice(0, insertAt), serving, ...waiting.slice(insertAt)])
 
-  let note = 'You were placed back in line for ' + service.name + ". " + service.notification
+  const note = withServiceNotification('You were placed back in line for ' + service.name + '.', service)
   notify(serving.userId, 'queue-update', note)
   updateStatuses(service)
   return viewOf(serving.id, serviceId)
@@ -264,7 +273,7 @@ export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?
     const calledAt = new Date().toISOString()
     getDb().prepare('UPDATE QueueEntry SET calledAt = ?, almostReady = 0 WHERE entryId = ?').run(calledAt, line[0].id)
     nowServing = { ...line[0], status: 'serving', calledAt }
-    let note = 'It is your turn for ' + service.name + ". " + service.notification
+    const note = withServiceNotification('It is your turn for ' + service.name + '.', service)
     notify(nowServing.userId, 'status-change', note)
   }
 
