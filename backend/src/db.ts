@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS Service (
   serviceId        TEXT PRIMARY KEY,
   name             TEXT NOT NULL UNIQUE CHECK (length(name) BETWEEN 1 AND 100),
   description      TEXT NOT NULL CHECK (length(description) <= 500),
-  expectedDuration INTEGER NOT NULL CHECK (expectedDuration > 0),
+  expectedDuration INTEGER NOT NULL CHECK (expectedDuration BETWEEN 1 AND 480),
   priority         TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
   notification     TEXT CHECK (notification IS NULL OR length(notification) <= 500)
 );
@@ -53,9 +53,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS OneActiveEntry ON QueueEntry (queueId, userId)
 CREATE TABLE IF NOT EXISTS Notification (
   notificationId TEXT PRIMARY KEY,
   userId         TEXT NOT NULL REFERENCES UserCredentials(userId) ON DELETE CASCADE,
-  message        TEXT NOT NULL CHECK (length(message) <= 500),
+  type           TEXT NOT NULL CHECK (type IN ('queue-update', 'status-change')),
+  -- Up to 1000 chars so a queue sentence and a 500-character service notification fit together.
+  message        TEXT NOT NULL CHECK (length(message) <= 1000),
   createdAt      TEXT NOT NULL,
   status         TEXT NOT NULL CHECK (status IN ('sent', 'viewed'))
+);
+
+CREATE TABLE IF NOT EXISTS History (
+  historyId   TEXT PRIMARY KEY,
+  userId      TEXT NOT NULL REFERENCES UserCredentials(userId) ON DELETE CASCADE,
+  serviceName TEXT NOT NULL,
+  occurredOn  TEXT NOT NULL,
+  outcome     TEXT NOT NULL CHECK (outcome IN ('served', 'left', 'removed'))
 );
 `
 

@@ -6,7 +6,7 @@ describe('database schema', () => {
     const db = openDatabase(':memory:')
     const rows = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]
     const names = rows.map((r) => r.name)
-    for (const table of ['UserCredentials', 'UserProfile', 'Service', 'Queue', 'QueueEntry', 'Notification']) {
+    for (const table of ['UserCredentials', 'UserProfile', 'Service', 'Queue', 'QueueEntry', 'Notification', 'History']) {
       expect(names).toContain(table)
     }
   })
@@ -38,5 +38,41 @@ describe('database schema', () => {
     const db = openDatabase(':memory:')
     expect(() => db.prepare('INSERT INTO UserCredentials VALUES (?, ?, ?, ?)').run('u1', 'a@b.co', 'h', 'boss')).toThrow()
     expect(() => db.prepare('INSERT INTO Queue VALUES (?, ?, ?, ?)').run('q1', 'missing', 'open', 'now')).toThrow()
+  })
+
+  it('enforces notification type and message length', () => {
+    const db = openDatabase(':memory:')
+    db.prepare('INSERT INTO UserCredentials VALUES (?, ?, ?, ?)').run('u1', 'a@b.co', 'h', 'user')
+    const insert = db.prepare(
+      'INSERT INTO Notification (notificationId, userId, type, message, createdAt, status) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    insert.run('n1', 'u1', 'queue-update', 'hi', '2026-01-01', 'sent')
+    insert.run('n2', 'u1', 'status-change', 'hello', '2026-01-01', 'viewed')
+    expect(() => insert.run('n3', 'u1', 'alert', 'bad', '2026-01-01', 'sent')).toThrow()
+
+    const msg1000 = 'x'.repeat(1000)
+    insert.run('n4', 'u1', 'queue-update', msg1000, '2026-01-01', 'sent')
+    const msg1001 = 'x'.repeat(1001)
+    expect(() => insert.run('n5', 'u1', 'queue-update', msg1001, '2026-01-01', 'sent')).toThrow()
+  })
+
+  it('enforces history outcome and user id', () => {
+    const db = openDatabase(':memory:')
+    db.prepare('INSERT INTO UserCredentials VALUES (?, ?, ?, ?)').run('u1', 'a@b.co', 'h', 'user')
+    const insert = db.prepare('INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)')
+    insert.run('h1', 'u1', 'Help Desk', '2026-01-01', 'served')
+    insert.run('h2', 'u1', 'Help Desk', '2026-01-02', 'left')
+    insert.run('h3', 'u1', 'Help Desk', '2026-01-03', 'removed')
+    expect(() => insert.run('h4', 'u1', 'Help Desk', '2026-01-04', 'canceled')).toThrow()
+    expect(() => insert.run('h5', 'missing', 'Help Desk', '2026-01-01', 'served')).toThrow()
+  })
+
+  it('enforces service expectedDuration between 1 and 480', () => {
+    const db = openDatabase(':memory:')
+    const insert = db.prepare('INSERT INTO Service (serviceId, name, description, expectedDuration, priority) VALUES (?, ?, ?, ?, ?)')
+    insert.run('s1', 'A', 'd', 1, 'low')
+    insert.run('s2', 'B', 'd', 480, 'low')
+    expect(() => insert.run('s3', 'C', 'd', 0, 'low')).toThrow()
+    expect(() => insert.run('s4', 'D', 'd', 481, 'low')).toThrow()
   })
 })
