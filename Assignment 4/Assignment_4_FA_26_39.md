@@ -100,6 +100,8 @@ All 108 tests in 8 files pass. Output of `npm run coverage` (Vitest with v8):
 | Functions  | 93 / 93   | 100%    |
 | Lines      | 350 / 352 | 99.43%  |
 
+![Coverage report](coverage_report.png)
+
 ## 4. Team Contribution Record
 
 ### Megan A Cowan
