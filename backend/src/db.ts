@@ -87,10 +87,10 @@ export function getDb(): DatabaseSync {
   return database
 }
 
-const SEED_USERS: { id: string; email: string; password: string; fullName: string; role: Role }[] = [
+const SEED_USERS: { id: string; email: string; password: string; fullName: string; role: Role; phone?: string }[] = [
   { id: 'u1', email: 'alex.kim@example.com', password: 'UserPass1', fullName: 'Alex Kim', role: 'user' },
-  { id: 'u2', email: 'jordan.lee@example.com', password: 'UserPass1', fullName: 'Jordan Lee', role: 'user' },
-  { id: 'u3', email: 'sam.patel@example.com', password: 'UserPass1', fullName: 'Sam Patel', role: 'user' },
+  { id: 'u2', email: 'jordan.lee@example.com', password: 'UserPass1', fullName: 'Jordan Lee', role: 'user', phone: '713-555-0142' },
+  { id: 'u3', email: 'sam.patel@example.com', password: 'UserPass1', fullName: 'Sam Patel', role: 'user', phone: '281-555-0178' },
   { id: 'u4', email: 'riley.chen@example.com', password: 'UserPass1', fullName: 'Riley Chen', role: 'user' },
   { id: 'u5', email: 'morgan.diaz@example.com', password: 'UserPass1', fullName: 'Morgan Diaz', role: 'user' },
   { id: 'u6', email: 'casey.wong@example.com', password: 'UserPass1', fullName: 'Casey Wong', role: 'user' },
@@ -103,11 +103,11 @@ const seedHashes = new Map<string, string>()
 
 function seedUsers(target: DatabaseSync): void {
   const addCredentials = target.prepare('INSERT INTO UserCredentials (userId, email, passwordHash, role) VALUES (?, ?, ?, ?)')
-  const addProfile = target.prepare('INSERT INTO UserProfile (userId, fullName, email) VALUES (?, ?, ?)')
+  const addProfile = target.prepare('INSERT INTO UserProfile (userId, fullName, email, phone) VALUES (?, ?, ?, ?)')
   for (const user of SEED_USERS) {
     if (!seedHashes.has(user.password)) seedHashes.set(user.password, hashPassword(user.password))
     addCredentials.run(user.id, user.email, seedHashes.get(user.password)!, user.role)
-    addProfile.run(user.id, user.fullName, user.email)
+    addProfile.run(user.id, user.fullName, user.email, user.phone ?? null)
   }
 }
 
@@ -198,6 +198,30 @@ const SEED_NOTIFICATIONS = [
     createdAt: '2026-09-28T16:30:00',
     status: 'viewed' as const,
   },
+  {
+    id: 'n3',
+    userId: 'u6',
+    type: 'queue-update' as const,
+    message: 'You joined the queue for IT Support.',
+    createdAt: '2026-09-29T09:18:00',
+    status: 'sent' as const,
+  },
+  {
+    id: 'n4',
+    userId: 'u3',
+    type: 'queue-update' as const,
+    message: 'You are almost ready in the queue for Academic Advising.',
+    createdAt: '2026-09-29T09:25:00',
+    status: 'sent' as const,
+  },
+  {
+    id: 'n5',
+    userId: 'u4',
+    type: 'queue-update' as const,
+    message: 'You joined the queue for Financial Aid Help Desk.',
+    createdAt: '2026-09-29T09:15:00',
+    status: 'viewed' as const,
+  },
 ]
 
 function seedNotifications(target: DatabaseSync): void {
@@ -214,6 +238,11 @@ const SEED_HISTORY = [
   { id: 'h2', userId: 'u1', occurredOn: '2026-09-15', serviceName: 'Financial Aid Help Desk', outcome: 'left' as const },
   { id: 'h3', userId: 'u1', occurredOn: '2026-09-08', serviceName: 'Academic Advising', outcome: 'served' as const },
   { id: 'h4', userId: 'u1', occurredOn: '2026-09-02', serviceName: 'Student ID Office', outcome: 'removed' as const },
+  { id: 'h5', userId: 'u6', occurredOn: '2026-09-24', serviceName: 'Academic Advising', outcome: 'served' as const },
+  { id: 'h6', userId: 'u6', occurredOn: '2026-09-10', serviceName: 'IT Support', outcome: 'left' as const },
+  { id: 'h7', userId: 'u3', occurredOn: '2026-09-18', serviceName: 'Financial Aid Help Desk', outcome: 'served' as const },
+  { id: 'h8', userId: 'u3', occurredOn: '2026-09-21', serviceName: 'Student ID Office', outcome: 'served' as const },
+  { id: 'h9', userId: 'u5', occurredOn: '2026-09-16', serviceName: 'IT Support', outcome: 'removed' as const },
 ]
 
 function seedHistory(target: DatabaseSync): void {
