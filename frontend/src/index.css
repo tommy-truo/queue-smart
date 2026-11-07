@@ -33,70 +33,78 @@ a:hover {
 .app-header {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding: 1.25rem 2rem 0;
-  border-bottom: 3px solid var(--link);
+  gap: 2.5rem;
+  min-height: 4.5rem;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--border-light);
   background: linear-gradient(to bottom, #ebf4ff, var(--bg));
+  box-shadow: 0 2px 8px rgba(44, 82, 130, 0.08);
 }
 
 .app-header strong {
-  align-self: center;
-  padding-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   color: var(--link);
   font-size: 1.6rem;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+}
+
+/* Small logo mark in front of the app name. */
+.app-header strong::before {
+  content: 'Q';
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  background: var(--link);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
 }
 
 .app-header nav {
   display: flex;
   flex: 1;
-  align-self: stretch;
-  align-items: flex-end;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .app-header nav a {
-  padding: 0.7rem 1.1rem;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -3px;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
   color: var(--text-muted);
   font-size: 1.05rem;
   text-decoration: none;
+  transition: background 0.15s, color 0.15s;
 }
 
 .app-header nav a:hover {
+  background: rgba(44, 82, 130, 0.08);
   color: var(--text);
-  border-bottom-color: var(--border);
 }
 
 .app-header nav a.active {
-  border-bottom-color: var(--text);
-  color: var(--text);
+  background: var(--link);
+  color: #fff;
   font-weight: 600;
 }
 
 .app-header label {
-  align-self: center;
-  padding-bottom: 1rem;
   color: var(--text-muted);
   font-size: 0.875rem;
 }
 
 .app-header button,
 .app-header select {
-  align-self: center;
-  margin-bottom: 1rem;
-  padding: 0.4rem 0.9rem;
+  padding: 0.45rem 1rem;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 999px;
   background: var(--bg);
   font: inherit;
   font-size: 0.95rem;
-}
-
-.app-header label select {
-  margin-bottom: 0;
 }
 
 .app-header button {
@@ -104,7 +112,8 @@ a:hover {
 }
 
 .app-header button:hover {
-  border-color: var(--accent);
+  border-color: var(--link);
+  color: var(--link);
 }
 
 main {
