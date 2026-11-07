@@ -14,8 +14,9 @@ CREATE TABLE IF NOT EXISTS UserProfile (
   userId   TEXT PRIMARY KEY REFERENCES UserCredentials(userId) ON DELETE CASCADE,
   fullName TEXT NOT NULL CHECK (length(fullName) BETWEEN 1 AND 50),
   email    TEXT NOT NULL UNIQUE CHECK (length(email) <= 254),
-  phone    TEXT CHECK (phone IS NULL OR length(phone) <= 20)
+  phone    TEXT CHECK (phone IS NULL OR length(phone) BETWEEN 10 AND 17)
 );
+
 
 CREATE TABLE IF NOT EXISTS Service (
   serviceId        TEXT PRIMARY KEY,
