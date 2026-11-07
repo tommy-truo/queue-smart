@@ -3,14 +3,14 @@ import { getDb } from '../src/db.ts'
 import { login, register } from '../src/modules/auth.ts'
 import { resetStore } from '../src/store.ts'
 
-const valid = { fullName: 'Taylor Smith', email: 'Taylor@Example.com', password: 'Secret123' }
+const valid = { fullName: 'Taylor Smith', email: 'Taylor@Example.com', password: 'Secret123', phone: '(123) 456-7890' }
 
 beforeEach(resetStore)
 
 describe('register', () => {
   it('creates a user account without exposing the password', () => {
     const user = register(valid)
-    expect(user).toMatchObject({ fullName: 'Taylor Smith', email: 'taylor@example.com', role: 'user' })
+    expect(user).toMatchObject({ fullName: 'Taylor Smith', email: 'taylor@example.com', role: 'user', phone: '(123) 456-7890' })
     expect(user).not.toHaveProperty('password')
   })
 
@@ -43,6 +43,9 @@ describe('register', () => {
   it('validates the name', () => {
     expect(() => register({ ...valid, fullName: '1234' })).toThrow('Invalid input')
     expect(() => register({ ...valid, fullName: 'a'.repeat(51) })).toThrow('Invalid input')
+  })
+  it('validates phone format', () => {
+    expect(() => register({ ...valid, phone: 'not-an-phone-num' })).toThrow('Invalid input')
   })
 })
 
