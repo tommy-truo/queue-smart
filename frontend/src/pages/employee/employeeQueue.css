@@ -1,34 +1,40 @@
 .employee-queue {
-  max-width: 36rem;
+  max-width: 38rem;
   width: 100%;
   margin-inline: auto;
-  margin-top: 2.5rem;
+  margin-top: 1.5rem;
 }
 
 .employee-queue h1 {
-  margin: 0 0 1.25rem;
-  font-size: 1.25rem;
-  font-weight: 600;
+  margin: 0 0 1.5rem;
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-align: center;
 }
 
 .employee-queue__now-serving {
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 1rem 1.25rem;
+  border: 1px solid #bee3f8;
+  border-left: 5px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
   min-height: 4rem;
+  background: var(--accent-soft);
+  box-shadow: var(--shadow);
 }
 
 .employee-queue__now-serving-label {
   margin: 0 0 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #444;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .employee-queue__now-serving-empty {
   margin: 0;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .employee-queue__serving-row {
@@ -42,47 +48,52 @@
   font-weight: 600;
 }
 
+.employee-queue__now-serving .employee-queue__serving-name {
+  font-size: 1.4rem;
+}
+
 .employee-queue__wait {
-  color: #555;
-  font-size: 0.9375rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .employee-queue__action-wrap {
   display: flex;
   justify-content: center;
-  margin: 1rem 0 1.5rem;
+  margin: 1.25rem 0 2rem;
 }
 
-.employee-queue__primary-btn {
-  padding: 0.5rem 1.25rem;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.employee-queue__primary-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+.employee-queue .employee-queue__primary-btn {
+  padding: 0.7rem 1.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(44, 82, 130, 0.3);
 }
 
 .employee-queue__list-heading {
   margin: 0 0 0.75rem;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  text-align: center;
 }
 
 .employee-queue__list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .employee-queue__list-empty {
   margin: 0;
-  padding: 1rem 1.25rem;
-  color: #666;
+  padding: 1.25rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .employee-queue__list-item {
@@ -90,8 +101,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem 1rem;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid #eee;
+  padding: 0.8rem 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.employee-queue__list-item:hover {
+  background: var(--surface);
 }
 
 .employee-queue__list-item:last-child {
@@ -99,13 +114,19 @@
 }
 
 .employee-queue__position {
-  min-width: 1.5rem;
-  font-weight: 600;
+  display: grid;
+  place-items: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
-.employee-queue__remove-btn {
+.employee-queue .employee-queue__remove-btn {
   margin-left: auto;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
-  cursor: pointer;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.85rem;
 }
