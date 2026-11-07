@@ -74,7 +74,7 @@ export function register(body: unknown): User {
     hashPassword(password),
     user.role,
   )
-  db.prepare('INSERT INTO UserProfile (userId, fullName) VALUES (?, ?)').run(user.id, user.fullName)
+  db.prepare('INSERT INTO UserProfile (userId, fullName, email) VALUES (?, ?, ?)').run(user.id, user.fullName, user.email)
   return user
 }
 
