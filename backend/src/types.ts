@@ -13,6 +13,7 @@ export type User = {
   email: string
   fullName: string
   role: Role
+  phone?: string
 }
 
 export type Service = {
