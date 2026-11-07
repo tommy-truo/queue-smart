@@ -8,7 +8,7 @@ https://github.com/tommy-truo/queue-smart
 - The database code is in `backend/src/db.ts`. The modules in `backend/src/modules/` read and write it.
 - Unit tests are in `backend/tests/`.
 - Run the tests with `npm test` and the coverage report with `npm run coverage` from `backend/`.
-- 108 tests pass, with about 99% line coverage.
+- 111 tests pass, with about 99% line coverage.
 
 ## 2. Database Schema
 
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS UserProfile (
   userId   TEXT PRIMARY KEY REFERENCES UserCredentials(userId) ON DELETE CASCADE,
   fullName TEXT NOT NULL CHECK (length(fullName) BETWEEN 1 AND 50),
   email    TEXT NOT NULL UNIQUE CHECK (length(email) <= 254),
-  phone    TEXT CHECK (phone IS NULL OR length(phone) <= 20)
+  phone    TEXT CHECK (phone IS NULL OR length(phone) BETWEEN 10 AND 17)
 );
 
 CREATE TABLE IF NOT EXISTS Service (
@@ -91,14 +91,14 @@ CREATE TABLE IF NOT EXISTS History (
 
 ## 3. Code Coverage Report
 
-All 108 tests in 8 files pass. Output of `npm run coverage` (Vitest with v8):
+All 111 tests in 8 files pass. Output of `npm run coverage` (Vitest with v8):
 
 | Metric     | Covered   | Percent |
 | ---------- | --------- | ------- |
-| Statements | 401 / 403 | 99.5%   |
-| Branches   | 189 / 193 | 97.92%  |
-| Functions  | 93 / 93   | 100%    |
-| Lines      | 350 / 352 | 99.43%  |
+| Statements | 403 / 405 | 99.5%   |
+| Branches   | 195 / 199 | 97.98%  |
+| Functions  | 94 / 94   | 100%    |
+| Lines      | 352 / 354 | 99.43%  |
 
 ![Coverage report](coverage_report.png)
 
@@ -111,6 +111,7 @@ All 108 tests in 8 files pass. Output of `npm run coverage` (Vitest with v8):
 | -------------------------- | -------------------------------------------------------------------------------- |
 | UserProfile email          | Added the email column to the UserProfile table and its seed data               |
 | Registration               | Registration now saves the user's email in UserProfile too                      |
+| Phone number               | Added a phone number field to registration, with length and format checks, saved in UserProfile, and tests |
 
 
 ### Charles Mccallum
@@ -122,6 +123,7 @@ All 108 tests in 8 files pass. Output of `npm run coverage` (Vitest with v8):
 | Password hashing           | Passwords are hashed with scrypt; login and registration use the database        |
 | Services and queues        | Moved services, queues and queue entries from memory into SQLite                 |
 | Seed data                  | Demo history, notifications and phone numbers for more users                     |
+| Phone fixes                | Made phone optional on the registration form, sent it to the API and returned it on login |
 | Styling                    | Restyled the header, cards, tables, buttons, forms and auth screens              |
 | Unit tests                 | Tests for the schema, password hashing and each move to the database             |
 
