@@ -28,7 +28,7 @@ function checkPassword(password: string) {
 }
 
 function checkPhone(phone: string) {
-  return PHONE_PATTERN.test(phone.trim()) ? undefined : 'Enter a vaild phone number'
+  return PHONE_PATTERN.test(phone.trim()) ? undefined : 'Enter a valid phone number.'
 }
 
 export const registerSchema: Schema = {
@@ -47,14 +47,14 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
-type UserRow = { userId: string; email: string; role: Role; fullName: string; passwordHash: string, phone: string}
+type UserRow = { userId: string; email: string; role: Role; fullName: string; passwordHash: string; phone: string | null }
 
 const USER_QUERY = `
-  SELECT c.userId, c.email, c.role, c.passwordHash, p.fullName
+  SELECT c.userId, c.email, c.role, c.passwordHash, p.fullName, p.phone
   FROM UserCredentials c JOIN UserProfile p ON p.userId = c.userId`
 
 function toUser(row: UserRow): User {
-  return { id: row.userId, email: row.email, fullName: row.fullName, role: row.role, phone: row.phone }
+  return { id: row.userId, email: row.email, fullName: row.fullName, role: row.role, phone: row.phone ?? undefined }
 }
 
 export function findUserById(id: string): User | undefined {
@@ -64,7 +64,7 @@ export function findUserById(id: string): User | undefined {
 
 export function register(body: unknown): User {
   assertValid(body, registerSchema)
-  const { fullName, email, password, phone } = body as { fullName: string; email: string; password: string; phone: string }
+  const { fullName, email, password, phone } = body as { fullName: string; email: string; password: string; phone?: string }
 
   const db = getDb()
   const normalized = normalizeEmail(email)
@@ -73,7 +73,7 @@ export function register(body: unknown): User {
   }
 
   // Registration always creates a regular user; admins and employees are seeded.
-  const user: User = { id: nextId('u'), email: normalized, fullName: fullName.trim(), role: 'user', phone: phone }
+  const user: User = { id: nextId('u'), email: normalized, fullName: fullName.trim(), role: 'user', phone: phone?.trim() }
   db.prepare('INSERT INTO UserCredentials (userId, email, passwordHash, role) VALUES (?, ?, ?, ?)').run(
     user.id,
     user.email,

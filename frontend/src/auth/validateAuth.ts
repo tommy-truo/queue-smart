@@ -73,10 +73,11 @@ function validateNameField(value: string, label: string): string | undefined {
   return undefined
 }
 
+// Phone is optional, so a blank value is fine.
 function validatePhoneField(value: string, label: string): string | undefined {
   const trimmed = value.trim()
-  if (!PHONE_PATTERN.test(trimmed)) {
-    return `${label} must a valid phone number.`
+  if (trimmed && !PHONE_PATTERN.test(trimmed)) {
+    return `${label} must be a valid phone number.`
   }
   return undefined
 }
@@ -126,7 +127,7 @@ export function validateRegister(fields: RegisterFields): FieldErrors {
     errors.confirmPassword = 'Passwords do not match.'
   }
 
-  const phoneError = validatePhoneField(fields.fullName, 'Phone number')
+  const phoneError = validatePhoneField(fields.phone,'Phone number')
   if (phoneError) errors.phone = phoneError
 
   return errors

@@ -47,6 +47,20 @@ describe('register', () => {
   it('validates phone format', () => {
     expect(() => register({ ...valid, phone: 'not-an-phone-num' })).toThrow('Invalid input')
   })
+
+  it('saves the phone and returns it on login', () => {
+    const user = register(valid)
+    const row = getDb().prepare('SELECT phone FROM UserProfile WHERE userId = ?').get(user.id) as { phone: string }
+    expect(row.phone).toBe('(123) 456-7890')
+    expect(login(valid).phone).toBe('(123) 456-7890')
+  })
+
+  it('allows registering without a phone', () => {
+    const { phone: _phone, ...noPhone } = valid
+    const user = register(noPhone)
+    const row = getDb().prepare('SELECT phone FROM UserProfile WHERE userId = ?').get(user.id) as { phone: string | null }
+    expect(row.phone).toBeNull()
+  })
 })
 
 describe('login', () => {
