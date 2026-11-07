@@ -4,7 +4,7 @@ import { homePath, useAuth } from '../../auth/AuthContext.ts'
 import { LIMITS, validateRegister } from '../../auth/validateAuth.ts'
 import './auth.css'
 
-type RegisterField = 'fullName' | 'email' | 'password' | 'confirmPassword'
+type RegisterField = 'fullName' | 'email' | 'password' | 'confirmPassword' | 'phone'
 
 export default function Register() {
   const { register } = useAuth()
@@ -13,6 +13,7 @@ export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [phone, setPhone] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<RegisterField, string>>>({})
   const [formError, setFormError] = useState('')
 
@@ -25,6 +26,7 @@ export default function Register() {
       email,
       password,
       confirmPassword,
+      phone
     }
 
     const errors = validateRegister(input)
@@ -133,6 +135,21 @@ export default function Register() {
           {fieldErrors.confirmPassword ? (
             <div role="alert">{fieldErrors.confirmPassword}</div>
           ) : null}
+        </div>
+        <div className="auth-field">
+          <label htmlFor="register-phone">
+            Phone Number 
+          </label>
+          <input
+            id="register-phone"
+            name="phone"
+            type="phone"
+            autoComplete= "tel-national"
+            maxLength={LIMITS.phone.max}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+          {fieldErrors.phone ? (<div role="alert">{fieldErrors.phone}</div>) : null}
         </div>
         {formError ? <div role="alert">{formError}</div> : null}
         <button type="submit">Create account</button>
