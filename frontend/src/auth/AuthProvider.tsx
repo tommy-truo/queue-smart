@@ -73,9 +73,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const { fullName, email, password } = input
+      const phone = input.phone.trim() || undefined
       const account = await api<SessionUser>('/auth/register', {
         method: 'POST',
-        body: { fullName, email, password },
+        body: { fullName, email, password, phone },
       })
       startSession(account)
       return { ok: true, role: account.role }

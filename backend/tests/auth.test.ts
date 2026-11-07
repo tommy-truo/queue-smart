@@ -40,6 +40,17 @@ describe('register', () => {
     }
   })
 
+  it('saves an optional phone number', () => {
+    const phoneOf = (id: string) =>
+      (getDb().prepare('SELECT phone FROM UserProfile WHERE userId = ?').get(id) as { phone: string | null }).phone
+    expect(phoneOf(register(valid).id)).toBeNull()
+    expect(phoneOf(register({ ...valid, email: 'pat@example.com', phone: '713-555-0100' }).id)).toBe('713-555-0100')
+  })
+
+  it('validates the phone number', () => {
+    expect(() => register({ ...valid, phone: '12345' })).toThrow('Invalid input')
+  })
+
   it('validates the name', () => {
     expect(() => register({ ...valid, fullName: '1234' })).toThrow('Invalid input')
     expect(() => register({ ...valid, fullName: 'a'.repeat(51) })).toThrow('Invalid input')

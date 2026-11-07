@@ -8,6 +8,7 @@ import type { Schema } from '../validation.ts'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const NAME_PATTERN = /^[A-Za-z][A-Za-z' -]*$/
+const PHONE_PATTERN = /^\+?1?[-. ]?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}$/
 
 function checkEmail(email: string) {
   return EMAIL_PATTERN.test(email.trim()) ? undefined : 'Enter a valid email address.'
@@ -26,10 +27,15 @@ function checkPassword(password: string) {
   return undefined
 }
 
+function checkPhone(phone: string) {
+  return PHONE_PATTERN.test(phone.trim()) ? undefined : 'Enter a valid phone number.'
+}
+
 export const registerSchema: Schema = {
   fullName: { type: 'string', required: true, max: 50, check: checkName },
   email: { type: 'string', required: true, max: 254, check: checkEmail },
   password: { type: 'string', required: true, min: 8, max: 64, check: checkPassword },
+  phone: { type: 'string', max: 20, check: checkPhone },
 }
 
 export const loginSchema: Schema = {
@@ -58,7 +64,7 @@ export function findUserById(id: string): User | undefined {
 
 export function register(body: unknown): User {
   assertValid(body, registerSchema)
-  const { fullName, email, password } = body as { fullName: string; email: string; password: string }
+  const { fullName, email, password, phone } = body as { fullName: string; email: string; password: string; phone?: string }
 
   const db = getDb()
   const normalized = normalizeEmail(email)
@@ -74,7 +80,12 @@ export function register(body: unknown): User {
     hashPassword(password),
     user.role,
   )
-  db.prepare('INSERT INTO UserProfile (userId, fullName, email) VALUES (?, ?, ?)').run(user.id, user.fullName, user.email)
+  db.prepare('INSERT INTO UserProfile (userId, fullName, email, phone) VALUES (?, ?, ?, ?)').run(
+    user.id,
+    user.fullName,
+    user.email,
+    phone?.trim() ?? null,
+  )
   return user
 }
 

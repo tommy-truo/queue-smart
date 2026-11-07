@@ -138,13 +138,13 @@ export default function Register() {
         </div>
         <div className="auth-field">
           <label htmlFor="register-phone">
-            Phone Number 
+            Phone number (optional)
           </label>
           <input
             id="register-phone"
             name="phone"
-            type="phone"
-            autoComplete= "tel-national"
+            type="tel"
+            autoComplete="tel-national"
             maxLength={LIMITS.phone.max}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
