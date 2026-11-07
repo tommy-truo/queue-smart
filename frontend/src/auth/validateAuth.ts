@@ -2,10 +2,12 @@ export const LIMITS = {
   email: { max: 254 },
   password: { min: 8, max: 64 },
   name: { min: 1, max: 50 },
+  phone: { min: 10, max: 17 }
 } as const
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const NAME_PATTERN = /^[A-Za-z][A-Za-z' -]{0,49}$/
+const PHONE_PATTERN = /^\+?1?[-. ]?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}$/
 
 export type FieldErrors = Partial<Record<string, string>>
 
@@ -19,6 +21,7 @@ export type RegisterFields = {
   email: string
   password: string
   confirmPassword: string
+  phone: string
 }
 
 function isBlank(value: string): boolean {
@@ -70,6 +73,14 @@ function validateNameField(value: string, label: string): string | undefined {
   return undefined
 }
 
+function validatePhoneField(value: string, label: string): string | undefined {
+  const trimmed = value.trim()
+  if (!PHONE_PATTERN.test(trimmed)) {
+    return `${label} must a valid phone number.`
+  }
+  return undefined
+}
+
 export function validateLogin(fields: LoginFields): FieldErrors {
   const errors: FieldErrors = {}
 
@@ -114,6 +125,9 @@ export function validateRegister(fields: RegisterFields): FieldErrors {
   } else if (fields.confirmPassword !== fields.password) {
     errors.confirmPassword = 'Passwords do not match.'
   }
+
+  const phoneError = validatePhoneField(fields.fullName, 'Phone number')
+  if (phoneError) errors.phone = phoneError
 
   return errors
 }
