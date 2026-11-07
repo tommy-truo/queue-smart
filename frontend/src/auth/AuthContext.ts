@@ -15,6 +15,7 @@ export type RegisterInput = {
   email: string
   password: string
   confirmPassword: string
+  phone: string
 }
 
 export const homePath: Record<Role, string> = {
