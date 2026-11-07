@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS UserCredentials (
 CREATE TABLE IF NOT EXISTS UserProfile (
   userId   TEXT PRIMARY KEY REFERENCES UserCredentials(userId) ON DELETE CASCADE,
   fullName TEXT NOT NULL CHECK (length(fullName) BETWEEN 1 AND 50),
+  email    TEXT NOT NULL UNIQUE CHECK (length(email) <= 254),
   phone    TEXT CHECK (phone IS NULL OR length(phone) <= 20)
 );
 
@@ -102,11 +103,11 @@ const seedHashes = new Map<string, string>()
 
 function seedUsers(target: DatabaseSync): void {
   const addCredentials = target.prepare('INSERT INTO UserCredentials (userId, email, passwordHash, role) VALUES (?, ?, ?, ?)')
-  const addProfile = target.prepare('INSERT INTO UserProfile (userId, fullName) VALUES (?, ?)')
+  const addProfile = target.prepare('INSERT INTO UserProfile (userId, fullName, email) VALUES (?, ?, ?)')
   for (const user of SEED_USERS) {
     if (!seedHashes.has(user.password)) seedHashes.set(user.password, hashPassword(user.password))
     addCredentials.run(user.id, user.email, seedHashes.get(user.password)!, user.role)
-    addProfile.run(user.id, user.fullName)
+    addProfile.run(user.id, user.fullName, user.email)
   }
 }
 
