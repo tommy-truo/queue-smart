@@ -85,6 +85,31 @@ export function serviceActivityReport(filters: ReportFilters): ServiceActivityRo
   return rows.map(row => ({ ...row, averageWait: row.averageWait === null ? null : Math.round(row.averageWait) }))
 }
 
+export type WaitByHourRow = {
+  /** 0-23, from when people joined. */
+  hour: number
+  visits: number
+  /** Minutes from joining to being called. */
+  averageWait: number
+}
+
+/** Average actual wait for each hour of the day people joined, for hours with data. */
+export function waitByHourReport(filters: ReportFilters): WaitByHourRow[] {
+  if (filters.serviceId) getService(filters.serviceId)
+  const rows = getDb()
+    .prepare(
+      `SELECT CAST(substr(e.joinedAt, 12, 2) AS INTEGER) AS hour, COUNT(*) AS visits,
+         AVG((julianday(e.calledAt) - julianday(e.joinedAt)) * 1440) AS averageWait
+       FROM QueueEntry e JOIN Queue q ON q.queueId = e.queueId
+       WHERE e.calledAt IS NOT NULL
+         AND (?1 IS NULL OR substr(e.joinedAt, 1, 10) >= ?1) AND (?2 IS NULL OR substr(e.joinedAt, 1, 10) <= ?2)
+         AND (?3 IS NULL OR q.serviceId = ?3)
+       GROUP BY hour ORDER BY hour`,
+    )
+    .all(filters.from ?? null, filters.to ?? null, filters.serviceId ?? null) as WaitByHourRow[]
+  return rows.map(row => ({ ...row, averageWait: Math.round(row.averageWait) }))
+}
+
 function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? '' : String(value)
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
@@ -112,3 +137,4 @@ export const SERVICE_ACTIVITY_COLUMNS = [
   'removed',
   'averageWait',
 ]
+export const WAIT_BY_HOUR_COLUMNS = ['hour', 'visits', 'averageWait']

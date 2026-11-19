@@ -60,6 +60,6 @@ Requests that need a signed-in user send the `x-user-id` header with the `id` re
 | POST | `/api/queues/:serviceId/entries/:entryId/reorder` | admin |
 | GET | `/api/me/notifications` | signed in |
 | GET | `/api/me/history` | user |
-| GET | `/api/reports/participation`, `/api/reports/services` | admin |
+| GET | `/api/reports/participation`, `/api/reports/services`, `/api/reports/wait-by-hour` | admin |
 
 Reports take optional `from` and `to` (YYYY-MM-DD) and `serviceId` filters. Add `format=csv` to download a CSV file instead of JSON.

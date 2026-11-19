@@ -1,7 +1,7 @@
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp } from '../src/app.ts'
-import { parseFilters, participationReport, serviceActivityReport, toCsv } from '../src/modules/reports.ts'
+import { parseFilters, participationReport, serviceActivityReport, toCsv, waitByHourReport } from '../src/modules/reports.ts'
 import { resetStore } from '../src/store.ts'
 
 const app = createApp()
@@ -52,6 +52,19 @@ describe('service activity report', () => {
   })
 })
 
+describe('wait by hour report', () => {
+  it('averages waits by the hour people joined', () => {
+    // Seed: one person joined Academic Advising at 9:05 and was called at 9:25.
+    expect(waitByHourReport({})).toEqual([{ hour: 9, visits: 1, averageWait: 20 }])
+  })
+
+  it('applies filters', () => {
+    expect(waitByHourReport({ serviceId: 's2' })).toEqual([])
+    expect(waitByHourReport({ from: '2026-09-30' })).toEqual([])
+    expect(() => waitByHourReport({ serviceId: 'nope' })).toThrow(/Service not found/)
+  })
+})
+
 describe('csv', () => {
   it('quotes cells with commas or quotes', () => {
     expect(toCsv([{ a: 'x, y', b: 'say "hi"', c: null }], ['a', 'b', 'c'])).toBe('a,b,c\n"x, y","say ""hi""",\n')
@@ -75,6 +88,12 @@ describe('report routes', () => {
     expect(res.headers['content-type']).toMatch(/text\/csv/)
     expect(res.headers['content-disposition']).toMatch(/participation\.csv/)
     expect(res.text.split('\n')[0]).toBe('userName,email,serviceName,date,outcome')
+  })
+
+  it('serve the wait-by-hour chart data', async () => {
+    const res = await request(app).get('/api/reports/wait-by-hour').set('x-user-id', 'a1')
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toEqual({ hour: 9, visits: 1, averageWait: 20 })
   })
 
   it('return 404 for an unknown service', async () => {

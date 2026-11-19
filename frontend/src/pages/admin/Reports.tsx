@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, download } from '../../api.ts'
 import type { Service } from '../../types.ts'
+import WaitByHourChart from './WaitByHourChart.tsx'
 
 type ReportType = 'participation' | 'services'
 
@@ -87,6 +88,8 @@ export default function Reports() {
         </label>{' '}
         <button type="button" className="primary" onClick={exportCsv}>Download CSV</button>
       </p>
+
+      <WaitByHourChart query={query} />
 
       {error && <p role="alert">{error}</p>}
       {loading ? (

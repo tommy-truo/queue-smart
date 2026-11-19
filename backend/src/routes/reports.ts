@@ -8,6 +8,8 @@ import {
   SERVICE_ACTIVITY_COLUMNS,
   serviceActivityReport,
   toCsv,
+  WAIT_BY_HOUR_COLUMNS,
+  waitByHourReport,
 } from '../modules/reports.ts'
 
 export const reportsRouter = Router()
@@ -27,4 +29,8 @@ reportsRouter.get('/participation', requireRole('admin'), (req, res) => {
 
 reportsRouter.get('/services', requireRole('admin'), (req, res) => {
   send(req, res, 'service-activity', serviceActivityReport(parseFilters(req.query)), SERVICE_ACTIVITY_COLUMNS)
+})
+
+reportsRouter.get('/wait-by-hour', requireRole('admin'), (req, res) => {
+  send(req, res, 'wait-by-hour', waitByHourReport(parseFilters(req.query)), WAIT_BY_HOUR_COLUMNS)
 })

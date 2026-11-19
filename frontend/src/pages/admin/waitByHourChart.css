@@ -1,0 +1,100 @@
+.wait-chart {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem 1.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.wait-chart h2 {
+  margin-top: 0;
+}
+
+.wait-chart__note {
+  margin-top: -0.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.wait-chart__plot,
+.wait-chart__axis {
+  display: flex;
+  gap: 2px;
+}
+
+.wait-chart__plot {
+  height: 180px;
+  padding-top: 1.5rem;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+}
+
+.wait-chart__col {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  outline: none;
+}
+
+.wait-chart__bar {
+  position: relative;
+  width: 70%;
+  max-width: 48px;
+  min-height: 2px;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+}
+
+.wait-chart__col:hover .wait-chart__bar,
+.wait-chart__col:focus-visible .wait-chart__bar {
+  background: var(--accent-hover);
+}
+
+.wait-chart__value {
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.wait-chart__axis span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-top: 0.35rem;
+}
+
+.wait-chart__tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  padding: 0.4rem 0.6rem;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+.wait-chart__col:hover .wait-chart__tip,
+.wait-chart__col:focus-visible .wait-chart__tip {
+  display: block;
+}
+
+.wait-chart__col:focus-visible .wait-chart__bar {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
