@@ -49,7 +49,7 @@ function Dashboard({ fullName }: { fullName?: string }) {
   const openServices = services.filter((s) => s.open)
   const unread = notifications.filter((n) => !n.read)
 
-  if (loading) return <div className="page"><h1>Welcome{fullName ? `, ${fullName}` : ''}</h1><p role="status">Loading dashboard…</p></div>
+  if (loading) return <div className="page"><h1>Welcome{fullName ? `, ${fullName}` : ''}</h1><p role="status" className="loading">Loading dashboard…</p></div>
   if (error) return <div className="page"><h1>Welcome{fullName ? `, ${fullName}` : ''}</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (

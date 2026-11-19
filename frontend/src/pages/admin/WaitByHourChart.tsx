@@ -39,7 +39,7 @@ export default function WaitByHourChart({ query }: { query: string }) {
   const ticks = Array.from({ length: top / step + 1 }, (_, i) => i * step)
 
   let body
-  if (loadedQuery !== query) body = <p role="status">Loading chart…</p>
+  if (loadedQuery !== query) body = <p role="status" className="loading">Loading chart…</p>
   else if (error) body = <p role="alert">{error}</p>
   else if (rows.length === 0) body = <p>No finished visits for these filters.</p>
   else

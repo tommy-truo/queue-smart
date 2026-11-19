@@ -94,7 +94,7 @@ export default function Reports() {
 
       {error && <p role="alert">{error}</p>}
       {loading ? (
-        <p role="status">Loading report…</p>
+        <p role="status" className="loading">Loading report…</p>
       ) : rows.length === 0 ? (
         <p>No data for these filters.</p>
       ) : type === 'participation' ? (

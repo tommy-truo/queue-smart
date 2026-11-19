@@ -57,7 +57,7 @@ function HistoryList() {
     setCurrentPage(1)
   }
 
-  if (loading) return <div className="page"><h1>History</h1><p role="status">Loading history…</p></div>
+  if (loading) return <div className="page"><h1>History</h1><p role="status" className="loading">Loading history…</p></div>
   if (error) return <div className="page"><h1>History</h1><p role="alert">{error}</p><button type="button" onClick={retry}>Retry</button></div>
   if (history.length === 0) return <div className="page"><h1>History</h1><p>No queue history yet.</p></div>
 

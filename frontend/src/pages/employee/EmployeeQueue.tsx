@@ -39,7 +39,7 @@ export default function EmployeeQueue() {
     })
   }
 
-  if (loading) return <section className="employee-queue"><h1>Queue</h1><p role="status">Loading queue…</p></section>
+  if (loading) return <section className="employee-queue"><h1>Queue</h1><p role="status" className="loading">Loading queue…</p></section>
   if (error) return <section className="employee-queue"><h1>Queue</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></section>
 
   return (

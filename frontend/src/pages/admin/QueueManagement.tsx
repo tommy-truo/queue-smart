@@ -55,7 +55,7 @@ export default function QueueManagement() {
     return undefined
   }
 
-  if (loading) return <div className="page"><h1>Queue management</h1><p role="status">Loading queue…</p></div>
+  if (loading) return <div className="page"><h1>Queue management</h1><p role="status" className="loading">Loading queue…</p></div>
   if (error) return <div className="page"><h1>Queue management</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (

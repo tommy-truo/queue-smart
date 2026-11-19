@@ -132,7 +132,7 @@ export default function ServiceManagement() {
     setValues({ ...values, [key]: value })
   }
 
-  if (loading) return <div className="page"><h1>Service management</h1><p role="status">Loading services…</p></div>
+  if (loading) return <div className="page"><h1>Service management</h1><p role="status" className="loading">Loading services…</p></div>
   if (loadError) return <div className="page"><h1>Service management</h1><p role="alert">{loadError}</p><button type="button" onClick={retry}>Retry</button></div>
 
   return (

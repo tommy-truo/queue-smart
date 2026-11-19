@@ -479,3 +479,13 @@ main {
     overflow-x: auto;
   }
 }
+
+/* Only show loading text if the fetch is slow, so fast loads don't flicker. */
+.loading {
+  opacity: 0;
+  animation: loading-appear 0s 300ms forwards;
+}
+
+@keyframes loading-appear {
+  to { opacity: 1; }
+}

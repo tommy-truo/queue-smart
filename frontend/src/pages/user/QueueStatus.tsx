@@ -26,7 +26,7 @@ export default function QueueStatus() {
     })
   }
 
-  if (loading) return <div className="page"><h1>Queue status</h1><p role="status">Loading queues…</p></div>
+  if (loading) return <div className="page"><h1>Queue status</h1><p role="status" className="loading">Loading queues…</p></div>
   if (error) return <div className="page"><h1>Queue status</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (

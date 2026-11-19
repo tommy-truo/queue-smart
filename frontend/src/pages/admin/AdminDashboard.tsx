@@ -52,7 +52,7 @@ export default function AdminDashboard() {
   const totalWaiting = services.reduce((total, service) => total + service.queueLength, 0)
   const openCount = services.filter((s) => s.open).length
 
-  if (loading) return <div className="page"><h1>Admin dashboard</h1><p role="status">Loading services…</p></div>
+  if (loading) return <div className="page"><h1>Admin dashboard</h1><p role="status" className="loading">Loading services…</p></div>
   if (loadError) return <div className="page"><h1>Admin dashboard</h1><p role="alert">{loadError}</p><button type="button" onClick={retry}>Retry</button></div>
 
   return (
