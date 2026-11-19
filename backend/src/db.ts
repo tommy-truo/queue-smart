@@ -1,4 +1,5 @@
 import { DatabaseSync } from 'node:sqlite'
+import { seedDemoYear } from './demoData.ts'
 import { hashPassword } from './password.ts'
 import type { Role } from './types.ts'
 
@@ -83,7 +84,11 @@ let database: DatabaseSync | undefined
 export function getDb(): DatabaseSync {
   if (!database) {
     database = openDatabase()
-    if (!database.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) seedAll(database)
+    if (!database.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) {
+      seedAll(database)
+      // Tests use an in-memory database and the small seed only.
+      if (process.env.DB_FILE !== ':memory:') seedDemoYear(database)
+    }
   }
   return database
 }

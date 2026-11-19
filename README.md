@@ -44,7 +44,7 @@ npm install
 npm run dev
 ```
 
-The API runs on http://localhost:3940. Run tests with `npm test`, or `npm run coverage` for a coverage report.
+The API runs on http://localhost:3940. The first start creates `backend/queuesmart.db` with the seed data plus a year of demo visits (extra users, served/left/removed history) so reports have something to show. Delete that file to start fresh. Run tests with `npm test`, or `npm run coverage` for a coverage report.
 
 Requests that need a signed-in user send the `x-user-id` header with the `id` returned by login.
 
@@ -62,3 +62,6 @@ Requests that need a signed-in user send the `x-user-id` header with the `id` re
 | POST | `/api/queues/:serviceId/entries/:entryId/reorder` | admin |
 | GET | `/api/me/notifications` | signed in |
 | GET | `/api/me/history` | user |
+| GET | `/api/reports/participation`, `/api/reports/services` | admin |
+
+Reports take optional `from` and `to` (YYYY-MM-DD) and `serviceId` filters. Add `format=csv` to download a CSV file instead of JSON.
