@@ -7,8 +7,8 @@ Run the API and the frontend together from the repo root:
 
 ```
 npm install
-npm --prefix backend install
-npm --prefix frontend install
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
 npm run dev
 ```
 
@@ -32,7 +32,7 @@ Open http://localhost:3939
 | Admin    | `admin@queuesmart.local`   | `AdminPass1`  |
 | Employee | `employee@queuesmart.local`| `EmployeePass1` |
 
-Register creates new **user** accounts only. The **View as** dropdown in the header still works for quick role switching without a password (demo / development).
+Register creates new **user** accounts only.
 
 ## Backend
 
