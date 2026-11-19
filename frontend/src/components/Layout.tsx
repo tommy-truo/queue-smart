@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router'
-import { homePath, useAuth, type Role } from '../auth/AuthContext.ts'
+import { useAuth, type Role } from '../auth/AuthContext.ts'
 
 type NavItem = { to: string; label: string }
 
@@ -25,13 +25,8 @@ const navByRole: Record<Role, NavItem[]> = {
 }
 
 export default function Layout() {
-  const { role, setRole, logout } = useAuth()
+  const { role, logout } = useAuth()
   const navigate = useNavigate()
-
-  function switchRole(next: Role | null) {
-    setRole(next)
-    navigate(next ? homePath[next] : '/login')
-  }
 
   function handleLogout() {
     logout()
@@ -54,20 +49,6 @@ export default function Layout() {
             Log out
           </button>
         ) : null}
-        {import.meta.env.DEV && (
-        <label>
-          View as{' '}
-          <select
-            value={role ?? ''}
-            onChange={(e) => switchRole((e.target.value || null) as Role | null)}
-          >
-            <option value="">Logged out</option>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-            <option value="employee">Employee</option>
-          </select>
-        </label>
-        )}
       </header>
       <main>
         <Outlet />

@@ -47,12 +47,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     persistSession(account.role, account)
   }
 
-  function setRole(next: Role | null) {
-    setRoleState(next)
-    setUser(null)
-    persistSession(next, null)
-  }
-
   async function login(email: string, password: string): Promise<LoginResult> {
     try {
       const account = await api<SessionUser>('/auth/login', { method: 'POST', body: { email, password } })
@@ -90,7 +84,9 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
-    setRole(null)
+    setRoleState(null)
+    setUser(null)
+    persistSession(null, null)
   }
 
   return (
@@ -98,7 +94,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         role,
         user,
-        setRole,
         login,
         register,
         logout,

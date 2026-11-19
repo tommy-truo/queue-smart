@@ -35,7 +35,6 @@ export type RegisterResult =
 type AuthContextValue = {
   role: Role | null
   user: SessionUser | null
-  setRole: (role: Role | null) => void
   login: (email: string, password: string) => Promise<LoginResult>
   register: (input: RegisterInput) => Promise<RegisterResult>
   logout: () => void
