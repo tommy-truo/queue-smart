@@ -29,7 +29,16 @@ reportsRouter.get('/participation', requireRole('admin'), (req, res) => {
 })
 
 reportsRouter.get('/services', requireRole('admin'), (req, res) => {
-  send(req, res, 'service-activity', serviceActivityReport(parseFilters(req.query)), SERVICE_ACTIVITY_COLUMNS)
+  const filters = parseFilters(req.query)
+  const rows = serviceActivityReport(filters)
+  if (req.query.format === 'csv') {
+    // The file also carries the chart's numbers, as a second section after a blank line.
+    const byHour = toCsv(waitByHourReport(filters), WAIT_BY_HOUR_COLUMNS)
+    const body = `${toCsv(rows, SERVICE_ACTIVITY_COLUMNS)}\nAverage wait by time of day\n${byHour}`
+    res.type('text/csv').attachment('service-activity.csv').send(body)
+    return
+  }
+  res.json(rows)
 })
 
 reportsRouter.get('/wait-by-hour', requireRole('admin'), (req, res) => {

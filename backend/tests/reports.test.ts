@@ -91,6 +91,14 @@ describe('report routes', () => {
     expect(res.text.split('\n')[0]).toBe('User,Email,Service,Date,Outcome')
   })
 
+  it('add the wait-by-hour numbers to the service activity CSV', async () => {
+    const res = await request(app).get('/api/reports/services?format=csv').set('x-user-id', 'a1')
+    const sections = res.text.split('\n\n')
+    expect(sections).toHaveLength(2)
+    expect(sections[0].split('\n')[0]).toMatch(/^Service,/)
+    expect(sections[1].split('\n').slice(0, 3)).toEqual(['Average wait by time of day', 'Hour (0-23),Visits served,Average wait (min)', '9,1,20'])
+  })
+
   it('serve the wait-by-hour chart data', async () => {
     const res = await request(app).get('/api/reports/wait-by-hour').set('x-user-id', 'a1')
     expect(res.status).toBe(200)
