@@ -66,8 +66,9 @@ describe('wait by hour report', () => {
 })
 
 describe('csv', () => {
-  it('quotes cells with commas or quotes', () => {
-    expect(toCsv([{ a: 'x, y', b: 'say "hi"', c: null }], ['a', 'b', 'c'])).toBe('a,b,c\n"x, y","say ""hi""",\n')
+  it('writes readable headings and quotes cells with commas or quotes', () => {
+    const columns: [string, string][] = [['a', 'A'], ['b', 'B, quoted'], ['c', 'C']]
+    expect(toCsv([{ a: 'x, y', b: 'say "hi"', c: null }], columns)).toBe('A,"B, quoted",C\n"x, y","say ""hi""",\n')
   })
 })
 
@@ -87,7 +88,7 @@ describe('report routes', () => {
     expect(res.status).toBe(200)
     expect(res.headers['content-type']).toMatch(/text\/csv/)
     expect(res.headers['content-disposition']).toMatch(/participation\.csv/)
-    expect(res.text.split('\n')[0]).toBe('userName,email,serviceName,date,outcome')
+    expect(res.text.split('\n')[0]).toBe('User,Email,Service,Date,Outcome')
   })
 
   it('serve the wait-by-hour chart data', async () => {

@@ -115,26 +115,41 @@ function csvCell(value: unknown): string {
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 
-/** One header row of column names, then one line per row. */
-export function toCsv(rows: object[], columns: string[]): string {
-  const lines = [columns.join(',')]
+/** A report column: the field in each row, and the heading shown in the file. */
+export type CsvColumn = [field: string, heading: string]
+
+/** One heading row, then one line per row. */
+export function toCsv(rows: object[], columns: CsvColumn[]): string {
+  const lines = [columns.map(([, heading]) => csvCell(heading)).join(',')]
   for (const row of rows) {
     const record = row as Record<string, unknown>
-    lines.push(columns.map(column => csvCell(record[column])).join(','))
+    lines.push(columns.map(([field]) => csvCell(record[field])).join(','))
   }
   return lines.join('\n') + '\n'
 }
 
-export const PARTICIPATION_COLUMNS = ['userName', 'email', 'serviceName', 'date', 'outcome']
-export const SERVICE_ACTIVITY_COLUMNS = [
-  'serviceName',
-  'expectedDuration',
-  'priority',
-  'queueStatus',
-  'waitingNow',
-  'served',
-  'left',
-  'removed',
-  'averageWait',
+export const PARTICIPATION_COLUMNS: CsvColumn[] = [
+  ['userName', 'User'],
+  ['email', 'Email'],
+  ['serviceName', 'Service'],
+  ['date', 'Date'],
+  ['outcome', 'Outcome'],
 ]
-export const WAIT_BY_HOUR_COLUMNS = ['hour', 'visits', 'averageWait']
+
+export const SERVICE_ACTIVITY_COLUMNS: CsvColumn[] = [
+  ['serviceName', 'Service'],
+  ['expectedDuration', 'Expected duration (min)'],
+  ['priority', 'Priority'],
+  ['queueStatus', 'Queue status'],
+  ['waitingNow', 'Waiting now'],
+  ['served', 'Served'],
+  ['left', 'Left'],
+  ['removed', 'Removed'],
+  ['averageWait', 'Average wait (min)'],
+]
+
+export const WAIT_BY_HOUR_COLUMNS: CsvColumn[] = [
+  ['hour', 'Hour (0-23)'],
+  ['visits', 'Visits served'],
+  ['averageWait', 'Average wait (min)'],
+]

@@ -8,6 +8,7 @@ import {
   SERVICE_ACTIVITY_COLUMNS,
   serviceActivityReport,
   toCsv,
+  type CsvColumn,
   WAIT_BY_HOUR_COLUMNS,
   waitByHourReport,
 } from '../modules/reports.ts'
@@ -15,7 +16,7 @@ import {
 export const reportsRouter = Router()
 
 /** JSON by default; `?format=csv` downloads the same rows as a CSV file. */
-function send(req: Request, res: Response, name: string, rows: object[], columns: string[]): void {
+function send(req: Request, res: Response, name: string, rows: object[], columns: CsvColumn[]): void {
   if (req.query.format === 'csv') {
     res.type('text/csv').attachment(`${name}.csv`).send(toCsv(rows, columns))
     return
