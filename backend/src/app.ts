@@ -4,6 +4,7 @@ import { HttpError } from './errors.ts'
 import { authRouter } from './routes/auth.ts'
 import { meRouter } from './routes/me.ts'
 import { queuesRouter } from './routes/queues.ts'
+import { reportsRouter } from './routes/reports.ts'
 import { servicesRouter } from './routes/services.ts'
 
 export function createApp() {
@@ -18,6 +19,7 @@ export function createApp() {
   app.use('/api/services', servicesRouter)
   app.use('/api/queues', queuesRouter)
   app.use('/api/me', meRouter)
+  app.use('/api/reports', reportsRouter)
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' })
