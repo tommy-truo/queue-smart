@@ -11,6 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<'email' | 'password', string>>>({})
   const [formError, setFormError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -20,7 +21,9 @@ export default function Login() {
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
+    setSubmitting(true)
     const result = await login(email, password)
+    setSubmitting(false)
     if (!result.ok) {
       setFormError(result.message)
       return
@@ -60,7 +63,9 @@ export default function Login() {
           {fieldErrors.password ? <div role="alert">{fieldErrors.password}</div> : null}
         </div>
         {formError ? <div role="alert">{formError}</div> : null}
-        <button type="submit">Log in</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Logging in…' : 'Log in'}
+        </button>
       </form>
       <p>
         Don&apos;t have an account? <Link to="/register">Register</Link>

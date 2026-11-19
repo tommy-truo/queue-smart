@@ -216,7 +216,8 @@ main {
 }
 
 .page button:disabled,
-.employee-queue button:disabled {
+.employee-queue button:disabled,
+.auth button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
