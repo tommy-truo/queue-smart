@@ -1,6 +1,6 @@
 import { getDb } from '../db.ts'
 import { HttpError } from '../errors.ts'
-import { nextId } from '../store.ts'
+import { localTimestamp, nextId } from '../store.ts'
 import type { Priority, QueueEntry, Service, User } from '../types.ts'
 import { assertValid } from '../validation.ts'
 import { recordHistory } from './history.ts'
@@ -154,7 +154,7 @@ export function joinQueue(user: User, serviceId: string, body: unknown): QueueVi
     userName: user.fullName,
     status: 'waiting',
     priority,
-    joinedAt: new Date().toISOString(),
+    joinedAt: localTimestamp(),
   }
   const db = getDb()
   const queue = db.prepare('SELECT queueId FROM Queue WHERE serviceId = ?').get(serviceId) as { queueId: string }
@@ -214,7 +214,7 @@ export function requeue(serviceId: string): QueueView {
 
   getDb()
     .prepare('UPDATE QueueEntry SET calledAt = NULL, almostReady = 0, joinedAt = ? WHERE entryId = ?')
-    .run(new Date().toISOString(), serving.id)
+    .run(localTimestamp(), serving.id)
 
   const waiting = line.filter((e) => e !== serving)
   const lastInGroup = waiting.findLastIndex((e) => e.priority === serving.priority)
@@ -270,7 +270,7 @@ export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?
 
   let nowServing: QueueEntry | undefined
   if (line[0]) {
-    const calledAt = new Date().toISOString()
+    const calledAt = localTimestamp()
     getDb().prepare('UPDATE QueueEntry SET calledAt = ?, almostReady = 0 WHERE entryId = ?').run(calledAt, line[0].id)
     nowServing = { ...line[0], status: 'serving', calledAt }
     const note = withServiceNotification('It is your turn for ' + service.name + '.', service)

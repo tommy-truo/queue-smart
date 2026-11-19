@@ -1,5 +1,5 @@
 import { getDb } from '../db.ts'
-import { nextId } from '../store.ts'
+import { localTimestamp, nextId } from '../store.ts'
 import type { HistoryEntry, Outcome } from '../types.ts'
 
 type HistoryRow = {
@@ -24,7 +24,7 @@ export function recordHistory(userId: string, serviceName: string, outcome: Outc
   const entry: HistoryEntry = {
     id: nextId('h'),
     userId,
-    date: new Date().toISOString().slice(0, 10),
+    date: localTimestamp().slice(0, 10),
     serviceName,
     outcome,
   }
