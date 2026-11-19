@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { getDb } from '../src/db.ts'
-import { seedDemoYear } from '../src/demoData.ts'
+import { moveLiveSeedToNow, seedDemoYear } from '../src/demoData.ts'
 import { resetStore } from '../src/store.ts'
 
 afterEach(() => {
@@ -46,5 +46,26 @@ describe('demo year', () => {
     const before = count('SELECT COUNT(*) AS n FROM QueueEntry')
     expect(() => seedDemoYear(getDb(), new Date('2026-11-19T12:00:00Z'))).toThrow()
     expect(count('SELECT COUNT(*) AS n FROM QueueEntry')).toBe(before)
+  })
+
+  it('moves people in line and notifications to now, keeping the gaps', () => {
+    // Seed: latest join is 2026-09-29T09:20:00, so with "now" at 15:00 on Nov 19 it lands at 14:50.
+    moveLiveSeedToNow(getDb(), new Date('2026-11-19T15:00:00'))
+    const times = getDb()
+      .prepare("SELECT entryId, joinedAt, calledAt FROM QueueEntry WHERE entryId IN ('q1', 'q3') ORDER BY entryId")
+      .all()
+    expect(times).toEqual([
+      { entryId: 'q1', joinedAt: '2026-11-19T14:35:00', calledAt: '2026-11-19T14:55:00' },
+      { entryId: 'q3', joinedAt: '2026-11-19T14:50:00', calledAt: null },
+    ])
+    expect(getDb().prepare("SELECT createdAt FROM Notification WHERE notificationId = 'n2'").get()).toEqual({
+      createdAt: '2026-11-18T22:00:00',
+    })
+  })
+
+  it('does nothing with no one in line', () => {
+    getDb().exec("UPDATE QueueEntry SET status = 'served'")
+    moveLiveSeedToNow(getDb())
+    expect(getDb().prepare("SELECT joinedAt FROM QueueEntry WHERE entryId = 'q1'").get()).toEqual({ joinedAt: '2026-09-29T09:05:00' })
   })
 })

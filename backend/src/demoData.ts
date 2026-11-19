@@ -92,3 +92,23 @@ export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
     throw error
   }
 }
+
+/**
+ * The small seed has people in line and notifications from a fixed day. Shifts them so the
+ * latest one happened ten minutes ago, keeping the gaps between them, so waits read as minutes not weeks.
+ */
+export function moveLiveSeedToNow(target: DatabaseSync, now = new Date()): void {
+  const { latest } = target
+    .prepare("SELECT MAX(joinedAt) AS latest FROM QueueEntry WHERE status = 'waiting'")
+    .get() as { latest: string | null }
+  if (!latest) return
+  // Stored times are local wall-clock times with no time zone, so do the maths on wall-clock values
+  // (both read as UTC) to keep a daylight saving change in between from adding or losing an hour.
+  const nowWallClock = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds())
+  const seconds = Math.round((nowWallClock - 10 * 60_000 - Date.parse(latest + 'Z')) / 1000)
+  const shift = (column: string) => `strftime('%Y-%m-%dT%H:%M:%S', ${column}, '${seconds >= 0 ? '+' : ''}${seconds} seconds')`
+  target
+    .prepare(`UPDATE QueueEntry SET joinedAt = ${shift('joinedAt')}, calledAt = ${shift('calledAt')} WHERE status = 'waiting'`)
+    .run()
+  target.prepare(`UPDATE Notification SET createdAt = ${shift('createdAt')}`).run()
+}
