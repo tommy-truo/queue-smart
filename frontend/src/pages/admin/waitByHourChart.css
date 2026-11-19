@@ -23,11 +23,44 @@
   gap: 2px;
 }
 
+.wait-chart__frame {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.wait-chart__y {
+  position: relative;
+  min-width: 3.5em;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.wait-chart__y span {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+  white-space: nowrap;
+}
+
+.wait-chart__axis {
+  grid-column: 2;
+}
+
 .wait-chart__plot {
+  position: relative;
   height: 180px;
-  padding-top: 1.5rem;
   align-items: flex-end;
   border-bottom: 1px solid var(--border);
+}
+
+.wait-chart__grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--border-light);
+  pointer-events: none;
 }
 
 .wait-chart__col {
@@ -46,8 +79,13 @@
   width: 70%;
   max-width: 48px;
   min-height: 2px;
-  background: var(--accent);
+  flex-shrink: 0;
+  background: #7393c0;
   border-radius: 4px 4px 0 0;
+}
+
+.wait-chart__col--peak .wait-chart__bar {
+  background: var(--accent);
 }
 
 .wait-chart__col:hover .wait-chart__bar,

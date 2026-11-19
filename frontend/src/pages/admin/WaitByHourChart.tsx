@@ -9,6 +9,14 @@ function hourLabel(hour: number): string {
   return `${hour % 12 || 12} ${suffix}`
 }
 
+/** A round step for the minutes scale that gives about four gridlines. */
+function tickStep(max: number): number {
+  const rough = max / 4
+  const magnitude = 10 ** Math.floor(Math.log10(rough))
+  const step = [1, 2, 5, 10].map(m => m * magnitude).find(s => s >= rough)!
+  return Math.max(1, step)
+}
+
 /** Bar chart of the average actual wait by the hour people joined. Takes the same filters as the reports. */
 export default function WaitByHourChart({ query }: { query: string }) {
   const [rows, setRows] = useState<Row[]>([])
@@ -26,6 +34,9 @@ export default function WaitByHourChart({ query }: { query: string }) {
 
   const max = Math.max(1, ...rows.map(r => r.averageWait))
   const peak = rows.find(r => r.averageWait === max)
+  const step = tickStep(max)
+  const top = Math.ceil(max / step) * step
+  const ticks = Array.from({ length: top / step + 1 }, (_, i) => i * step)
 
   let body
   if (loadedQuery !== query) body = <p role="status">Loading chart…</p>
@@ -33,16 +44,20 @@ export default function WaitByHourChart({ query }: { query: string }) {
   else if (rows.length === 0) body = <p>No finished visits for these filters.</p>
   else
     body = (
-      <>
+      <div className="wait-chart__frame">
+        <div className="wait-chart__y" aria-hidden="true">
+          {ticks.map(t => <span key={t} style={{ bottom: `${(t / top) * 100}%` }}>{t === top ? `${t} min` : t}</span>)}
+        </div>
         <div
           className="wait-chart__plot"
           role="img"
           aria-label={`Average wait by hour. Longest at ${hourLabel(peak!.hour)}, ${peak!.averageWait} minutes.`}
         >
+          {ticks.slice(1).map(t => <div key={t} className="wait-chart__grid" style={{ bottom: `${(t / top) * 100}%` }} />)}
           {rows.map(r => (
-            <div key={r.hour} className="wait-chart__col" tabIndex={0}>
+            <div key={r.hour} className={`wait-chart__col${r === peak ? ' wait-chart__col--peak' : ''}`} tabIndex={0}>
               {r === peak && <span className="wait-chart__value">{r.averageWait} min</span>}
-              <div className="wait-chart__bar" style={{ height: `${(r.averageWait / max) * 100}%` }}>
+              <div className="wait-chart__bar" style={{ height: `${(r.averageWait / top) * 100}%` }}>
                 <span className="wait-chart__tip" role="tooltip">
                   <strong>{hourLabel(r.hour)}</strong>
                   <br />
@@ -57,7 +72,7 @@ export default function WaitByHourChart({ query }: { query: string }) {
         <div className="wait-chart__axis" aria-hidden="true">
           {rows.map(r => <span key={r.hour}>{hourLabel(r.hour)}</span>)}
         </div>
-      </>
+      </div>
     )
 
   return (
