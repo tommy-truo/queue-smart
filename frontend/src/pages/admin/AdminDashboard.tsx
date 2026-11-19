@@ -83,10 +83,12 @@ export default function AdminDashboard() {
               <td>{s.queueLength}</td>
               <td>{s.open ? 'Open' : 'Closed'}</td>
               <td>
-                <button type="button" disabled={savingId !== null} onClick={() => toggleOpen(s.id)}>
-                  {savingId === s.id ? 'Saving…' : s.open ? 'Close queue' : 'Open queue'}
-                </button>{' '}
-                <Link to="/admin/queue">View queue</Link>
+                <div className="row-actions">
+                  <button type="button" disabled={savingId !== null} onClick={() => toggleOpen(s.id)}>
+                    {savingId === s.id ? 'Saving…' : s.open ? 'Close queue' : 'Open queue'}
+                  </button>
+                  <Link to="/admin/queue">View queue</Link>
+                </div>
               </td>
             </tr>
           ))}

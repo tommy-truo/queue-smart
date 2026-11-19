@@ -54,7 +54,9 @@ function Dashboard({ fullName }: { fullName?: string }) {
   return (
     <div className="page">
       <h1>Welcome{fullName ? `, ${fullName}` : ''}</h1>
-      <button type="button" onClick={refresh}>Refresh</button>
+      <p>
+        <button type="button" onClick={refresh}>Refresh</button>
+      </p>
 
       <section className="card">
         <h2>{entries.length > 1 ? 'Current queues' : 'Current queue'}</h2>

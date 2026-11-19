@@ -439,3 +439,43 @@ main {
   background: #742a2a;
   color: #fff;
 }
+
+/* A button and link side by side in a table cell. */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Phones: header wraps onto two rows, wide tables scroll sideways inside their card. */
+@media (max-width: 640px) {
+  .app-header {
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .app-header strong {
+    font-size: 1.3rem;
+  }
+
+  .app-header nav {
+    order: 3;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+
+  .app-header nav a {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.95rem;
+  }
+
+  .app-header > button {
+    margin-left: auto;
+  }
+
+  .page table {
+    display: block;
+    overflow-x: auto;
+  }
+}
