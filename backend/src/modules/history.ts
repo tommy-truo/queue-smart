@@ -1,5 +1,5 @@
 import { getDb } from '../db.ts'
-import { localTimestamp, nextId } from '../store.ts'
+import { localTimestamp, nextId } from '../util.ts'
 import type { HistoryEntry, Outcome } from '../types.ts'
 
 type HistoryRow = {

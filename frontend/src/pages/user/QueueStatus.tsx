@@ -9,7 +9,7 @@ export default function QueueStatus() {
   const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues()
   const [leaving, setLeaving] = useState<QueueView | null>(null)
   const serviceName = (id: string) => services.find(service => service.id === id)?.name ?? 'Service'
-  // Position excludes the serving chair; the estimate counts everyone ahead.
+  // Position excludes the person being served; the estimate counts everyone ahead, them included.
   const peopleAhead = (entry: QueueView) => {
     const duration = services.find(service => service.id === entry.serviceId)?.expectedDuration
     return duration ? Math.max(0, Math.round(entry.estimatedWait / duration)) : 0

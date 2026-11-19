@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { findUserById } from '../src/modules/auth.ts'
 import { getQueue, joinQueue } from '../src/modules/queue.ts'
 import { createService, getService, listServices, updateService } from '../src/modules/services.ts'
-import { resetStore } from '../src/store.ts'
+import { resetDatabase } from '../src/db.ts'
 
 const valid = { name: 'Library Help', description: 'Book holds and renewals.', expectedDuration: 5, priority: 'low', notification: 'please bring library card' }
 
-beforeEach(resetStore)
+beforeEach(resetDatabase)
 
 describe('services', () => {
   it('lists the seeded services', () => {

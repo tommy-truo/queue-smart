@@ -1,6 +1,6 @@
 import { getDb } from '../db.ts'
 import { HttpError } from '../errors.ts'
-import { nextId } from '../store.ts'
+import { localTimestamp, nextId } from '../util.ts'
 import type { Priority, Service } from '../types.ts'
 import { assertValid } from '../validation.ts'
 import type { Schema } from '../validation.ts'
@@ -87,7 +87,7 @@ export function createService(body: unknown): Service {
     nextId('qu'),
     service.id,
     service.open ? 'open' : 'closed',
-    new Date().toISOString(),
+    localTimestamp(),
   )
   return service
 }

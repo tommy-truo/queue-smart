@@ -1,7 +1,7 @@
 import { HttpError } from '../errors.ts'
 import { getDb } from '../db.ts'
 import { hashPassword, verifyPassword } from '../password.ts'
-import { nextId } from '../store.ts'
+import { nextId } from '../util.ts'
 import type { Role, User } from '../types.ts'
 import { assertValid } from '../validation.ts'
 import type { Schema } from '../validation.ts'

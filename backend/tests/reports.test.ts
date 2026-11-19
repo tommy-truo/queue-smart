@@ -2,12 +2,12 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp } from '../src/app.ts'
 import { parseFilters, participationReport, serviceActivityReport, toCsv, waitByHourReport } from '../src/modules/reports.ts'
-import { resetStore } from '../src/store.ts'
+import { resetDatabase } from '../src/db.ts'
 
 const app = createApp()
 
 beforeEach(() => {
-  resetStore()
+  resetDatabase()
   vi.spyOn(console, 'log').mockImplementation(() => {})
 })
 

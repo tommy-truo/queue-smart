@@ -1,17 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getDb } from '../src/db.ts'
+import { getDb, resetDatabase } from '../src/db.ts'
 import { findUserById } from '../src/modules/auth.ts'
 import { listHistory } from '../src/modules/history.ts'
 import { listNotifications } from '../src/modules/notifications.ts'
 import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, reorder, requeue, serveNext } from '../src/modules/queue.ts'
 import { getService } from '../src/modules/services.ts'
 import { estimateWait } from '../src/modules/waitTime.ts'
-import { resetStore } from '../src/store.ts'
 
 const user = (id: string) => findUserById(id)!
 
 beforeEach(() => {
-  resetStore()
+  resetDatabase()
   vi.spyOn(console, 'log').mockImplementation(() => {})
 })
 

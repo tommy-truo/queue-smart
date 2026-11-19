@@ -17,7 +17,7 @@ export type Service = {
   open: boolean
 }
 
-/** A person waiting in a service's queue. Position is the index within that service's entries. */
+/** A person in a service's queue, including whoever is being served. */
 export type QueueEntry = {
   id: string
   serviceId: string
@@ -25,9 +25,9 @@ export type QueueEntry = {
   userName: string
   status: QueueStatus
   joinedAt: string
-  /** Set when the person enters the chair. */
+  /** Set when staff call the person up to be served. */
   calledAt?: string
-  /** Unset while still on the live board; set when finished or removed. */
+  /** Unset while still in line; set when served, left or removed. */
   outcome?: Outcome
 }
 

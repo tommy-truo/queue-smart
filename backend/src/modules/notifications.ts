@@ -1,5 +1,5 @@
 import { getDb } from '../db.ts'
-import { nextId } from '../store.ts'
+import { localTimestamp, nextId } from '../util.ts'
 import type { AppNotification, NotificationType } from '../types.ts'
 
 type NotificationRow = {
@@ -28,7 +28,7 @@ export function notify(userId: string, type: NotificationType, message: string):
     userId,
     type,
     message,
-    createdAt: new Date().toISOString(),
+    createdAt: localTimestamp(),
     read: false,
   }
   getDb()

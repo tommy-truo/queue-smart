@@ -1,6 +1,6 @@
 import { getDb } from '../db.ts'
 import { HttpError } from '../errors.ts'
-import { localTimestamp, nextId } from '../store.ts'
+import { localTimestamp, nextId } from '../util.ts'
 import type { Priority, QueueEntry, Service, User } from '../types.ts'
 import { assertValid } from '../validation.ts'
 import { recordHistory } from './history.ts'

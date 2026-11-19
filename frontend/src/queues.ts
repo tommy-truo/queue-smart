@@ -3,11 +3,12 @@ import { api } from './api.ts'
 import { useAuth } from './auth/AuthContext.ts'
 import type { QueueEntry, Service } from './types.ts'
 
+/** position is 1-based in line, or 0 while being served. estimatedWait is in minutes. */
 export type QueueView = QueueEntry & { position: number; estimatedWait: number }
 export type ServiceSummary = Service & { queueLength: number; estimatedWait: number }
 type QueueData = { key: string; services: ServiceSummary[]; entries: QueueView[]; error: string }
 
-/** Both queue views read the same services and entries used by backend history. */
+/** Loads services plus one service's queue (staff), or the user's own entries when no service is given. */
 export function useQueues(serviceId?: string) {
   const { user } = useAuth()
   const key = `${user?.id ?? 'guest'}:${serviceId ?? 'mine'}`

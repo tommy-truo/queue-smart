@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { getDb } from '../src/db.ts'
+import { getDb, resetDatabase } from '../src/db.ts'
 import { login, register } from '../src/modules/auth.ts'
-import { resetStore } from '../src/store.ts'
 
 const valid = { fullName: 'Taylor Smith', email: 'Taylor@Example.com', password: 'Secret123', phone: '(123) 456-7890' }
 
-beforeEach(resetStore)
+beforeEach(resetDatabase)
 
 describe('register', () => {
   it('creates a user account without exposing the password', () => {

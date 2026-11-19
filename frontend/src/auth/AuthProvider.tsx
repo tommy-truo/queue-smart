@@ -6,45 +6,32 @@ import {
   type LoginResult,
   type RegisterInput,
   type RegisterResult,
-  type Role,
   type SessionUser,
 } from './AuthContext.ts'
 import { validateRegister } from './validateAuth.ts'
 
-const ROLE_KEY = 'queuesmart.role'
-
-function loadRole(): Role | null {
-  const stored = localStorage.getItem(ROLE_KEY)
-  return stored && stored in homePath ? (stored as Role) : null
-}
-
-function loadSessionUser(role: Role | null): SessionUser | null {
-  if (!role) return null
+function loadSessionUser(): SessionUser | null {
   try {
     const raw = localStorage.getItem(SESSION_USER_KEY)
     const user = raw ? (JSON.parse(raw) as SessionUser) : null
-    return user && user.role === role ? user : null
+    return user && user.role in homePath ? user : null
   } catch {
     return null
   }
 }
 
-function persistSession(role: Role | null, user: SessionUser | null): void {
-  if (role) localStorage.setItem(ROLE_KEY, role)
-  else localStorage.removeItem(ROLE_KEY)
-
+function persistSession(user: SessionUser | null): void {
   if (user) localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user))
   else localStorage.removeItem(SESSION_USER_KEY)
 }
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  const [role, setRoleState] = useState<Role | null>(() => loadRole())
-  const [user, setUser] = useState<SessionUser | null>(() => loadSessionUser(loadRole()))
+  const [user, setUser] = useState<SessionUser | null>(loadSessionUser)
+  const role = user?.role ?? null
 
   function startSession(account: SessionUser): void {
-    setRoleState(account.role)
     setUser(account)
-    persistSession(account.role, account)
+    persistSession(account)
   }
 
   async function login(email: string, password: string): Promise<LoginResult> {
@@ -84,9 +71,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
-    setRoleState(null)
     setUser(null)
-    persistSession(null, null)
+    persistSession(null)
   }
 
   return (

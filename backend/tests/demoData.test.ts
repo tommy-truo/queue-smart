@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { getDb } from '../src/db.ts'
+import { getDb, resetDatabase } from '../src/db.ts'
 import { moveLiveSeedToNow, seedDemoYear } from '../src/demoData.ts'
-import { resetStore } from '../src/store.ts'
 
 afterEach(() => {
-  resetStore()
+  resetDatabase()
 })
 
 const count = (sql: string) => (getDb().prepare(sql).get() as { n: number }).n
@@ -35,7 +34,7 @@ describe('demo year', () => {
       getDb().prepare("SELECT entryId, userId, joinedAt, calledAt FROM QueueEntry WHERE entryId LIKE 'dq%' ORDER BY entryId").all()
     seedDemoYear(getDb(), new Date('2026-11-19T12:00:00Z'))
     const first = snapshot()
-    resetStore()
+    resetDatabase()
     seedDemoYear(getDb(), new Date('2026-11-19T12:00:00Z'))
     expect(snapshot()).toEqual(first)
   })
