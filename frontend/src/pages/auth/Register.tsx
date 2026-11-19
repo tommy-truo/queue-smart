@@ -16,6 +16,7 @@ export default function Register() {
   const [phone, setPhone] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<RegisterField, string>>>({})
   const [formError, setFormError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -33,7 +34,9 @@ export default function Register() {
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
+    setSubmitting(true)
     const result = await register(input)
+    setSubmitting(false)
     if (!result.ok) {
       if (result.reason === 'email-taken') {
         setFieldErrors({ email: 'An account with this email already exists.' })
@@ -152,7 +155,9 @@ export default function Register() {
           {fieldErrors.phone ? (<div role="alert">{fieldErrors.phone}</div>) : null}
         </div>
         {formError ? <div role="alert">{formError}</div> : null}
-        <button type="submit">Create account</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Creating account…' : 'Create account'}
+        </button>
       </form>
       <p>
         Already have an account? <Link to="/login">Log in</Link>

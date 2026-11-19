@@ -30,6 +30,7 @@ export default function Reports() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [serviceId, setServiceId] = useState('')
+  const [downloading, setDownloading] = useState(false)
   const [services, setServices] = useState<Service[]>([])
   const [rows, setRows] = useState<ParticipationRow[] | ServiceActivityRow[]>([])
   // Which request the shown rows belong to, so loading is just "not caught up yet".
@@ -55,10 +56,13 @@ export default function Reports() {
 
   async function exportCsv() {
     setError('')
+    setDownloading(true)
     try {
       await download(`/reports/${key}&format=csv`, `${type}-report.csv`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not download the report.')
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -87,7 +91,9 @@ export default function Reports() {
             {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </label>{' '}
-        <button type="button" className="primary" onClick={exportCsv}>Download CSV</button>
+        <button type="button" className="primary" disabled={downloading} onClick={exportCsv}>
+          {downloading ? 'Downloading…' : 'Download CSV'}
+        </button>
       </p>
 
       <WaitByHourChart query={query} />
