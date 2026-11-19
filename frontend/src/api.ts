@@ -35,7 +35,7 @@ export async function api<T>(path: string, options: { method?: string; body?: un
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     })
   } catch {
-    throw new ApiError(0, 'Could not reach the server. Is the backend running?')
+    throw new ApiError(0, 'Could not connect to QueueSmart. Check your connection and try again.')
   }
 
   const data = await res.json().catch(() => ({}))
@@ -50,7 +50,7 @@ export async function download(path: string, filename: string): Promise<void> {
   try {
     res = await fetch(`/api${path}`, { headers: userId ? { 'x-user-id': userId } : {} })
   } catch {
-    throw new ApiError(0, 'Could not reach the server. Is the backend running?')
+    throw new ApiError(0, 'Could not connect to QueueSmart. Check your connection and try again.')
   }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))

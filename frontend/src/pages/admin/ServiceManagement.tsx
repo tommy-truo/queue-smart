@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api, ApiError } from '../../api.ts'
+import { capitalize } from '../../format.ts'
 import type { Priority, Service } from '../../types.ts'
 
 type FormValues = {
@@ -131,12 +132,12 @@ export default function ServiceManagement() {
     setValues({ ...values, [key]: value })
   }
 
-  if (loading) return <div className="page"><h1>Service Management</h1><p role="status">Loading services…</p></div>
-  if (loadError) return <div className="page"><h1>Service Management</h1><p role="alert">{loadError}</p><button type="button" onClick={retry}>Retry</button></div>
+  if (loading) return <div className="page"><h1>Service management</h1><p role="status">Loading services…</p></div>
+  if (loadError) return <div className="page"><h1>Service management</h1><p role="alert">{loadError}</p><button type="button" onClick={retry}>Retry</button></div>
 
   return (
     <div className="page">
-      <h1>Service Management</h1>
+      <h1>Service management</h1>
 
       {message ? <p role="status">{message}</p> : null}
       {services.length === 0 ? <p>No services yet. Create one below.</p> : null}
@@ -157,7 +158,7 @@ export default function ServiceManagement() {
               <td>{s.name}</td>
               <td>{s.description}</td>
               <td>{s.expectedDuration}</td>
-              <td>{s.priority}</td>
+              <td>{capitalize(s.priority)}</td>
               <td>
                 <button type="button" disabled={saving} onClick={() => startEdit(s)}>
                   Edit
@@ -244,7 +245,7 @@ export default function ServiceManagement() {
         </div>
 
         <div>
-          <label htmlFor="service-notification">Notification Message</label>
+          <label htmlFor="service-notification">Notification message (optional)</label>
           <br />
           <textarea
             id="service-notification"

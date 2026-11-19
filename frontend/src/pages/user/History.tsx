@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../api.ts'
 import { useAuth } from '../../auth/AuthContext.ts'
+import { capitalize, formatDate } from '../../format.ts'
 import type { HistoryEntry } from '../../types.ts'
 
 type SortKey = 'serviceName' | 'date' | 'outcome'
@@ -82,8 +83,8 @@ function HistoryList() {
             return(
               <tr key = {val.id}>
                 <td>{val.serviceName}</td>
-                <td>{val.date}</td>
-                <td>{val.outcome}</td>
+                <td>{formatDate(val.date)}</td>
+                <td>{capitalize(val.outcome)}</td>
               </tr>
             )
           })}

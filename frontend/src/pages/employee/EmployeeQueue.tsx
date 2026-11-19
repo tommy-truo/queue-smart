@@ -26,7 +26,7 @@ export default function EmployeeQueue() {
     setRequeuing(false)
     void runAction(async () => {
       await requeue(SERVICE_ID)
-      return `Placed ${name} back in line.`
+      return `Put ${name} back in line.`
     })
   }
 
@@ -53,9 +53,9 @@ export default function EmployeeQueue() {
         {serving ? (
           <div className="employee-queue__serving-row">
             <span className="employee-queue__serving-name">{serving.userName}</span>
-            <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRequeuing(true)}>Requeue</button>
+            <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRequeuing(true)}>Put back in line</button>
           </div>
-        ) : <p className="employee-queue__now-serving-empty">No one being served</p>}
+        ) : <p className="employee-queue__now-serving-empty">No one is being served.</p>}
       </div>
       <div className="employee-queue__action-wrap">
         <button type="button" className="employee-queue__primary-btn" disabled={busy || entries.length === 0} onClick={event => {
@@ -64,10 +64,10 @@ export default function EmployeeQueue() {
           const result = await serveNext(SERVICE_ID)
           return [result.served ? `Served ${result.served.userName}.` : '', result.nowServing ? `Now serving ${result.nowServing.userName}.` : 'The queue is now empty.'].filter(Boolean).join(' ')
           })
-        }}>{busy ? 'Updating…' : serving ? 'Finish serving and call next' : 'Serve next'}</button>
+        }}>{busy ? 'Updating…' : serving ? 'Finish and call next' : 'Call next'}</button>
       </div>
       <h2 className="employee-queue__list-heading">Waiting</h2>
-      {waiting.length === 0 ? <p className="employee-queue__list-empty">No one is waiting</p> : (
+      {waiting.length === 0 ? <p className="employee-queue__list-empty">No one is waiting.</p> : (
         <ul className="employee-queue__list">{waiting.map((entry, index) => (
           <li key={entry.id} className="employee-queue__list-item">
             <span className="employee-queue__position">{index + 1}.</span>
@@ -77,8 +77,8 @@ export default function EmployeeQueue() {
           </li>
         ))}</ul>
       )}
-      <ConfirmModal open={requeuing} title="Place back in line?" message={`Place ${serving?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
-        confirmLabel="Requeue" onConfirm={confirmRequeue} onCancel={() => setRequeuing(false)} />
+      <ConfirmModal open={requeuing} title="Put back in line?" message={`Put ${serving?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
+        confirmLabel="Put back in line" onConfirm={confirmRequeue} onCancel={() => setRequeuing(false)} />
       <ConfirmModal open={removing !== null} title="Remove from queue?" message={`Remove ${removing?.userName ?? ''} from ${service?.name ?? 'this queue'}?`}
         confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
     </section>

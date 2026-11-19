@@ -26,17 +26,17 @@ export default function QueueStatus() {
     })
   }
 
-  if (loading) return <div className="page"><h1>Queue Status</h1><p role="status">Loading queues…</p></div>
-  if (error) return <div className="page"><h1>Queue Status</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
+  if (loading) return <div className="page"><h1>Queue status</h1><p role="status">Loading queues…</p></div>
+  if (error) return <div className="page"><h1>Queue status</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (
     <div className="page">
-      <h1>Queue Status</h1>
+      <h1>Queue status</h1>
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
-      {entries.length === 0 ? <p>You are not currently in a queue. <Link to="/join">Join a Queue</Link></p> : (
+      {entries.length === 0 ? <p>You are not currently in a queue. <Link to="/join">Join a queue</Link></p> : (
         <table>
-          <thead><tr><th>Service</th><th>Estimated Wait Time</th><th>Position</th><th>People Ahead</th><th>Status</th><th /></tr></thead>
+          <thead><tr><th>Service</th><th>Estimated wait</th><th>Position</th><th>People ahead</th><th>Status</th><th /></tr></thead>
           <tbody>{entries.map(entry => (
             <tr key={entry.id}>
               <td>{serviceName(entry.serviceId)}</td>

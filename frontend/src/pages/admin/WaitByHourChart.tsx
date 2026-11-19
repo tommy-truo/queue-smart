@@ -63,7 +63,7 @@ export default function WaitByHourChart({ query }: { query: string }) {
   return (
     <section className="wait-chart">
       <h2>Average wait by time of day</h2>
-      <p className="wait-chart__note">Minutes from joining a queue to being called, by the hour people joined.</p>
+      <p className="wait-chart__note">How long people waited to be called, by the time of day they joined.</p>
       {body}
     </section>
   )

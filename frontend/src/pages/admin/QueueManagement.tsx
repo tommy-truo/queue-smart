@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
+import { formatTime } from '../../format.ts'
 import StatusBadge from '../../components/StatusBadge.tsx'
 import { removeFromQueue, reorderQueueEntry, requeue, serveNext, useQueues, type QueueView } from '../../queues.ts'
 
@@ -19,7 +20,7 @@ export default function QueueManagement() {
     setRequeuing(null)
     void runAction(async () => {
       await requeue(entry.serviceId)
-      return `Placed ${entry.userName} back in line.`
+      return `Put ${entry.userName} back in line.`
     })
   }
   const servingIndex = entries.findIndex(entry => entry.status === 'serving')
@@ -54,12 +55,12 @@ export default function QueueManagement() {
     return undefined
   }
 
-  if (loading) return <div className="page"><h1>Queue Management</h1><p role="status">Loading queue…</p></div>
-  if (error) return <div className="page"><h1>Queue Management</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
+  if (loading) return <div className="page"><h1>Queue management</h1><p role="status">Loading queue…</p></div>
+  if (error) return <div className="page"><h1>Queue management</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (
     <div className="page">
-      <h1>Queue Management</h1>
+      <h1>Queue management</h1>
       <label>Service{' '}
         <select value={serviceId} disabled={busy} onChange={event => setServiceId(event.target.value)}>
           {services.map(service => <option key={service.id} value={service.id}>{service.name}{service.open ? '' : ' (closed)'}</option>)}
@@ -76,14 +77,14 @@ export default function QueueManagement() {
             const result = await serveNext(serviceId)
             return [result.served ? `Served ${result.served.userName}.` : '', result.nowServing ? `Now serving ${result.nowServing.userName}.` : 'The queue is now empty.'].filter(Boolean).join(' ')
             })
-          }}>{busy ? 'Updating…' : 'Serve next'}</button>
+          }}>{busy ? 'Updating…' : entries.some(entry => entry.status === 'serving') ? 'Finish and call next' : 'Call next'}</button>
           <table>
             <thead><tr><th>#</th><th>Name</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
             <tbody>{entries.map((entry, index) => (
               <tr key={entry.id}>
                 <td>{entry.position === 0 ? 'Serving' : entry.position}</td><td>{entry.userName}</td>
                 <td><StatusBadge status={entry.status} /></td>
-                <td>{new Date(entry.joinedAt).toLocaleTimeString([], { timeStyle: 'short' })}</td>
+                <td>{formatTime(entry.joinedAt)}</td>
                 <td>
                   {(['up', 'down'] as const).map(direction => {
                     const disabledReason = reorderDisabled(index, direction)
@@ -100,7 +101,7 @@ export default function QueueManagement() {
                     )
                   })}{' '}
                   {entry.status === 'serving' ? (
-                    <button type="button" disabled={busy} onClick={() => setRequeuing(entry)}>Requeue</button>
+                    <button type="button" disabled={busy} onClick={() => setRequeuing(entry)}>Put back in line</button>
                   ) : null}{' '}
                   <button type="button" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
                 </td>
@@ -109,8 +110,8 @@ export default function QueueManagement() {
           </table>
         </>
       )}
-      <ConfirmModal open={requeuing !== null} title="Place back in line?" message={`Place ${requeuing?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
-        confirmLabel="Requeue" onConfirm={confirmRequeue} onCancel={() => setRequeuing(null)} />
+      <ConfirmModal open={requeuing !== null} title="Put back in line?" message={`Put ${requeuing?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
+        confirmLabel="Put back in line" onConfirm={confirmRequeue} onCancel={() => setRequeuing(null)} />
       <ConfirmModal open={removing !== null} title="Remove from queue?" message={`Remove ${removing?.userName ?? ''} from ${service?.name ?? 'this queue'}?`}
         confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
       <ConfirmModal

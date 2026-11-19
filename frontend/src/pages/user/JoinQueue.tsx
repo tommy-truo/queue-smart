@@ -20,15 +20,15 @@ export default function JoinQueue() {
     })
   }
 
-  if (loading) return <div className="page"><h1>Join Queue</h1><p role="status">Loading queues…</p></div>
-  if (error) return <div className="page"><h1>Join Queue</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
+  if (loading) return <div className="page"><h1>Join queue</h1><p role="status">Loading queues…</p></div>
+  if (error) return <div className="page"><h1>Join queue</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (
     <div className="page">
-      <h1>Join Queue</h1>
+      <h1>Join queue</h1>
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
-      {services.length === 0 ? <p>No services available.</p> : null}
+      {services.length === 0 ? <p>No services available.</p> : <p>Choose a service to see its current wait and join the line.</p>}
       <label className="field">
         Service
         <select value={serviceId} disabled={busy} onChange={event => setServiceId(event.target.value)}>
@@ -43,18 +43,18 @@ export default function JoinQueue() {
           <p>Expected duration: {selected.expectedDuration} min</p>
           {entry ? (
             <>
-              <p>Position: {entry.position === 0 ? 'Being served' : entry.position}. Estimated wait: {entry.estimatedWait} min</p>
+              <p>Position: {entry.position === 0 ? 'Being served' : entry.position}. Estimated wait: {entry.estimatedWait} min.</p>
               <button type="button" disabled={busy} onClick={() => setLeaving(selected)}>Leave</button>
               <span className="note">You are already in this queue.</span>
             </>
           ) : (
             <>
-              <p>Estimated wait: {selected.open ? `${selected.estimatedWait} min` : 'N/A'}</p>
+              <p>Estimated wait: {selected.open ? `${selected.estimatedWait} min` : 'Closed'}</p>
               <button type="button" className="primary" disabled={busy || !selected.open} onClick={() => void runAction(async () => {
                 await joinQueue(selected.id)
                 return `You joined ${selected.name}.`
               })}>Join</button>
-              {!selected.open ? <span className="note">Queue not open. Try again later.</span> : null}
+              {!selected.open ? <span className="note">This queue is closed right now.</span> : null}
             </>
           )}
         </div>

@@ -4,15 +4,15 @@ import { useAuth, type Role } from '../auth/AuthContext.ts'
 type NavItem = { to: string; label: string }
 
 const guestNav: NavItem[] = [
-  { to: '/login', label: 'Login' },
+  { to: '/login', label: 'Log in' },
   { to: '/register', label: 'Register' },
 ]
 
 const navByRole: Record<Role, NavItem[]> = {
   user: [
     { to: '/dashboard', label: 'Dashboard' },
-    { to: '/join', label: 'Join Queue' },
-    { to: '/status', label: 'Queue Status' },
+    { to: '/join', label: 'Join queue' },
+    { to: '/status', label: 'Queue status' },
     { to: '/history', label: 'History' },
   ],
   admin: [

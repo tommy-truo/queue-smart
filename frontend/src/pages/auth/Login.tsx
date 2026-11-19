@@ -31,7 +31,7 @@ export default function Login() {
 
   return (
     <section className="auth">
-      <h1>Login</h1>
+      <h1>Log in</h1>
       <form noValidate onSubmit={handleSubmit}>
         <div className="auth-field">
           <label htmlFor="login-email">Email</label>

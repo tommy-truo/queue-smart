@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, download } from '../../api.ts'
+import { capitalize, formatDate } from '../../format.ts'
 import type { Service } from '../../types.ts'
 import WaitByHourChart from './WaitByHourChart.tsx'
 
@@ -103,7 +104,7 @@ export default function Reports() {
           </thead>
           <tbody>
             {(rows as ParticipationRow[]).map((r, i) => (
-              <tr key={i}><td>{r.userName}</td><td>{r.email}</td><td>{r.serviceName}</td><td>{r.date}</td><td>{r.outcome}</td></tr>
+              <tr key={i}><td>{r.userName}</td><td>{r.email}</td><td>{r.serviceName}</td><td>{formatDate(r.date)}</td><td>{capitalize(r.outcome)}</td></tr>
             ))}
           </tbody>
         </table>
@@ -111,14 +112,14 @@ export default function Reports() {
         <table>
           <thead>
             <tr>
-              <th>Service</th><th>Expected (min)</th><th>Priority</th><th>Queue</th><th>Waiting now</th>
-              <th>Served</th><th>Left</th><th>Removed</th><th>Avg wait (min)</th>
+              <th>Service</th><th>Expected (min)</th><th>Priority</th><th>Queue status</th><th>Waiting now</th>
+              <th>Served</th><th>Left</th><th>Removed</th><th>Average wait (min)</th>
             </tr>
           </thead>
           <tbody>
             {(rows as ServiceActivityRow[]).map(r => (
               <tr key={r.serviceName}>
-                <td>{r.serviceName}</td><td>{r.expectedDuration}</td><td>{r.priority}</td><td>{r.queueStatus}</td>
+                <td>{r.serviceName}</td><td>{r.expectedDuration}</td><td>{capitalize(r.priority)}</td><td>{capitalize(r.queueStatus)}</td>
                 <td>{r.waitingNow}</td><td>{r.served}</td><td>{r.left}</td><td>{r.removed}</td>
                 <td>{r.averageWait ?? '—'}</td>
               </tr>

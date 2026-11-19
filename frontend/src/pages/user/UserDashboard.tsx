@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { api } from '../../api.ts'
 import { useAuth } from '../../auth/AuthContext.ts'
+import { formatDateTime } from '../../format.ts'
 import StatusBadge from '../../components/StatusBadge.tsx'
 import type { AppNotification } from '../../types.ts'
 import type { QueueView, ServiceSummary } from '../../queues.ts'
@@ -73,7 +74,7 @@ function Dashboard({ fullName }: { fullName?: string }) {
           )
         }) : (
           <p>
-            You are not in a queue. <Link to="/join">Join one</Link>
+            You are not in a queue. <Link to="/join">Join a queue</Link>
           </p>
         )}
       </section>
@@ -97,7 +98,7 @@ function Dashboard({ fullName }: { fullName?: string }) {
         <ul>
           {notifications.map((n) => (
             <li key={n.id} className={n.read ? undefined : 'unread'}>
-              {n.message} <small>{new Date(n.createdAt).toLocaleString()}</small>
+              {n.message} <small>{formatDateTime(n.createdAt)}</small>
             </li>
           ))}
         </ul>
