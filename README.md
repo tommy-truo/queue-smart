@@ -6,9 +6,7 @@ Fall 2026
 Run the API and the frontend together from the repo root:
 
 ```
-npm install
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
+npm run install:all
 npm run dev
 ```
 
