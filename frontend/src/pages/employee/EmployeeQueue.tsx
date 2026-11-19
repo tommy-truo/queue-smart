@@ -4,10 +4,9 @@ import { removeFromQueue, requeue, serveNext, useQueues, type QueueView } from '
 import { waitSince } from './formatWait.ts'
 import './employeeQueue.css'
 
-const SERVICE_ID = 's1'
-
 export default function EmployeeQueue() {
-  const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(SERVICE_ID)
+  const [serviceId, setServiceId] = useState('s1')
+  const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(serviceId)
   const [removing, setRemoving] = useState<QueueView | null>(null)
   const [requeuing, setRequeuing] = useState(false)
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -18,14 +17,14 @@ export default function EmployeeQueue() {
   const serving = entries.find(entry => entry.status === 'serving')
   // Preserve the backend's priority/arrival ordering.
   const waiting = entries.filter(entry => entry.status !== 'serving')
-  const service = services.find(service => service.id === SERVICE_ID)
+  const service = services.find(service => service.id === serviceId)
 
   function confirmRequeue() {
     if (!serving) return
     const name = serving.userName
     setRequeuing(false)
     void runAction(async () => {
-      await requeue(SERVICE_ID)
+      await requeue(serviceId)
       return `Put ${name} back in line.`
     })
   }
@@ -35,7 +34,7 @@ export default function EmployeeQueue() {
     const entry = removing
     setRemoving(null)
     void runAction(async () => {
-      await removeFromQueue(SERVICE_ID, entry.id)
+      await removeFromQueue(serviceId, entry.id)
       return `Removed ${entry.userName}.`
     })
   }
@@ -45,7 +44,12 @@ export default function EmployeeQueue() {
 
   return (
     <section className="employee-queue">
-      <h1>{service?.name ?? 'Queue'}</h1>
+      <h1>Queue</h1>
+      <label>Service{' '}
+        <select value={serviceId} disabled={busy} onChange={event => setServiceId(event.target.value)}>
+          {services.map(service => <option key={service.id} value={service.id}>{service.name}{service.open ? '' : ' (closed)'}</option>)}
+        </select>
+      </label>
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
       <div className="employee-queue__now-serving">
@@ -61,7 +65,7 @@ export default function EmployeeQueue() {
         <button type="button" className="employee-queue__primary-btn" disabled={busy || entries.length === 0} onClick={event => {
           if (event.detail > 1) return
           void runAction(async () => {
-          const result = await serveNext(SERVICE_ID)
+          const result = await serveNext(serviceId)
           return [result.served ? `Served ${result.served.userName}.` : '', result.nowServing ? `Now serving ${result.nowServing.userName}.` : 'The queue is now empty.'].filter(Boolean).join(' ')
           })
         }}>{busy ? 'Updating…' : serving ? 'Finish and call next' : 'Call next'}</button>
