@@ -100,22 +100,13 @@ a:hover {
   font-weight: 600;
 }
 
-.app-header label {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
-
-.app-header button,
-.app-header select {
+.app-header button {
   padding: 0.45rem 1rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--bg);
   font: inherit;
   font-size: 0.95rem;
-}
-
-.app-header button {
   cursor: pointer;
 }
 

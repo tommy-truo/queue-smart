@@ -132,7 +132,3 @@ export function validateRegister(fields: RegisterFields): FieldErrors {
 
   return errors
 }
-
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
