@@ -12,6 +12,7 @@ import History from './pages/user/History.tsx'
 import AdminDashboard from './pages/admin/AdminDashboard.tsx'
 import ServiceManagement from './pages/admin/ServiceManagement.tsx'
 import QueueManagement from './pages/admin/QueueManagement.tsx'
+import Reports from './pages/admin/Reports.tsx'
 import EmployeeQueue from './pages/employee/EmployeeQueue.tsx'
 
 function Home() {
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/services" element={<ServiceManagement />} />
           <Route path="/admin/queue" element={<QueueManagement />} />
+          <Route path="/admin/reports" element={<Reports />} />
         </Route>
 
         <Route element={<RequireRole role="employee" />}>

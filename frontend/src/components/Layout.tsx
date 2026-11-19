@@ -19,6 +19,7 @@ const navByRole: Record<Role, NavItem[]> = {
     { to: '/admin', label: 'Dashboard' },
     { to: '/admin/services', label: 'Services' },
     { to: '/admin/queue', label: 'Queues' },
+    { to: '/admin/reports', label: 'Reports' },
   ],
   employee: [{ to: '/employee', label: 'Queue' }],
 }

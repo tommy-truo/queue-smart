@@ -42,3 +42,24 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   if (!res.ok) throw new ApiError(res.status, data.error ?? 'Request failed.', data.fields)
   return data as T
 }
+
+/** Downloads a file from the backend (sent with the signed-in user) and saves it under the given name. */
+export async function download(path: string, filename: string): Promise<void> {
+  const userId = sessionUserId()
+  let res: Response
+  try {
+    res = await fetch(`/api${path}`, { headers: userId ? { 'x-user-id': userId } : {} })
+  } catch {
+    throw new ApiError(0, 'Could not reach the server. Is the backend running?')
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, data.error ?? 'Download failed.')
+  }
+  const url = URL.createObjectURL(await res.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
