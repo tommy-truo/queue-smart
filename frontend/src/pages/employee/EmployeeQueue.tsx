@@ -29,7 +29,7 @@ export default function EmployeeQueue() {
     setRequeuing(null)
     void runAction(async () => {
       if (serving?.id !== entry.id) throw new Error('The person being served changed. Review the queue and try again.')
-      await requeue(entry.serviceId)
+      await requeue(entry.serviceId, entry.id, entry.status)
       return `Put ${name} back in line.`
     })
   }
@@ -72,7 +72,7 @@ export default function EmployeeQueue() {
         <button type="button" className="employee-queue__primary-btn" disabled={busy || entries.length === 0} onClick={event => {
           if (event.detail > 1) return
           void runAction(async () => {
-          const result = await serveNext(serviceId)
+          const result = await serveNext(serviceId, entries[0].id, entries[0].status)
           return [result.served ? `Served ${result.served.userName}.` : '', result.nowServing ? `Now serving ${result.nowServing.userName}.` : 'The queue is now empty.'].filter(Boolean).join(' ')
           })
         }}>{busy ? 'Updating…' : serving ? 'Finish and call next' : 'Call next'}</button>

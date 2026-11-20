@@ -98,16 +98,16 @@ export function leaveQueue(id: string) {
   return api<QueueEntry>(`/queues/${encodeURIComponent(id)}/leave`, { method: 'POST' })
 }
 
-export function serveNext(id: string) {
-  return api<{ served?: QueueEntry; nowServing?: QueueEntry }>(`/queues/${encodeURIComponent(id)}/serve-next`, { method: 'POST' })
+export function serveNext(id: string, expectedEntryId: string, expectedStatus: QueueEntry['status']) {
+  return api<{ served?: QueueEntry; nowServing?: QueueEntry }>(`/queues/${encodeURIComponent(id)}/serve-next`, { method: 'POST', body: { expectedEntryId, expectedStatus } })
 }
 
 export function removeFromQueue(serviceId: string, entryId: string) {
   return api<QueueEntry>(`/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/remove`, { method: 'POST' })
 }
 
-export function requeue(serviceId: string) {
-  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/requeue`, { method: 'POST' })
+export function requeue(serviceId: string, expectedEntryId: string, expectedStatus: QueueEntry['status']) {
+  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/requeue`, { method: 'POST', body: { expectedEntryId, expectedStatus } })
 }
 
 export function reorderQueueEntry(serviceId: string, entryId: string, direction: 'up' | 'down') {

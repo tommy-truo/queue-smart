@@ -23,7 +23,7 @@ export default function QueueManagement() {
     setRequeuing(null)
     void runAction(async () => {
       if (entries.find(item => item.status === 'serving')?.id !== entry.id) throw new Error('The person being served changed. Review the queue and try again.')
-      await requeue(entry.serviceId)
+      await requeue(entry.serviceId, entry.id, entry.status)
       return `Put ${entry.userName} back in line.`
     })
   }
@@ -80,7 +80,7 @@ export default function QueueManagement() {
           <button type="button" className="primary" disabled={busy} onClick={event => {
             if (event.detail > 1) return
             void runAction(async () => {
-            const result = await serveNext(serviceId)
+            const result = await serveNext(serviceId, entries[0].id, entries[0].status)
             return [result.served ? `Served ${result.served.userName}.` : '', result.nowServing ? `Now serving ${result.nowServing.userName}.` : 'The queue is now empty.'].filter(Boolean).join(' ')
             })
           }}>{busy ? 'Updating…' : entries.some(entry => entry.status === 'serving') ? 'Finish and call next' : 'Call next'}</button>
