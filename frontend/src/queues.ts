@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from './api.ts'
 import { useAuth } from './auth/AuthContext.ts'
-import type { QueueEntry, Service } from './types.ts'
+import type { Priority, QueueEntry, Service } from './types.ts'
 
 export type QueueView = QueueEntry & { position: number; estimatedWait: number }
 export type ServiceSummary = Service & { queueLength: number; estimatedWait: number }
@@ -115,4 +115,10 @@ export function reorderQueueEntry(serviceId: string, entryId: string, direction:
     `/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/reorder`,
     { method: 'POST', body: { direction } },
   )
+}
+
+export function setQueuePriority(serviceId: string, entryId: string, priority: Priority) {
+  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/priority`, {
+    method: 'POST', body: { priority },
+  })
 }

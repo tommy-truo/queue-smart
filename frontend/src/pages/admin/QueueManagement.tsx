@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
+import type { Priority } from '../../types.ts'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
 import { formatTime } from '../../format.ts'
 import StatusBadge from '../../components/StatusBadge.tsx'
-import { removeFromQueue, reorderQueueEntry, requeue, serveNext, useQueues, type QueueView } from '../../queues.ts'
+import { removeFromQueue, reorderQueueEntry, requeue, serveNext, setQueuePriority, useQueues, type QueueView } from '../../queues.ts'
 
 type PendingReorder = { entry: QueueView; direction: 'up' | 'down' }
 
@@ -108,7 +109,17 @@ export default function QueueManagement() {
                   {entry.status === 'serving' ? (
                     <button type="button" disabled={busy} onClick={() => setRequeuing(entry)}>Put back in line</button>
                   ) : null}{' '}
-
+                  {entry.status !== 'serving' ? <label>Priority for {entry.userName}{' '}
+                    <select aria-label={`Priority for ${entry.userName}`} value={entry.priority} disabled={busy} onChange={event => {
+                      const priority = event.target.value as Priority
+                      void runAction(async () => {
+                        await setQueuePriority(entry.serviceId, entry.id, priority)
+                        return `Updated ${entry.userName}'s priority to ${priority}.`
+                      })
+                    }}>
+                      <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
+                    </select>
+                  </label> : null}{' '}
                   <button type="button" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
                 </td>
               </tr>

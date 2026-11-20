@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import type { Priority } from '../../types.ts'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
-import { removeFromQueue, requeue, serveNext, useQueues, type QueueView } from '../../queues.ts'
+import { removeFromQueue, requeue, serveNext, setQueuePriority, useQueues, type QueueView } from '../../queues.ts'
 import { waitSince } from './formatWait.ts'
 import './employeeQueue.css'
 
@@ -83,7 +84,17 @@ export default function EmployeeQueue() {
             <span className="employee-queue__position">{index + 1}.</span>
             <span className="employee-queue__serving-name">{entry.userName}</span>
             <span className="employee-queue__wait">{waitSince(entry.joinedAt, nowMs)}</span>
-
+            {entry.status !== 'serving' ? <label>Priority for {entry.userName}{' '}
+                    <select aria-label={`Priority for ${entry.userName}`} value={entry.priority} disabled={busy} onChange={event => {
+                      const priority = event.target.value as Priority
+                      void runAction(async () => {
+                        await setQueuePriority(entry.serviceId, entry.id, priority)
+                        return `Updated ${entry.userName}'s priority to ${priority}.`
+                      })
+                    }}>
+                      <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
+                    </select>
+                  </label> : null}{' '}
                   <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
           </li>
         ))}</ul>
