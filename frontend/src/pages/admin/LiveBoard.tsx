@@ -62,6 +62,13 @@ export default function LiveBoard() {
       <div className="live-board__head">
         <h2 id="live-board-title">Live queues</h2>
         <span className="live-board__live">Live</span>
+        <span className="live-board__info">
+          <button type="button" aria-label="What the timer colours mean" aria-describedby="live-board-legend">i</button>
+          <span id="live-board-legend" role="tooltip" className="live-board__legend">
+            <span className="live-board__key live-board__key--long">Waited 2× the service time</span>
+            <span className="live-board__key live-board__key--very-long">Waited 3× the service time</span>
+          </span>
+        </span>
         <span className="live-board__nav">
           <button type="button" aria-label="Previous queues" onClick={() => scroll(-1)}>‹</button>
           <button type="button" aria-label="More queues" onClick={() => scroll(1)}>›</button>
@@ -106,14 +113,6 @@ export default function LiveBoard() {
             </div>
           ))}
         </div>
-      ) : null}
-
-      {queues && queues.length > 0 ? (
-        <p className="live-board__legend">
-          Time waiting, or time with staff for whoever is being served.
-          <span className="live-board__key live-board__key--long">2× service time</span>
-          <span className="live-board__key live-board__key--very-long">3× service time</span>
-        </p>
       ) : null}
     </section>
   )
