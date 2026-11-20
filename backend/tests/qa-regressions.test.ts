@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDb, resetDatabase } from '../src/db.ts'
 import { findUserById } from '../src/modules/auth.ts'
-import { assignPriority, getQueue, joinQueue, reorder } from '../src/modules/queue.ts'
-import { createService, getService, updateService } from '../src/modules/services.ts'
+import { assignPriority, getQueue, joinQueue, leaveQueue, removeFromQueue, reorder, requeue, serveNext } from '../src/modules/queue.ts'
+import { createService, getService, listServices, updateService } from '../src/modules/services.ts'
 import { parseFilters, participationReport, serviceActivityReport, toCsv } from '../src/modules/reports.ts'
 import { validate } from '../src/validation.ts'
 
@@ -84,3 +84,50 @@ function rejectWrites(table: string): () => void {
   getDb().exec(`CREATE TEMP TRIGGER fail_qa BEFORE INSERT ON ${table} BEGIN SELECT RAISE(ABORT, 'injected QA failure'); END`)
   return () => getDb().exec('DROP TRIGGER fail_qa')
 }
+
+describe('atomic multi-table changes', () => {
+  it('rolls back a service when its queue cannot be created', () => {
+    const cleanup = rejectWrites('Queue')
+    try {
+      expect(() => createService({ name: 'Failed service', description: 'Test', expectedDuration: 10, priority: 'medium' })).toThrow(/injected QA failure/)
+      expect(listServices()).toHaveLength(4)
+    } finally { cleanup() }
+  })
+
+  it.each(['join', 'remove', 'requeue', 'serve', 'priority', 'reorder'])('rolls back %s when notification insertion fails', operation => {
+    const before = getQueue(operation === 'join' ? 's3' : 's1')
+    const historyBefore = getDb().prepare('SELECT * FROM History').all()
+    const cleanup = rejectWrites('Notification')
+    try {
+      const actions: Record<string, () => unknown> = {
+        join: () => joinQueue(findUserById('u1')!, 's3', {}),
+        remove: () => removeFromQueue('s1', 'q2'),
+        requeue: () => requeue('s1'),
+        serve: () => serveNext('s1'),
+        priority: () => assignPriority('s1', 'q3', { priority: 'high' }),
+        reorder: () => reorder('s1', 'q3', { direction: 'up' }),
+      }
+      expect(actions[operation]).toThrow(/injected QA failure/)
+      expect(getQueue(operation === 'join' ? 's3' : 's1')).toEqual(before)
+      expect(getDb().prepare('SELECT * FROM History').all()).toEqual(historyBefore)
+    } finally { cleanup() }
+  })
+
+  it('rolls back leaving when history insertion fails', () => {
+    const before = getQueue('s1')
+    const cleanup = rejectWrites('History')
+    try {
+      expect(() => leaveQueue(findUserById('u1')!, 's1')).toThrow(/injected QA failure/)
+      expect(getQueue('s1')).toEqual(before)
+    } finally { cleanup() }
+  })
+
+  it('rolls back service fields when updating queue status fails', () => {
+    getDb().exec("CREATE TEMP TRIGGER fail_qa BEFORE UPDATE ON Queue BEGIN SELECT RAISE(ABORT, 'injected QA failure'); END")
+    const before = getService('s1')
+    try {
+      expect(() => updateService('s1', { name: 'Should roll back', open: false })).toThrow(/injected QA failure/)
+      expect(getService('s1')).toEqual(before)
+    } finally { getDb().exec('DROP TRIGGER fail_qa') }
+  })
+})
