@@ -33,7 +33,7 @@ export default function WaitByHourChart({ query }: { query: string }) {
   }, [query])
 
   const max = Math.max(1, ...rows.map(r => r.averageWait))
-  const peak = rows.find(r => r.averageWait === max)
+  const peak = rows.reduce<Row | undefined>((best, row) => !best || row.averageWait > best.averageWait ? row : best, undefined)
   const step = tickStep(max)
   const top = Math.ceil(max / step) * step
   const ticks = Array.from({ length: top / step + 1 }, (_, i) => i * step)

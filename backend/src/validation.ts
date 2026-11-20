@@ -4,6 +4,8 @@ import type { FieldErrors } from './errors.ts'
 type Rule = {
   type: 'string' | 'number' | 'boolean'
   required?: boolean
+  /** Passwords use their raw length; other text fields are trimmed. */
+  trim?: boolean
   /** Min/max length for strings, min/max value for numbers. */
   min?: number
   max?: number
@@ -18,7 +20,7 @@ export type Schema = Record<string, Rule>
 function checkField(field: string, value: unknown, rule: Rule): string | undefined {
   if (rule.type === 'string') {
     if (typeof value !== 'string') return `${field} must be a string.`
-    const length = value.trim().length
+    const length = rule.trim === false ? value.length : value.trim().length
     if (rule.required && length === 0) return `${field} is required.`
     if (rule.min !== undefined && length < rule.min) return `${field} must be at least ${rule.min} characters.`
     if (rule.max !== undefined && length > rule.max) return `${field} must be at most ${rule.max} characters.`
@@ -42,11 +44,14 @@ function checkField(field: string, value: unknown, rule: Rule): string | undefin
  */
 export function validate(body: unknown, schema: Schema, partial = false): FieldErrors {
   const errors: FieldErrors = {}
-  const data = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return { body: 'Request body must be an object.' }
+  }
+  const data = body as Record<string, unknown>
 
   for (const [field, rule] of Object.entries(schema)) {
     const value = data[field]
-    if (value === undefined || value === null) {
+    if (value === undefined) {
       if (rule.required && !partial) errors[field] = `${field} is required.`
       continue
     }

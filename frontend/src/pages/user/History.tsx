@@ -67,14 +67,14 @@ function HistoryList() {
       <table>
         <thead>
           <tr>
-          <th className="sortable" aria-sort={sortConfig.key === 'serviceName' ? sortConfig.direction : 'none'} onClick={() => handleSort('serviceName')}>
-            Service {sortConfig.key === 'serviceName' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
+          <th className="sortable" aria-sort={sortConfig.key === 'serviceName' ? sortConfig.direction : 'none'}>
+            <button type="button" onClick={() => handleSort('serviceName')}>Service {sortConfig.key === 'serviceName' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}</button>
           </th>
-          <th className="sortable" aria-sort={sortConfig.key === 'date' ? sortConfig.direction : 'none'} onClick={() => handleSort('date')}>
-            Date {sortConfig.key === 'date' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
+          <th className="sortable" aria-sort={sortConfig.key === 'date' ? sortConfig.direction : 'none'}>
+            <button type="button" onClick={() => handleSort('date')}>Date {sortConfig.key === 'date' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}</button>
           </th>
-          <th className="sortable" aria-sort={sortConfig.key === 'outcome' ? sortConfig.direction : 'none'} onClick={() => handleSort('outcome')}>
-            Outcome {sortConfig.key === 'outcome' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}
+          <th className="sortable" aria-sort={sortConfig.key === 'outcome' ? sortConfig.direction : 'none'}>
+            <button type="button" onClick={() => handleSort('outcome')}>Outcome {sortConfig.key === 'outcome' ? (sortConfig.direction === 'ascending' ? '↑' : '↓'):'↕'}</button>
           </th>
           </tr>
         </thead>

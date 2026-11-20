@@ -1,5 +1,6 @@
 import { HttpError } from '../errors.ts'
 import { getDb } from '../db.ts'
+import { transaction } from '../transaction.ts'
 import { hashPassword, verifyPassword } from '../password.ts'
 import { nextId } from '../util.ts'
 import type { Role, User } from '../types.ts'
@@ -34,13 +35,13 @@ function checkPhone(phone: string) {
 export const registerSchema: Schema = {
   fullName: { type: 'string', required: true, max: 50, check: checkName },
   email: { type: 'string', required: true, max: 254, check: checkEmail },
-  password: { type: 'string', required: true, min: 8, max: 64, check: checkPassword },
+  password: { type: 'string', required: true, trim: false, min: 8, max: 64, check: checkPassword },
   phone: { type: 'string', required: false, min: 10, max: 17, check: checkPhone},
 }
 
 export const loginSchema: Schema = {
   email: { type: 'string', required: true, max: 254 },
-  password: { type: 'string', required: true, max: 64 },
+  password: { type: 'string', required: true, trim: false, max: 64 },
 }
 
 function normalizeEmail(email: string): string {
@@ -62,7 +63,7 @@ export function findUserById(id: string): User | undefined {
   return row && toUser(row)
 }
 
-export function register(body: unknown): User {
+function registerAccount(body: unknown): User {
   assertValid(body, registerSchema)
   const { fullName, email, password, phone } = body as { fullName: string; email: string; password: string; phone?: string }
 
@@ -98,4 +99,8 @@ export function login(body: unknown): User {
     throw new HttpError(401, 'Invalid email or password.')
   }
   return toUser(row)
+}
+
+export function register(body: unknown): User {
+  return transaction(() => registerAccount(body))
 }

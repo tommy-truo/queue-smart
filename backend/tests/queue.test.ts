@@ -3,11 +3,16 @@ import { getDb, resetDatabase } from '../src/db.ts'
 import { findUserById } from '../src/modules/auth.ts'
 import { listHistory } from '../src/modules/history.ts'
 import { listNotifications } from '../src/modules/notifications.ts'
-import { getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, reorder, requeue, serveNext } from '../src/modules/queue.ts'
+import { assignPriority, getQueue, joinQueue, leaveQueue, myQueues, queueSummary, removeFromQueue, reorder, requeue, serveNext } from '../src/modules/queue.ts'
 import { getService } from '../src/modules/services.ts'
 import { estimateWait } from '../src/modules/waitTime.ts'
 
 const user = (id: string) => findUserById(id)!
+
+function joinWithPriority(account: ReturnType<typeof user>, serviceId: string, body: {priority: 'high' | 'low'}) {
+  const entry = joinQueue(account, serviceId, {})
+  return assignPriority(serviceId, entry.id, body)
+}
 
 beforeEach(() => {
   resetDatabase()
@@ -49,19 +54,19 @@ describe('joinQueue', () => {
   })
 
   it('orders higher priority ahead of earlier arrivals', () => {
-    const entry = joinQueue(user('u1'), 's3', { priority: 'high' })
+    const entry = joinWithPriority(user('u1'), 's3', { priority: 'high' })
     expect(entry.position).toBe(1)
     expect(getQueue('s3').map((e) => e.userName)).toEqual(['Alex Kim', 'Morgan Diaz', 'Casey Wong'])
   })
 
   it('never jumps ahead of the person being served', () => {
-    joinQueue(user('u4'), 's1', { priority: 'high' })
+    joinWithPriority(user('u4'), 's1', { priority: 'high' })
     expect(getQueue('s1')[0].userName).toBe('Jordan Lee')
     expect(getQueue('s1')[1].userName).toBe('Riley Chen')
   })
 
   it('moves someone pushed back by priority from almost ready to waiting', () => {
-    joinQueue(user('u1'), 's3', { priority: 'high' })
+    joinWithPriority(user('u1'), 's3', { priority: 'high' })
     const morgan = getQueue('s3').find((e) => e.userName === 'Morgan Diaz')!
     expect(morgan.status).toBe('waiting')
   })
@@ -153,7 +158,7 @@ describe('requeue', () => {
   })
 
   it('keeps a higher priority ahead and sends the requeued person behind their own group', () => {
-    joinQueue(user('u4'), 's1', { priority: 'high' })
+    joinWithPriority(user('u4'), 's1', { priority: 'high' })
     requeue('s1')
     expect(getQueue('s1').map((entry) => entry.userName)).toEqual(['Riley Chen', 'Sam Patel', 'Alex Kim', 'Jordan Lee'])
   })
@@ -167,7 +172,7 @@ describe('requeue', () => {
   })
 
   it('notifies them again when they land at the front, and serve next calls them before a lower priority', () => {
-    joinQueue(user('u1'), 's2', { priority: 'low' })
+    joinWithPriority(user('u1'), 's2', { priority: 'low' })
     serveNext('s2')
     const moved = requeue('s2')
     expect(moved).toMatchObject({ userName: 'Riley Chen', position: 1, status: 'almost-ready' })
@@ -203,7 +208,7 @@ describe('reorder', () => {
   })
 
   it('keeps a cross-priority move on the next read', () => {
-    joinQueue(user('u4'), 's1', { priority: 'high' })
+    joinWithPriority(user('u4'), 's1', { priority: 'high' })
     reorder('s1', 'q2', { direction: 'up' })
     expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Sam Patel', 'Riley Chen', 'Alex Kim'])
     expect(getQueue('s1').map((e) => e.userName)).toEqual(['Jordan Lee', 'Sam Patel', 'Riley Chen', 'Alex Kim'])
@@ -228,9 +233,9 @@ describe('reorder', () => {
   })
 
   it('slots a new join by priority without undoing manual order', () => {
-    joinQueue(user('u4'), 's1', { priority: 'high' })
+    joinWithPriority(user('u4'), 's1', { priority: 'high' })
     reorder('s1', 'q2', { direction: 'up' })
-    joinQueue(user('u5'), 's1', { priority: 'high' })
+    joinWithPriority(user('u5'), 's1', { priority: 'high' })
     expect(getQueue('s1').map((e) => e.userName)).toEqual([
       'Jordan Lee',
       'Morgan Diaz',
@@ -297,7 +302,7 @@ describe('database storage', () => {
       .map((row) => ({ ...row }))
 
   it('stores positions that stay in line order as people join and leave', () => {
-    joinQueue(user('u4'), 's1', { priority: 'high' })
+    joinWithPriority(user('u4'), 's1', { priority: 'high' })
     leaveQueue(user('u3'), 's1')
     const active = rows().filter((row) => row.status === 'waiting')
     expect(active.map((row) => row.position)).toEqual([1, 2, 3])

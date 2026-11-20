@@ -1,4 +1,5 @@
 import { getDb } from '../db.ts'
+import { transaction } from '../transaction.ts'
 import { HttpError } from '../errors.ts'
 import { localTimestamp, nextId } from '../util.ts'
 import type { Priority, Service } from '../types.ts'
@@ -58,57 +59,61 @@ export function getService(id: string): Service {
 }
 
 export function createService(body: unknown): Service {
-  assertValid(body, serviceSchema)
-  const input = body as Omit<Service, 'id' | 'open'> & { open?: boolean }
+  return transaction(() => {
+    assertValid(body, serviceSchema)
+    const input = body as Omit<Service, 'id' | 'open'> & { open?: boolean }
 
-  const service: Service = {
-    id: nextId('s'),
-    name: input.name.trim(),
-    description: input.description.trim(),
-    expectedDuration: input.expectedDuration,
-    priority: input.priority,
-    notification: input.notification?.trim(),
-    open: input.open ?? true,
-  }
-  assertNameFree(service.name)
-  const db = getDb()
-  db.prepare(
-    'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification) VALUES (?, ?, ?, ?, ?, ?)',
-  ).run(
-    service.id,
-    service.name,
-    service.description,
-    service.expectedDuration,
-    service.priority,
-    service.notification ?? null,
-  )
-  // Every service gets its own queue.
-  db.prepare('INSERT INTO Queue (queueId, serviceId, status, createdAt) VALUES (?, ?, ?, ?)').run(
-    nextId('qu'),
-    service.id,
-    service.open ? 'open' : 'closed',
-    localTimestamp(),
-  )
-  return service
+    const service: Service = {
+      id: nextId('s'),
+      name: input.name.trim(),
+      description: input.description.trim(),
+      expectedDuration: input.expectedDuration,
+      priority: input.priority,
+      notification: input.notification?.trim(),
+      open: input.open ?? true,
+    }
+    assertNameFree(service.name)
+    const db = getDb()
+    db.prepare(
+      'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification) VALUES (?, ?, ?, ?, ?, ?)',
+    ).run(
+      service.id,
+      service.name,
+      service.description,
+      service.expectedDuration,
+      service.priority,
+      service.notification ?? null,
+    )
+    // Every service gets its own queue.
+    db.prepare('INSERT INTO Queue (queueId, serviceId, status, createdAt) VALUES (?, ?, ?, ?)').run(
+      nextId('qu'),
+      service.id,
+      service.open ? 'open' : 'closed',
+      localTimestamp(),
+    )
+    return service
+  })
 }
 
 export function updateService(id: string, body: unknown): Service {
-  const service = getService(id)
-  assertValid(body, serviceSchema, true)
-  const input = body as Partial<Service>
+  return transaction(() => {
+    const service = getService(id)
+    assertValid(body, serviceSchema, true)
+    const input = body as Partial<Service>
 
-  if (input.name !== undefined) service.name = input.name.trim()
-  if (input.description !== undefined) service.description = input.description.trim()
-  if (input.expectedDuration !== undefined) service.expectedDuration = input.expectedDuration
-  if (input.priority !== undefined) service.priority = input.priority
-  if (input.notification !== undefined) service.notification = input.notification.trim()
-  if (input.open !== undefined) service.open = input.open
+    if (input.name !== undefined) service.name = input.name.trim()
+    if (input.description !== undefined) service.description = input.description.trim()
+    if (input.expectedDuration !== undefined) service.expectedDuration = input.expectedDuration
+    if (input.priority !== undefined) service.priority = input.priority
+    if (input.notification !== undefined) service.notification = input.notification.trim()
+    if (input.open !== undefined) service.open = input.open
 
-  assertNameFree(service.name, id)
-  const db = getDb()
-  db.prepare(
-    'UPDATE Service SET name = ?, description = ?, expectedDuration = ?, priority = ?, notification = ? WHERE serviceId = ?',
-  ).run(service.name, service.description, service.expectedDuration, service.priority, service.notification ?? null, id)
-  db.prepare('UPDATE Queue SET status = ? WHERE serviceId = ?').run(service.open ? 'open' : 'closed', id)
-  return service
+    assertNameFree(service.name, id)
+    const db = getDb()
+    db.prepare(
+      'UPDATE Service SET name = ?, description = ?, expectedDuration = ?, priority = ?, notification = ? WHERE serviceId = ?',
+    ).run(service.name, service.description, service.expectedDuration, service.priority, service.notification ?? null, id)
+    db.prepare('UPDATE Queue SET status = ? WHERE serviceId = ?').run(service.open ? 'open' : 'closed', id)
+    return service
+  })
 }

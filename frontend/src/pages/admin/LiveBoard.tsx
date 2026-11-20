@@ -39,14 +39,20 @@ export default function LiveBoard() {
 
   useEffect(() => {
     let active = true
-    const load = () =>
-      api<OpenQueue[]>('/queues')
-        .then(data => { if (active) { setQueues(data); setError('') } })
-        .catch(e => { if (active) setError(e instanceof Error ? e.message : 'Could not load the live queues.') })
-    load()
+    let request: AbortController | undefined
+    const load = () => {
+      request?.abort()
+      const controller = new AbortController()
+      request = controller
+      return api<OpenQueue[]>('/queues', { signal: controller.signal })
+        .then(data => { if (active && !controller.signal.aborted) { setQueues(data); setError('') } })
+        .catch(e => { if (active && !controller.signal.aborted) setError(e instanceof Error ? e.message : 'Could not load the live queues.') })
+    }
+    void load()
     const refresh = setInterval(load, REFRESH_MS)
     const tick = setInterval(() => setNow(Date.now()), 1000)
-    return () => { active = false; clearInterval(refresh); clearInterval(tick) }
+    window.addEventListener('focus', load)
+    return () => { active = false; request?.abort(); clearInterval(refresh); clearInterval(tick); window.removeEventListener('focus', load) }
   }, [])
 
   const seconds = (since: string) => (now - new Date(since).getTime()) / 1000

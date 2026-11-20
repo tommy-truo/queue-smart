@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { useAuth, type Role } from '../auth/AuthContext.ts'
 
@@ -28,9 +29,15 @@ export default function Layout() {
   const { role, logout } = useAuth()
   const navigate = useNavigate()
 
-  function handleLogout() {
-    logout()
-    navigate('/login')
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+  async function handleLogout() {
+    if (loggingOut) return
+    setLoggingOut(true)
+    setLogoutError('')
+    try { await logout(); navigate('/login') }
+    catch (error) { setLogoutError(error instanceof Error ? error.message : 'Could not log out.') }
+    finally { setLoggingOut(false) }
   }
 
   return (
@@ -45,12 +52,13 @@ export default function Layout() {
           ))}
         </nav>
         {role ? (
-          <button type="button" onClick={handleLogout}>
+          <button type="button" disabled={loggingOut} onClick={() => void handleLogout()}>
             Log out
           </button>
         ) : null}
       </header>
       <main>
+        {logoutError && <p role="alert">{logoutError}</p>}
         <Outlet />
       </main>
     </>

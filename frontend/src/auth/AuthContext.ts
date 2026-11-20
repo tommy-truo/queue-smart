@@ -37,7 +37,7 @@ type AuthContextValue = {
   user: SessionUser | null
   login: (email: string, password: string) => Promise<LoginResult>
   register: (input: RegisterInput) => Promise<RegisterResult>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

@@ -39,6 +39,14 @@ describe('register', () => {
     }
   })
 
+  it('measures password length without trimming significant spaces', () => {
+    const account = { ...valid, password: ' Abc123 ' }
+    const user = register(account)
+    expect(login(account).id).toBe(user.id)
+    expect(() => login({ ...account, password: account.password.trim() })).toThrow(/Invalid email or password/)
+    expect(() => register({ ...valid, email: 'long@example.com', password: ' '.repeat(64) + 'Abc12345' })).toThrow('Invalid input')
+  })
+
   it('validates the name', () => {
     expect(() => register({ ...valid, fullName: '1234' })).toThrow('Invalid input')
     expect(() => register({ ...valid, fullName: 'a'.repeat(51) })).toThrow('Invalid input')

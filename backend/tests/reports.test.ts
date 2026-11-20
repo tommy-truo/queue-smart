@@ -1,3 +1,4 @@
+import { cookieFor } from './sessionHelper.ts'
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp } from '../src/app.ts'
@@ -74,17 +75,17 @@ describe('csv', () => {
 
 describe('report routes', () => {
   it('are admin only', async () => {
-    expect((await request(app).get('/api/reports/services').set('x-user-id', 'u1')).status).toBe(403)
+    expect((await request(app).get('/api/reports/services').set('Cookie', await cookieFor(app, 'u1'))).status).toBe(403)
   })
 
   it('return JSON by default', async () => {
-    const res = await request(app).get('/api/reports/services').set('x-user-id', 'a1')
+    const res = await request(app).get('/api/reports/services').set('Cookie', await cookieFor(app, 'a1'))
     expect(res.status).toBe(200)
     expect(res.body.length).toBeGreaterThan(0)
   })
 
   it('download CSV on request', async () => {
-    const res = await request(app).get('/api/reports/participation?format=csv&serviceId=s1').set('x-user-id', 'a1')
+    const res = await request(app).get('/api/reports/participation?format=csv&serviceId=s1').set('Cookie', await cookieFor(app, 'a1'))
     expect(res.status).toBe(200)
     expect(res.headers['content-type']).toMatch(/text\/csv/)
     expect(res.headers['content-disposition']).toMatch(/participation\.csv/)
@@ -92,21 +93,21 @@ describe('report routes', () => {
   })
 
   it('add the wait-by-hour numbers to the service activity CSV', async () => {
-    const res = await request(app).get('/api/reports/services?format=csv').set('x-user-id', 'a1')
+    const res = await request(app).get('/api/reports/services?format=csv').set('Cookie', await cookieFor(app, 'a1'))
     const sections = res.text.split('\n\n')
     expect(sections).toHaveLength(2)
     expect(sections[0].split('\n')[0]).toMatch(/^Service,/)
-    expect(sections[1].split('\n').slice(0, 3)).toEqual(['Average wait by time of day', 'Hour (0-23),Visits served,Average wait (min)', '9,1,20'])
+    expect(sections[1].split('\n').slice(0, 3)).toEqual(['Average wait by time of day', 'Hour (0-23),Visits called,Average wait (min)', '9,1,20'])
   })
 
   it('serve the wait-by-hour chart data', async () => {
-    const res = await request(app).get('/api/reports/wait-by-hour').set('x-user-id', 'a1')
+    const res = await request(app).get('/api/reports/wait-by-hour').set('Cookie', await cookieFor(app, 'a1'))
     expect(res.status).toBe(200)
     expect(res.body[0]).toEqual({ hour: 9, visits: 1, averageWait: 20 })
   })
 
   it('return 404 for an unknown service', async () => {
-    const res = await request(app).get('/api/reports/services?serviceId=nope').set('x-user-id', 'a1')
+    const res = await request(app).get('/api/reports/services?serviceId=nope').set('Cookie', await cookieFor(app, 'a1'))
     expect(res.status).toBe(404)
   })
 })

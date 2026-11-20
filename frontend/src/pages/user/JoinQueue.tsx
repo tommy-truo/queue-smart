@@ -26,6 +26,7 @@ export default function JoinQueue() {
   return (
     <div className="page">
       <h1>Join queue</h1>
+      <button type="button" disabled={busy} onClick={refresh}>Refresh</button>
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
       {services.length === 0 ? <p>No services available.</p> : <p>Choose a service to see its current wait and join the line.</p>}

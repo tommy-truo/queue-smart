@@ -13,7 +13,7 @@ type FormValues = {
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
 
-const emptyForm: FormValues = { name: '', description: '', expectedDuration: '', priority: 'medium' }
+const emptyForm: FormValues = { name: '', description: '', expectedDuration: '', priority: 'medium', notification: '' }
 
 const NAME_MAX = 100
 const DESCRIPTION_MAX = 500
@@ -76,7 +76,7 @@ export default function ServiceManagement() {
       description: service.description,
       expectedDuration: String(service.expectedDuration),
       priority: service.priority,
-      notification: service.notification
+      notification: service.notification ?? ''
     })
     setErrors({})
     setMessage('')
@@ -253,7 +253,7 @@ export default function ServiceManagement() {
             maxLength={DESCRIPTION_MAX}
             disabled={saving}
             cols={40}
-            value={values.notification}
+            value={values.notification ?? ''}
             onChange={(e) => update('notification', e.target.value)}
           />
           {errors.notification ? (

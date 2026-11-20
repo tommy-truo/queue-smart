@@ -20,7 +20,7 @@ function rowToHistory(row: HistoryRow): HistoryEntry {
   }
 }
 
-export function recordHistory(userId: string, serviceName: string, outcome: Outcome): HistoryEntry {
+export function recordHistory(userId: string, serviceName: string, outcome: Outcome, serviceId?: string): HistoryEntry {
   const entry: HistoryEntry = {
     id: nextId('h'),
     userId,
@@ -29,8 +29,8 @@ export function recordHistory(userId: string, serviceName: string, outcome: Outc
     outcome,
   }
   getDb()
-    .prepare('INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)')
-    .run(entry.id, entry.userId, entry.serviceName, entry.date, entry.outcome)
+    .prepare('INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome, serviceId) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(entry.id, entry.userId, entry.serviceName, entry.date, entry.outcome, serviceId ?? null)
   return entry
 }
 

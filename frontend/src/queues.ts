@@ -1,70 +1,92 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from './api.ts'
 import { useAuth } from './auth/AuthContext.ts'
-import type { QueueEntry, Service } from './types.ts'
+import type { Priority, QueueEntry, Service } from './types.ts'
 
-/** position is 1-based in line, or 0 while being served. estimatedWait is in minutes. */
 export type QueueView = QueueEntry & { position: number; estimatedWait: number }
 export type ServiceSummary = Service & { queueLength: number; estimatedWait: number }
-type QueueData = { key: string; services: ServiceSummary[]; entries: QueueView[]; error: string }
+type QueueData = { key: string; services: ServiceSummary[]; entries: QueueView[]; serviceId: string }
 
-/** Loads services plus one service's queue (staff), or the user's own entries when no service is given. */
+/** An empty service ID selects the first available staff queue; undefined loads the customer's queues. */
 export function useQueues(serviceId?: string) {
   const { user } = useAuth()
   const key = `${user?.id ?? 'guest'}:${serviceId ?? 'mine'}`
-  const generation = useRef(0)
+  const currentKey = useRef(key)
+  useEffect(() => { currentKey.current = key }, [key])
   const [data, setData] = useState<QueueData | null>(null)
+  const [failure, setFailure] = useState({ key: '', message: '' })
   const [revision, setRevision] = useState(0)
   const [busy, setBusy] = useState(false)
   const pending = useRef(false)
+  const request = useRef<AbortController | null>(null)
   const [feedback, setFeedback] = useState({ key: '', message: '', error: '' })
 
   useEffect(() => {
-    generation.current += 1
     let active = true
-    const path = serviceId ? `/queues/${encodeURIComponent(serviceId)}` : '/queues/mine'
-    Promise.all([api<ServiceSummary[]>('/services'), api<QueueView[]>(path)])
-      .then(([services, entries]) => {
-        if (active) setData({ key, services, entries, error: '' })
-      })
-      .catch(error => {
-        if (active) setData({ key, services: [], entries: [], error: error instanceof Error ? error.message : 'Could not load queues.' })
-      })
-    return () => { active = false; generation.current += 1 }
+    let sequence = 0
+    async function load() {
+      if (pending.current) return
+      const number = ++sequence
+      request.current?.abort()
+      const controller = new AbortController()
+      request.current = controller
+      try {
+        const services = await api<ServiceSummary[]>('/services', { signal: controller.signal })
+        const selected = serviceId === undefined ? '' : services.find(s => s.id === serviceId)?.id ?? services[0]?.id ?? ''
+        const entries = serviceId !== undefined && !selected ? [] : await api<QueueView[]>(
+          serviceId === undefined ? '/queues/mine' : `/queues/${encodeURIComponent(selected)}`,
+          { signal: controller.signal },
+        )
+        if (active && number === sequence && !controller.signal.aborted) {
+          setData({ key, services, entries, serviceId: selected })
+          setFailure({ key, message: '' })
+        }
+      } catch (error) {
+        if (active && number === sequence && !controller.signal.aborted && !(error instanceof DOMException && error.name === 'AbortError')) {
+          setFailure({ key, message: error instanceof Error ? error.message : 'Could not load queues.' })
+        }
+      }
+    }
+    void load()
+    const timer = window.setInterval(() => { void load() }, 5000)
+    const onFocus = () => { void load() }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      active = false
+      request.current?.abort()
+      window.clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
+    }
   }, [key, serviceId, revision])
 
-  function refresh() {
-    setData(null)
-    setRevision(value => value + 1)
-  }
+  function refresh() { setRevision(value => value + 1) }
 
   async function runAction(action: () => Promise<string>) {
-    // Guard synchronously: two rapid serve clicks must never serve two people.
     if (pending.current) return
-    const actionGeneration = generation.current
+    const actionKey = key
     pending.current = true
+    request.current?.abort()
     setBusy(true)
     setFeedback({ key, message: '', error: '' })
     try {
       const result = await action()
-      if (generation.current === actionGeneration) {
-        setFeedback({ key, message: result, error: '' })
-        refresh()
-      }
+      if (currentKey.current === actionKey) setFeedback({ key, message: result, error: '' })
     } catch (error) {
-      if (generation.current === actionGeneration) setFeedback({ key, message: '', error: error instanceof Error ? error.message : 'Could not update the queue.' })
+      if (currentKey.current === actionKey) setFeedback({ key, message: '', error: error instanceof Error ? error.message : 'Could not update the queue.' })
     } finally {
       pending.current = false
       setBusy(false)
+      if (currentKey.current === actionKey) refresh()
     }
   }
 
   const current = data?.key === key ? data : null
+  const loadError = failure.key === key ? failure.message : ''
   return {
-    services: current?.services ?? [], entries: current?.entries ?? [],
-    loading: current === null, error: current?.error ?? '',
+    services: current?.services ?? [], entries: current?.entries ?? [], selectedServiceId: current?.serviceId ?? '',
+    loading: current === null && !loadError, error: current === null ? loadError : '',
     busy, message: feedback.key === key ? feedback.message : '',
-    actionError: feedback.key === key ? feedback.error : '', refresh, runAction,
+    actionError: (feedback.key === key ? feedback.error : '') || loadError, refresh, runAction,
   }
 }
 
@@ -76,16 +98,16 @@ export function leaveQueue(id: string) {
   return api<QueueEntry>(`/queues/${encodeURIComponent(id)}/leave`, { method: 'POST' })
 }
 
-export function serveNext(id: string) {
-  return api<{ served?: QueueEntry; nowServing?: QueueEntry }>(`/queues/${encodeURIComponent(id)}/serve-next`, { method: 'POST' })
+export function serveNext(id: string, expectedEntryId: string, expectedStatus: QueueEntry['status']) {
+  return api<{ served?: QueueEntry; nowServing?: QueueEntry }>(`/queues/${encodeURIComponent(id)}/serve-next`, { method: 'POST', body: { expectedEntryId, expectedStatus } })
 }
 
 export function removeFromQueue(serviceId: string, entryId: string) {
   return api<QueueEntry>(`/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/remove`, { method: 'POST' })
 }
 
-export function requeue(serviceId: string) {
-  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/requeue`, { method: 'POST' })
+export function requeue(serviceId: string, expectedEntryId: string, expectedStatus: QueueEntry['status']) {
+  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/requeue`, { method: 'POST', body: { expectedEntryId, expectedStatus } })
 }
 
 export function reorderQueueEntry(serviceId: string, entryId: string, direction: 'up' | 'down') {
@@ -93,4 +115,10 @@ export function reorderQueueEntry(serviceId: string, entryId: string, direction:
     `/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/reorder`,
     { method: 'POST', body: { direction } },
   )
+}
+
+export function setQueuePriority(serviceId: string, entryId: string, priority: Priority) {
+  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/priority`, {
+    method: 'POST', body: { priority },
+  })
 }

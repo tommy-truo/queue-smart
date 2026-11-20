@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { currentUser, requireRole } from '../middleware.ts'
-import { getQueue, joinQueue, leaveQueue, myQueues, openQueues, removeFromQueue, reorder, requeue, serveNext } from '../modules/queue.ts'
+import { assignPriority, getQueue, joinQueue, leaveQueue, myQueues, openQueues, removeFromQueue, reorder, requeue, serveNext } from '../modules/queue.ts'
 
 export const queuesRouter = Router()
 
@@ -25,11 +25,11 @@ queuesRouter.post('/:serviceId/leave', requireRole('user'), (req, res) => {
 })
 
 queuesRouter.post('/:serviceId/serve-next', requireRole('admin', 'employee'), (req, res) => {
-  res.json(serveNext(String(req.params.serviceId)))
+  res.json(serveNext(String(req.params.serviceId), req.body))
 })
 
 queuesRouter.post('/:serviceId/requeue', requireRole('admin', 'employee'), (req, res) => {
-  res.json(requeue(String(req.params.serviceId)))
+  res.json(requeue(String(req.params.serviceId), req.body))
 })
 
 queuesRouter.post('/:serviceId/entries/:entryId/remove', requireRole('admin', 'employee'), (req, res) => {
@@ -38,4 +38,8 @@ queuesRouter.post('/:serviceId/entries/:entryId/remove', requireRole('admin', 'e
 
 queuesRouter.post('/:serviceId/entries/:entryId/reorder', requireRole('admin'), (req, res) => {
   res.json(reorder(String(req.params.serviceId), String(req.params.entryId), req.body))
+})
+
+queuesRouter.post('/:serviceId/entries/:entryId/priority', requireRole('admin', 'employee'), (req, res) => {
+  res.json(assignPriority(String(req.params.serviceId), String(req.params.entryId), req.body))
 })

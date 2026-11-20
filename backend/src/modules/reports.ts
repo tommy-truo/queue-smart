@@ -32,30 +32,44 @@ export type ServiceActivityRow = {
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
+function validCalendarDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00Z`)
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
 /** Reads from, to and serviceId out of a query string. */
 export function parseFilters(query: Record<string, unknown>): ReportFilters {
   const filters: ReportFilters = {}
   for (const key of ['from', 'to'] as const) {
     const value = query[key]
     if (value === undefined || value === '') continue
-    if (typeof value !== 'string' || !DATE.test(value)) throw new HttpError(400, `${key} must be a date like 2026-09-29.`)
+    if (typeof value !== 'string' || !DATE.test(value) || !validCalendarDate(value)) {
+      throw new HttpError(400, `${key} must be a date like 2026-09-29.`)
+    }
     filters[key] = value
   }
-  if (typeof query.serviceId === 'string' && query.serviceId) filters.serviceId = query.serviceId
+  if (query.serviceId !== undefined && query.serviceId !== '') {
+    if (typeof query.serviceId !== 'string') throw new HttpError(400, 'serviceId must be a single service ID.')
+    filters.serviceId = query.serviceId
+  }
+  if (filters.from && filters.to && filters.from > filters.to) {
+    throw new HttpError(400, 'from must be on or before to.')
+  }
   return filters
 }
 
 /** Every user's queue history, newest first. */
 export function participationReport(filters: ReportFilters): ParticipationRow[] {
-  const serviceName = filters.serviceId ? getService(filters.serviceId).name : null
+  if (filters.serviceId) getService(filters.serviceId)
+  const serviceId = filters.serviceId ?? null
   return getDb()
     .prepare(
       `SELECT p.fullName AS userName, p.email, h.serviceName, h.occurredOn AS date, h.outcome
        FROM History h JOIN UserProfile p ON p.userId = h.userId
-       WHERE (? IS NULL OR h.occurredOn >= ?) AND (? IS NULL OR h.occurredOn <= ?) AND (? IS NULL OR h.serviceName = ?)
+       WHERE (? IS NULL OR h.occurredOn >= ?) AND (? IS NULL OR h.occurredOn <= ?) AND (? IS NULL OR h.serviceId = ?)
        ORDER BY h.occurredOn DESC, p.fullName`,
     )
-    .all(filters.from ?? null, filters.from ?? null, filters.to ?? null, filters.to ?? null, serviceName, serviceName) as ParticipationRow[]
+    .all(filters.from ?? null, filters.from ?? null, filters.to ?? null, filters.to ?? null, serviceId, serviceId) as ParticipationRow[]
 }
 
 /** One row per service: its details, who is waiting now, outcomes, and the average actual wait. */
@@ -68,11 +82,11 @@ export function serviceActivityReport(filters: ReportFilters): ServiceActivityRo
     .prepare(
       `SELECT s.name AS serviceName, s.expectedDuration, s.priority, q.status AS queueStatus,
          (SELECT COUNT(*) FROM QueueEntry e WHERE e.queueId = q.queueId AND e.status = 'waiting') AS waitingNow,
-         (SELECT COUNT(*) FROM History h WHERE h.serviceName = s.name AND h.outcome = 'served'
+         (SELECT COUNT(*) FROM History h WHERE h.serviceId = s.serviceId AND h.outcome = 'served'
             AND (?1 IS NULL OR h.occurredOn >= ?1) AND (?2 IS NULL OR h.occurredOn <= ?2)) AS served,
-         (SELECT COUNT(*) FROM History h WHERE h.serviceName = s.name AND h.outcome = 'left'
+         (SELECT COUNT(*) FROM History h WHERE h.serviceId = s.serviceId AND h.outcome = 'left'
             AND (?1 IS NULL OR h.occurredOn >= ?1) AND (?2 IS NULL OR h.occurredOn <= ?2)) AS left,
-         (SELECT COUNT(*) FROM History h WHERE h.serviceName = s.name AND h.outcome = 'removed'
+         (SELECT COUNT(*) FROM History h WHERE h.serviceId = s.serviceId AND h.outcome = 'removed'
             AND (?1 IS NULL OR h.occurredOn >= ?1) AND (?2 IS NULL OR h.occurredOn <= ?2)) AS removed,
          (SELECT AVG((julianday(e.calledAt) - julianday(e.joinedAt)) * 1440) FROM QueueEntry e
             WHERE e.queueId = q.queueId AND e.calledAt IS NOT NULL
@@ -111,8 +125,10 @@ export function waitByHourReport(filters: ReportFilters): WaitByHourRow[] {
 }
 
 function csvCell(value: unknown): string {
-  const text = value === null || value === undefined ? '' : String(value)
-  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+  let text = value === null || value === undefined ? '' : String(value)
+  // Spreadsheet applications interpret these prefixes even inside quoted CSV cells.
+  if (typeof value === 'string' && /^[\s\u0000-\u001f]*[=+@-]|^[\t\r\n]/.test(value)) text = `'${text}`
+  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 
 /** A report column: the field in each row, and the heading shown in the file. */
@@ -150,6 +166,6 @@ export const SERVICE_ACTIVITY_COLUMNS: CsvColumn[] = [
 
 export const WAIT_BY_HOUR_COLUMNS: CsvColumn[] = [
   ['hour', 'Hour (0-23)'],
-  ['visits', 'Visits served'],
+  ['visits', 'Visits called'],
   ['averageWait', 'Average wait (min)'],
 ]

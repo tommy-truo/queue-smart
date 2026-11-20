@@ -24,6 +24,7 @@ export type QueueEntry = {
   userId: string
   userName: string
   status: QueueStatus
+  priority: Priority
   joinedAt: string
   /** Set when staff call the person up to be served. */
   calledAt?: string

@@ -1,7 +1,8 @@
-import { Navigate, Route, Routes } from 'react-router'
+import { Link, Navigate, Route, Routes } from 'react-router'
 import { homePath, useAuth } from './auth/AuthContext.ts'
 import RequireGuest from './auth/RequireGuest.tsx'
 import RequireRole from './auth/RequireRole.tsx'
+import ErrorBoundary from './components/ErrorBoundary.tsx'
 import Layout from './components/Layout.tsx'
 import Login from './pages/auth/Login.tsx'
 import Register from './pages/auth/Register.tsx'
@@ -22,6 +23,7 @@ function Home() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
@@ -47,7 +49,9 @@ export default function App() {
         <Route element={<RequireRole role="employee" />}>
           <Route path="/employee" element={<EmployeeQueue />} />
         </Route>
+        <Route path="*" element={<div className="page"><h1>Page not found</h1><p>This address does not exist. <Link to="/">Return to your dashboard</Link>.</p></div>} />
       </Route>
     </Routes>
+    </ErrorBoundary>
   )
 }

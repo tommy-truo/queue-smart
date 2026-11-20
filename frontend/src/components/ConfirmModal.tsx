@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 
 type Props = {
   open: boolean
@@ -17,6 +17,8 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: Props) {
+  const titleId = useId()
+  const messageId = useId()
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -29,6 +31,8 @@ export default function ConfirmModal({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
+      aria-describedby={messageId}
       className="confirm-modal"
       onCancel={(e) => {
         e.preventDefault()
@@ -38,8 +42,8 @@ export default function ConfirmModal({
         if (e.target === ref.current) onCancel()
       }}
     >
-      <h2 className="confirm-modal__title">{title}</h2>
-      <p className="confirm-modal__message">{message}</p>
+      <h2 id={titleId} className="confirm-modal__title">{title}</h2>
+      <p id={messageId} className="confirm-modal__message">{message}</p>
       <div className="confirm-modal__actions">
         <button type="button" className="confirm-modal__btn" onClick={onCancel}>
           Cancel
