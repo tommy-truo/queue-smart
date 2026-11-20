@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { REMINDER_CHECK_MS } from '../src/reminderWorker.ts'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtemp, rm } from 'node:fs/promises'
@@ -144,6 +145,7 @@ try {
     ['POST', '/queues/s1/serve-next', ['admin', 'employee']], ['POST', '/queues/s1/requeue', ['admin', 'employee']],
     ['POST', '/queues/s1/entries/q2/remove', ['admin', 'employee']], ['POST', '/queues/s1/entries/q2/reorder', ['admin']],
     ['POST', '/queues/s1/entries/q2/priority', ['admin', 'employee']],
+    ['PUT', '/queues/s1/reminder', ['user']], ['POST', '/queues/s1/reminder/dismiss', ['user']],
   ]
   for (const [method, endpoint, roles] of writes) {
     for (const [role, client] of Object.entries(clients)) {
@@ -216,6 +218,27 @@ try {
   await call('GET', '/auth/session', 200, admin)
   await call('GET', '/missing', 404)
 
+  // Verify a real thirty-second background check with no queue mutation or customer request.
+  const timedService = (await call('POST', '/services', 201, admin, { ...serviceInput, name: 'Timed reminder service', expectedDuration: 6 })).data
+  const timedQueue = `/queues/${timedService.id}`
+  const firstTimed = (await call('POST', `${timedQueue}/join`, 201, customer, {})).data
+  verify(firstTimed.reminderMinutes === 10 && !!firstTimed.reminderNotificationId, 'default reminder is saved immediately when joining inside the threshold')
+  await call('POST', `${timedQueue}/serve-next`, 200, employee)
+  const timedEntry = (await call('POST', `${timedQueue}/join`, 201, second, { reminderMinutes: 5 })).data
+  verify(timedEntry.reminderMinutes === 5 && !timedEntry.reminderNotificationId, 'chosen reminder stays pending above its threshold')
+  await call('PUT', `${timedQueue}/reminder`, 403, admin, { entryId: timedEntry.id, reminderMinutes: 10 })
+  await call('PUT', `${timedQueue}/reminder`, 400, second, { entryId: timedEntry.id, reminderMinutes: 7 })
+  await call('PUT', `${timedQueue}/reminder`, 409, second, { entryId: 'old-visit', reminderMinutes: 10 })
+  const timingDb = new DatabaseSync(dbFile)
+  try { timingDb.prepare('UPDATE QueueEntry SET calledAt = ? WHERE entryId = ?').run(new Date(Date.now() - 61_000).toISOString(), firstTimed.id) }
+  finally { timingDb.close() }
+  await delay(REMINDER_CHECK_MS + 1000)
+  const timedReminder = ((await call('GET', '/queues/mine', 200, second)).data as Json[]).find(row => row.id === timedEntry.id)!
+  verify(!!timedReminder.reminderNotificationId && timedReminder.reminderWaitMinutes <= 5, 'background worker sends a threshold reminder without a browser request or staff action')
+  const editedReminder = (await call('PUT', `${timedQueue}/reminder`, 200, second, { entryId: timedEntry.id, reminderMinutes: 15 })).data
+  verify(editedReminder.reminderNotificationId === timedReminder.reminderNotificationId && editedReminder.reminderLeadMinutes === 5, 'editing a sent reminder does not send a duplicate')
+  await call('POST', `${timedQueue}/reminder/dismiss`, 200, second, { notificationId: timedReminder.reminderNotificationId })
+
   // Expire only a disposable session directly, then exercise normal HTTP authentication.
   const expiring = await login('smoke-second@example.com', 'SmokePass1')
   const db = new DatabaseSync(dbFile)
@@ -228,6 +251,8 @@ try {
   // Real process restart, same file and browser cookie, no fixtures injected.
   await stop()
   await start()
+  const persistedReminder = ((await call('GET', '/queues/mine', 200, second)).data as Json[]).find(row => row.id === timedEntry.id)!
+  verify(persistedReminder.reminderMinutes === 15 && persistedReminder.reminderNotificationId === timedReminder.reminderNotificationId && persistedReminder.reminderDismissed, 'reminder preference, identity and dismissal survive a server restart without resending')
   const persisted = (await call('GET', '/auth/session', 200, customer)).data
   verify(persisted.id === user.id, 'session cookie and registered account survive an API restart')
   const persistedHistory = (await call('GET', '/me/history', 200, customer)).data as Json[]
@@ -238,7 +263,7 @@ try {
   await call('POST', '/auth/logout', 204, customer)
   await call('GET', '/auth/session', 401, customer)
   await call('POST', '/auth/logout', 204)
-  console.log(JSON.stringify({ result: 'PASS', checks, coverage: 'HTTP role matrix, queue lifecycle, reports/export, negative inputs, sessions, process restart persistence' }, null, 2))
+  console.log(JSON.stringify({ result: 'PASS', checks, coverage: 'HTTP role matrix, queue lifecycle, reports/export, negative inputs, sessions, live background reminders, process restart persistence' }, null, 2))
 } catch (error) {
   console.error(JSON.stringify({ result: 'FAIL', checks, lastPassed: completed.at(-1), error: error instanceof Error ? error.message : String(error), serverOutput: output }, null, 2))
   process.exitCode = 1

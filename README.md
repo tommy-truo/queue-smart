@@ -68,6 +68,8 @@ Serve the frontend and API under the same origin (the Vite development proxy doe
 | POST | `/api/queues/:serviceId/entries/:entryId/remove` | admin, employee |
 | POST | `/api/queues/:serviceId/entries/:entryId/reorder` | admin |
 | POST | `/api/queues/:serviceId/entries/:entryId/priority` | admin, employee |
+| PUT | `/api/queues/:serviceId/reminder` | user; own current queue visit |
+| POST | `/api/queues/:serviceId/reminder/dismiss` | user; own active reminder |
 | GET | `/api/me/notifications` | signed in |
 | GET | `/api/me/history` | user |
 | GET | `/api/reports/participation`, `/api/reports/services`, `/api/reports/wait-by-hour` | admin |
@@ -81,13 +83,23 @@ Customers join at medium priority. Administrators and employees can assign low, 
 
 Queue screens refresh every five seconds, on focus, and through Refresh controls. Background refreshes preserve the current display. Reports accept valid inclusive date ranges and a single service ID. Outcome counts use the history outcome date; wait statistics use the date/hour of joining. The hourly chart and CSV count **visits called**, including a customer currently being served. CSV text is escaped to prevent spreadsheet formula interpretation.
 
+## Smart queue reminders
+
+Customers choose a 5-, 10-, or 15-minute reminder when joining (default 10) and can change it on Queue Status. The backend recalculates the wait from the current customer's remaining expected service time plus the customers still waiting ahead. Customer screens show a live countdown; idle queues do not count down, and delayed service is identified rather than promising an exact start time.
+
+The server checks reminders at startup, every 30 seconds, and after queue changes. Reaching the selected threshold saves one notification and displays a dismissible banner across customer screens. The banner appears on the next five-second queue refresh. Preferences, sent state, and dismissal survive a restart; staff requeue starts a fresh reminder period. Editing a sent reminder does not resend it. The existing “It's your turn” notification is separate. These reminders replace the earlier position-only “almost up” message; the next-in-line badge remains.
+
+The backend must be running to create timed reminders. A customer can close the browser and see the saved notification on return; this does not send email, SMS, or browser push. See the [smart reminder design and demo](Final%20Project/Smart_Reminders.md).
+
 ## API request bodies
 
 The browser sends the session cookie automatically. API clients must retain the cookie returned by login or registration; sending `x-user-id` does not authenticate a request.
 
 | Action | JSON body | Behavior |
 | --- | --- | --- |
-| Join a queue | `{}` | Creates a medium-priority entry; customer-supplied low/high priority is rejected. |
+| Join a queue | `{"reminderMinutes":10}` | Choose 5, 10, or 15 minutes; omitted preference defaults to 10. Creates a medium-priority entry. |
+| Change a reminder | `{"entryId":"q2","reminderMinutes":5}` | Change the current visit's preference; stale visits return 409. A sent reminder is not sent again. |
+| Dismiss a reminder | `{"notificationId":"n12"}` | Hides that banner and marks its saved notification viewed. A stale reminder returns 409. |
 | Assign priority | `{"priority":"high"}` | Administrators and employees may choose `low`, `medium`, or `high`. |
 | Reorder an entry | `{"direction":"up"}` | Administrators may choose `up` or `down`; a missing direction is rejected. |
 | Serve next or requeue | `{"expectedEntryId":"q2","expectedStatus":"serving"}` | The staff UI sends the displayed entry ID and status. A changed entry returns 409 without mutation. API clients should send both fields; valid statuses are `waiting`, `almost-ready`, and `serving`. |
@@ -105,7 +117,7 @@ npm --prefix frontend run lint
 npm --prefix frontend run build
 ```
 
-Backend coverage enforces an 80% minimum for statements, branches, functions, and lines. Tests use isolated databases; the API smoke crawl starts a disposable server/database and verifies persistence across restart. Frontend tests cover rendering, queue refresh, session changes, stale responses, and accessibility behavior.
+Backend coverage enforces an 80% minimum for statements, branches, functions, and lines. Tests use isolated databases; the API smoke crawl starts a disposable server/database and verifies persistence across restart. It includes a real 30-second reminder-worker check and takes about 35 seconds. Frontend tests cover rendering, queue refresh, session changes, stale responses, and accessibility behavior.
 
 ## Final project records
 

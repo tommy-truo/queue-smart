@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite'
 
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 function hasColumn(database: DatabaseSync, table: string, name: string): boolean {
   return (database.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).some(column => column.name === name)
@@ -58,6 +58,14 @@ export function migrateDatabase(database: DatabaseSync): void {
       userId TEXT NOT NULL REFERENCES UserCredentials(userId) ON DELETE CASCADE,
       expiresAt INTEGER NOT NULL
     ); CREATE INDEX IF NOT EXISTS SessionUser ON Session(userId);`)
+  }
+  if (version < 4) {
+    database.exec(`ALTER TABLE QueueEntry ADD COLUMN reminderMinutes INTEGER NOT NULL DEFAULT 10 CHECK (reminderMinutes IN (5, 10, 15));
+      ALTER TABLE QueueEntry ADD COLUMN reminderSentAt TEXT;
+      ALTER TABLE QueueEntry ADD COLUMN reminderNotificationId TEXT REFERENCES Notification(notificationId) ON DELETE SET NULL;
+      ALTER TABLE QueueEntry ADD COLUMN reminderDismissed INTEGER NOT NULL DEFAULT 0 CHECK (reminderDismissed IN (0, 1));
+      ALTER TABLE QueueEntry ADD COLUMN reminderWaitMinutes INTEGER;
+      ALTER TABLE QueueEntry ADD COLUMN reminderLeadMinutes INTEGER;`)
   }
   database.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`)
 }

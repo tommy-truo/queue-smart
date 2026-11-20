@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDb, resetDatabase } from '../src/db.ts'
 import { findUserById } from '../src/modules/auth.ts'
 import { assignPriority, getQueue, joinQueue, leaveQueue, removeFromQueue, reorder, requeue, serveNext } from '../src/modules/queue.ts'
@@ -7,6 +7,8 @@ import { parseFilters, participationReport, serviceActivityReport, toCsv } from 
 import { validate } from '../src/validation.ts'
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-29T09:25:00'))
   resetDatabase()
   vi.spyOn(console, 'log').mockImplementation(() => {})
 })
@@ -95,6 +97,7 @@ describe('atomic multi-table changes', () => {
   })
 
   it.each(['join', 'remove', 'requeue', 'serve', 'priority', 'reorder'])('rolls back %s when notification insertion fails', operation => {
+    if (['priority', 'reorder'].includes(operation)) vi.setSystemTime(new Date('2026-09-29T09:30:00'))
     const before = getQueue(operation === 'join' ? 's3' : 's1')
     const historyBefore = getDb().prepare('SELECT * FROM History').all()
     const cleanup = rejectWrites('Notification')
@@ -176,3 +179,5 @@ describe('stale staff action preconditions', () => {
     expect(getQueue('s1')).toEqual(before)
   })
 })
+
+afterEach(() => vi.useRealTimers())

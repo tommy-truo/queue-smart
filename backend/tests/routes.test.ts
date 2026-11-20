@@ -1,12 +1,14 @@
 import { cookieFor } from './sessionHelper.ts'
 import request from 'supertest'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp } from '../src/app.ts'
 import { resetDatabase } from '../src/db.ts'
 
 const app = createApp()
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-29T09:25:00'))
   resetDatabase()
   vi.spyOn(console, 'log').mockImplementation(() => {})
 })
@@ -219,3 +221,5 @@ describe('me routes', () => {
     expect(history.body[0]).toMatchObject({ date: '2026-09-22', outcome: 'served' })
   })
 })
+
+afterEach(() => vi.useRealTimers())

@@ -8,9 +8,15 @@ Repository: https://github.com/tommy-truo/queue-smart
 | --- | --- | --- |
 | Pete Sankar | Reviewed the integrated application and fixed authentication, persistence, reporting, and queue issues. Replaced user ID headers with server sessions and added logout, expiry, and account synchronization across tabs. Added database migrations, transaction rollback, and stable service references in history. Fixed report validation, CSV formula handling, and the zero-wait chart crash. Connected staff priority controls, added queue refresh and stale-action protection, and corrected service links, form reset, keyboard sorting, dialog labels, and missing-page recovery. Added regression tests, a repeatable API crawl, dependency updates, and runtime documentation. | Extended the team's existing SQLite schema, backend modules, reporting, and React screens. Verified 206 backend tests, 19 frontend tests, 200 HTTP checks, 99.34% backend line coverage, frontend build, backend typecheck, and frontend lint. Both dependency audits reported zero vulnerabilities. The HTTP crawl verifies persistence across an API restart. A final live-browser retest remains pending because browser control was unavailable. |
 
+### Smart Queue Reminders
+
+| Group Member Name | What is your contribution? | Discussion Notes |
+| --- | --- | --- |
+| Pete Sankar | Added account-specific 5-, 10-, or 15-minute reminders, live wait estimates, an editable preference, and a dismissible banner. The server evaluates due reminders on a background timer and after queue changes. SQLite saves delivery and dismissal. Staff requeue starts a new waiting period. | Reused the existing queue, notification, and transaction code. Tested threshold crossing without a request, duplicate prevention, service duration edits, requeue, stale requests, and restart persistence. See [design and demo](Smart_Reminders.md) and [latest verification](Verification.md). |
+
 ### Commit evidence
 
-The implementation and verification work is committed on `pete-branch`. These are actual local commit hashes; the GitHub links become available after the branch is pushed. The work has not been merged into `main`.
+The implementation and verification work is committed on `pete-branch`. The links below identify the implementation and verification commits on `pete-branch`.
 
 | Commit | Work | Branch |
 | --- | --- | --- |
@@ -55,6 +61,9 @@ The implementation and verification work is committed on `pete-branch`. These ar
 | [abc21d2](https://github.com/tommy-truo/queue-smart/commit/abc21d2ceab81169a95fd275e9a4325e397fab70) | Added a disposable 200-check HTTP crawl with restart persistence checks. | `pete-branch` |
 | [4a29a1f](https://github.com/tommy-truo/queue-smart/commit/4a29a1f134ffdc20f5cdbb32780c21bfa607b660) | Documented session APIs, staff queue actions, migrations, and verification commands. | `pete-branch` |
 | [e3cc1ea](https://github.com/tommy-truo/queue-smart/commit/e3cc1eafd53ee80fd7f29e4442066294d79eb45d) | Recorded final project coverage, QA results, and remaining demo checks. | `pete-branch` |
+| [8de7b3b](https://github.com/tommy-truo/queue-smart/commit/8de7b3b15123b320c89ef4407b67a8ea13040f29) | Persisted reminder preferences and delivery state in SQLite. | `pete-branch` |
+| [ed4a88e](https://github.com/tommy-truo/queue-smart/commit/ed4a88ec4292c0bc5b1d1312725184227a1d00d0) | Added live wait estimates, timed delivery, and API regression checks. | `pete-branch` |
+| [9a9c5d9](https://github.com/tommy-truo/queue-smart/commit/9a9c5d996b719366a937d7e66c25c4b0af360e05) | Added customer reminder controls, countdown, and banner. | `pete-branch` |
 
 Commits use the configured Git author `mcisaura`. The branch was renamed from `pete-a3` to `pete-branch`; Pete's earlier contribution commits remain in its history.
 

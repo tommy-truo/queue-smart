@@ -4,6 +4,7 @@ import { api } from '../../api.ts'
 import { useAuth } from '../../auth/AuthContext.ts'
 import { formatDateTime } from '../../format.ts'
 import StatusBadge from '../../components/StatusBadge.tsx'
+import LiveWait from '../../components/LiveWait.tsx'
 import type { AppNotification } from '../../types.ts'
 import type { QueueView, ServiceSummary } from '../../queues.ts'
 
@@ -80,12 +81,12 @@ function Dashboard({ fullName }: { fullName?: string }) {
         {entries.length > 0 ? entries.map(entry => {
           const service = services.find(service => service.id === entry.serviceId)
           // The API estimate includes the serving chair, unlike its position number.
-          const peopleAhead = service ? Math.max(0, Math.round(entry.estimatedWait / service.expectedDuration)) : 0
+          const peopleAhead = entry.peopleAhead ?? (service ? Math.max(0, Math.round(entry.estimatedWait / service.expectedDuration)) : 0)
           return (
             <p key={entry.id}>
               {service?.name ?? 'Service'}: <StatusBadge status={entry.status} />.{' '}
               {entry.status !== 'serving' ? <>Position <strong>#{entry.position}</strong>, with {peopleAhead} {peopleAhead === 1 ? 'person' : 'people'} ahead of you. </> : null}
-              Estimated wait: {entry.estimatedWait} min. <Link to="/status">View status</Link>
+              Estimated wait: <LiveWait entry={entry} /> <Link to="/status">View status</Link>
             </p>
           )
         }) : (

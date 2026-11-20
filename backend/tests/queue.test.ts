@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDb, resetDatabase } from '../src/db.ts'
 import { findUserById } from '../src/modules/auth.ts'
 import { listHistory } from '../src/modules/history.ts'
@@ -15,6 +15,8 @@ function joinWithPriority(account: ReturnType<typeof user>, serviceId: string, b
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-29T09:25:00'))
   resetDatabase()
   vi.spyOn(console, 'log').mockImplementation(() => {})
 })
@@ -112,7 +114,7 @@ describe('removeFromQueue', () => {
     expect(queue.map((e) => e.userName)).toEqual(['Jordan Lee', 'Alex Kim'])
     expect(queue[0].status).toBe('serving')
     expect(queue[1]).toMatchObject({ status: 'almost-ready', position: 1 })
-    expect(listNotifications('u1')[0].message).toMatch(/almost up for Academic Advising/)
+    expect(listNotifications('u1').some(note => note.message.startsWith('Get ready'))).toBe(false)
     expect(listNotifications('u3')[0].message).toMatch(/removed from the queue/)
   })
 
@@ -180,7 +182,7 @@ describe('requeue', () => {
     const messages = listNotifications('u4').map((note) => note.message)
     expect(messages).toEqual(expect.arrayContaining([
       'You were placed back in line for Financial Aid Help Desk. Please bring your student ID.',
-      'You are almost up for Financial Aid Help Desk. Please bring your student ID.',
+      'Get ready for Financial Aid Help Desk. You are near the front. Waiting for staff to call the next customer. Please bring your student ID.',
     ]))
     expect(listHistory('u4')).toEqual([])
 
@@ -228,7 +230,7 @@ describe('reorder', () => {
       ['Alex Kim', 1, 'almost-ready'],
       ['Sam Patel', 2, 'waiting'],
     ])
-    expect(listNotifications('u1').some((n) => n.message.match(/almost up for Academic Advising/))).toBe(true)
+    expect(listNotifications('u1').some((n) => n.message.startsWith('Get ready'))).toBe(false)
     expect(listNotifications('u3').some((n) => n.message.match(/reorder|moved/i))).toBe(false)
   })
 
@@ -268,11 +270,11 @@ describe('serveNext', () => {
     expect(listNotifications('u3')[0].message).toMatch(/your turn/)
   })
 
-  it('notifies the person who becomes next in line', () => {
+  it('marks the next person almost ready but waits for their reminder threshold', () => {
     serveNext('s1')
     const alex = getQueue('s1').find((e) => e.userId === 'u1')!
     expect(alex).toMatchObject({ position: 1, status: 'almost-ready' })
-    expect(listNotifications('u1')[0].message).toMatch(/almost up for Academic Advising/)
+    expect(listNotifications('u1').some(note => note.message.startsWith('Get ready'))).toBe(false)
   })
 
   it('calls the first person when no one is being served', () => {
@@ -336,3 +338,5 @@ describe('myQueues', () => {
     expect(myQueues('u1')).toEqual([])
   })
 })
+
+afterEach(() => vi.useRealTimers())
