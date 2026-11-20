@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { resetDatabase } from '../src/db.ts'
+import { getDb, resetDatabase } from '../src/db.ts'
 import { findUserById } from '../src/modules/auth.ts'
 import { assignPriority, getQueue, joinQueue, reorder } from '../src/modules/queue.ts'
-import { getService, updateService } from '../src/modules/services.ts'
+import { createService, getService, updateService } from '../src/modules/services.ts'
+import { parseFilters, participationReport, serviceActivityReport, toCsv } from '../src/modules/reports.ts'
 import { validate } from '../src/validation.ts'
 
 beforeEach(() => {
@@ -50,3 +51,36 @@ describe('priority assignment', () => {
     expect(() => assignPriority('s1', 'q4', { priority: 'high' })).toThrow(/not in line/)
   })
 })
+
+describe('report input and CSV safety', () => {
+  it.each(['2026-02-29', '2026-02-30', '2026-13-01', '2026-00-01', '2026-11-31'])('rejects impossible calendar date %s', from => {
+    expect(() => parseFilters({ from })).toThrow(/must be a date/)
+  })
+
+  it('accepts leap days and rejects reversed or repeated filters', () => {
+    expect(parseFilters({ from: '2028-02-29' })).toEqual({ from: '2028-02-29' })
+    expect(() => parseFilters({ from: '2026-11-20', to: '2026-11-19' })).toThrow(/on or before/)
+    expect(() => parseFilters({ from: ['2026-01-01', '2026-02-01'] })).toThrow(/must be a date/)
+    expect(() => parseFilters({ serviceId: ['s1', 's2'] })).toThrow(/single service ID/)
+  })
+
+  it('neutralizes text formulas, preserves numeric negatives, and quotes carriage returns', () => {
+    const columns: [string, string][] = [['value', 'Value']]
+    const values = ['=1+1', '+SUM(1)', '-1', '@SUM(1)', '  =1+1', '\tformula', 'a\rb', -2]
+    expect(toCsv(values.map(value => ({ value })), columns)).toBe("Value\n'=1+1\n'+SUM(1)\n'-1\n'@SUM(1)\n'  =1+1\n'\tformula\n\"a\rb\"\n-2\n")
+  })
+
+  it('keeps history attached to its service after renaming and reusing the old name', () => {
+    updateService('s1', { name: 'Advising renamed' })
+    const replacement = createService({ name: 'Academic Advising', description: 'New service', expectedDuration: 10, priority: 'medium' })
+    expect(participationReport({ serviceId: 's1' })).toHaveLength(2)
+    expect(participationReport({ serviceId: replacement.id })).toEqual([])
+    expect(serviceActivityReport({ serviceId: 's1' })[0].served).toBe(2)
+    expect(serviceActivityReport({ serviceId: replacement.id })[0].served).toBe(0)
+  })
+})
+
+function rejectWrites(table: string): () => void {
+  getDb().exec(`CREATE TEMP TRIGGER fail_qa BEFORE INSERT ON ${table} BEGIN SELECT RAISE(ABORT, 'injected QA failure'); END`)
+  return () => getDb().exec('DROP TRIGGER fail_qa')
+}
