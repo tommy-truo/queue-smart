@@ -219,14 +219,27 @@ export function removeFromQueue(serviceId: string, entryId: string): QueueEntry 
   })
 }
 
+/** Reject stale staff actions before any queue, history, or notification writes. */
+function assertExpectedEntry(body: unknown, entry: QueueEntry): void {
+  if (body === undefined) return
+  assertValid(body, {
+    expectedEntryId: { type: 'string', required: true, min: 1 },
+    expectedStatus: { type: 'string', required: true, oneOf: ['waiting', 'almost-ready', 'serving'] },
+  })
+  const expected = body as { expectedEntryId: string; expectedStatus: QueueEntry['status'] }
+  if (expected.expectedEntryId !== entry.id || expected.expectedStatus !== entry.status) {
+    throw new HttpError(409, 'The queue changed. Refresh it before trying again.')
+  }
+}
 
 /** Puts the person being served at the end of their priority group without calling the next person. */
-export function requeue(serviceId: string): QueueView {
+export function requeue(serviceId: string, body?: unknown): QueueView {
   return transaction(() => {
     const service = getService(serviceId)
     const line = orderedEntries(serviceId)
     const serving = line.find((entry) => entry.status === 'serving')
     if (!serving) throw new HttpError(409, `No one is being served for ${service.name}.`)
+    assertExpectedEntry(body, serving)
 
     getDb()
       .prepare('UPDATE QueueEntry SET calledAt = NULL, almostReady = 0, joinedAt = ? WHERE entryId = ?')
@@ -275,11 +288,12 @@ export function reorder(serviceId: string, entryId: string, body: unknown): Queu
 }
 
 /** Finishes whoever is being served and calls the next person in line. */
-export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?: QueueEntry } {
+export function serveNext(serviceId: string, body?: unknown): { served?: QueueEntry; nowServing?: QueueEntry } {
   return transaction(() => {
     const service = getService(serviceId)
     const line = orderedEntries(serviceId)
     if (line.length === 0) throw new HttpError(409, `No one is waiting for ${service.name}.`)
+    assertExpectedEntry(body, line[0])
 
     let served: QueueEntry | undefined
     if (line[0].status === 'serving') {

@@ -25,11 +25,11 @@ queuesRouter.post('/:serviceId/leave', requireRole('user'), (req, res) => {
 })
 
 queuesRouter.post('/:serviceId/serve-next', requireRole('admin', 'employee'), (req, res) => {
-  res.json(serveNext(String(req.params.serviceId)))
+  res.json(serveNext(String(req.params.serviceId), req.body))
 })
 
 queuesRouter.post('/:serviceId/requeue', requireRole('admin', 'employee'), (req, res) => {
-  res.json(requeue(String(req.params.serviceId)))
+  res.json(requeue(String(req.params.serviceId), req.body))
 })
 
 queuesRouter.post('/:serviceId/entries/:entryId/remove', requireRole('admin', 'employee'), (req, res) => {
