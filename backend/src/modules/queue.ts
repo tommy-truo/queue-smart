@@ -7,7 +7,8 @@ import { assertValid } from '../validation.ts'
 import { recordHistory } from './history.ts'
 import { notify } from './notifications.ts'
 import { getService, listServices, PRIORITIES } from './services.ts'
-import { estimateWait } from './waitTime.ts'
+import { liveWait } from './waitTime.ts'
+import { sendDueReminders, validateReminderMinutes } from './reminders.ts'
 
 /** People at or above this position (1 = next up) are marked almost ready. */
 export const ALMOST_READY_POSITION = 1
@@ -25,6 +26,12 @@ export type QueueView = QueueEntry & {
   position: number
   /** Minutes. */
   estimatedWait: number
+  estimatedWaitSeconds: number
+  estimateUpdatedAt: number
+  peopleAhead: number
+  serviceDelayed: boolean
+  awaitingStaff: boolean
+  countdownFloorSeconds: number
 }
 
 type EntryRow = {
@@ -36,11 +43,18 @@ type EntryRow = {
   joinedAt: string
   calledAt: string | null
   almostReady: number
+  reminderMinutes: number
+  reminderSentAt: string | null
+  reminderNotificationId: string | null
+  reminderDismissed: number
+  reminderWaitMinutes: number | null
+  reminderLeadMinutes: number | null
 }
 
 // Everyone still in line, including whoever is being served. Add filters and ORDER BY after it.
 const ACTIVE_ENTRIES = `
-  SELECT e.entryId, q.serviceId, e.userId, p.fullName AS userName, e.priority, e.joinedAt, e.calledAt, e.almostReady
+  SELECT e.entryId, q.serviceId, e.userId, p.fullName AS userName, e.priority, e.joinedAt, e.calledAt, e.almostReady,
+    e.reminderMinutes, e.reminderSentAt, e.reminderNotificationId, e.reminderDismissed, e.reminderWaitMinutes, e.reminderLeadMinutes
   FROM QueueEntry e
   JOIN Queue q ON q.queueId = e.queueId
   JOIN UserProfile p ON p.userId = e.userId
@@ -55,6 +69,12 @@ function toEntry(row: EntryRow): QueueEntry {
     status: row.calledAt ? 'serving' : row.almostReady ? 'almost-ready' : 'waiting',
     priority: row.priority,
     joinedAt: row.joinedAt,
+    reminderMinutes: row.reminderMinutes,
+    reminderSentAt: row.reminderSentAt ?? undefined,
+    reminderNotificationId: row.reminderNotificationId ?? undefined,
+    reminderDismissed: !!row.reminderDismissed,
+    reminderWaitMinutes: row.reminderWaitMinutes ?? undefined,
+    reminderLeadMinutes: row.reminderLeadMinutes ?? undefined,
   }
   if (row.calledAt) entry.calledAt = row.calledAt
   return entry
@@ -101,15 +121,19 @@ function insertionIndex(waiting: QueueEntry[], priority: Priority): number {
   return lower === -1 ? waiting.length : lower
 }
 
-export function getQueue(serviceId: string): QueueView[] {
+export function getQueue(serviceId: string, now = Date.now()): QueueView[] {
   const service = getService(serviceId)
   const entries = orderedEntries(serviceId)
-  const someoneServing = entries[0]?.status === 'serving'
-
+  const serving = entries[0]?.status === 'serving' ? entries[0] : undefined
   return entries.map((entry, index) => ({
     ...entry,
-    position: someoneServing ? index : index + 1,
-    estimatedWait: estimateWait(index, service.expectedDuration),
+    position: serving ? index : index + 1,
+    peopleAhead: index,
+    estimateUpdatedAt: now,
+    countdownFloorSeconds: Math.max(0, index - (serving ? 1 : 0)) * service.expectedDuration * 60,
+    ...(entry.status === 'serving'
+      ? { estimatedWait: 0, estimatedWaitSeconds: 0, serviceDelayed: false, awaitingStaff: false }
+      : liveWait(index - (serving ? 1 : 0), service.expectedDuration, serving?.calledAt, now)),
   }))
 }
 
@@ -122,11 +146,18 @@ export function openQueues() {
 
 /** Queue length and the wait someone joining now would get. */
 export function queueSummary(service: Service) {
-  const length = orderedEntries(service.id).length
-  return { queueLength: length, estimatedWait: estimateWait(length, service.expectedDuration) }
+  const entries = orderedEntries(service.id)
+  const serving = entries[0]?.status === 'serving' ? entries[0] : undefined
+  const wait = liveWait(entries.length - (serving ? 1 : 0), service.expectedDuration, serving?.calledAt)
+  return { queueLength: entries.length, estimatedWait: wait.estimatedWait }
 }
 
-/** Marks people near the front as almost ready and notifies them once. */
+/** Checks all queues even if no customer currently has the app open. */
+export function processQueueReminders(now = Date.now()): number {
+  return transaction(() => listServices().reduce((count, service) => count + sendDueReminders(service, getQueue(service.id, now), now), 0))
+}
+
+/** Keeps the positional badge while timed reminders replace the old front-of-line alert. */
 function updateStatuses(service: Service): void {
   const setAlmostReady = getDb().prepare('UPDATE QueueEntry SET almostReady = ? WHERE entryId = ?')
   for (const entry of getQueue(service.id)) {
@@ -135,12 +166,11 @@ function updateStatuses(service: Service): void {
 
     if (close && entry.status === 'waiting') {
       setAlmostReady.run(1, entry.id)
-      const note = withServiceNotification('You are almost up for ' + service.name + '.', service)
-      notify(entry.userId, 'status-change', note)
     } else if (!close && entry.status === 'almost-ready') {
       setAlmostReady.run(0, entry.id)
     }
   }
+  sendDueReminders(service, getQueue(service.id))
 }
 
 function viewOf(entryId: string, serviceId: string): QueueView {
@@ -152,6 +182,7 @@ export function joinQueue(user: User, serviceId: string, body: unknown): QueueVi
     const service = getService(serviceId)
     assertValid(body, { priority: { type: 'string', oneOf: ['medium'] } })
     const priority: Priority = 'medium'
+    const reminderMinutes = validateReminderMinutes(body, false)
 
     if (!service.open) throw new HttpError(409, `${service.name} is not accepting people right now.`)
     if (findActiveEntry(user.id, serviceId)) throw new HttpError(409, `You are already in line for ${service.name}.`)
@@ -164,13 +195,15 @@ export function joinQueue(user: User, serviceId: string, body: unknown): QueueVi
       status: 'waiting',
       priority,
       joinedAt: localTimestamp(),
+      reminderMinutes,
+      reminderDismissed: false,
     }
     const db = getDb()
     const queue = db.prepare('SELECT queueId FROM Queue WHERE serviceId = ?').get(serviceId) as { queueId: string }
     const line = orderedEntries(serviceId)
     db.prepare(
-      "INSERT INTO QueueEntry (entryId, queueId, userId, position, priority, joinedAt, status) VALUES (?, ?, ?, ?, ?, ?, 'waiting')",
-    ).run(entry.id, queue.queueId, user.id, line.length + 1, priority, entry.joinedAt)
+      "INSERT INTO QueueEntry (entryId, queueId, userId, position, priority, joinedAt, reminderMinutes, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting')",
+    ).run(entry.id, queue.queueId, user.id, line.length + 1, priority, entry.joinedAt, reminderMinutes)
 
     // Whoever is being served stays first; everyone else is ordered by priority.
     const serving = line.filter((e) => e.status === 'serving')
@@ -179,8 +212,11 @@ export function joinQueue(user: User, serviceId: string, body: unknown): QueueVi
     savePositions([...serving, ...waiting.slice(0, insertAt), entry, ...waiting.slice(insertAt)])
 
     const view = viewOf(entry.id, serviceId)
+    const waitMessage = view.estimatedWait === 0
+      ? 'Waiting for staff to call you.'
+      : `Estimated wait: about ${view.estimatedWait} min.`
     const note = withServiceNotification(
-      'You joined the queue for ' + service.name + '. Position ' + view.position + ', about ' + view.estimatedWait + 'min.',
+      `You joined the queue for ${service.name}. Position ${view.position}. ${waitMessage}`,
       service,
     )
     notify(user.id, 'queue-update', note)
@@ -242,7 +278,7 @@ export function requeue(serviceId: string, body?: unknown): QueueView {
     assertExpectedEntry(body, serving)
 
     getDb()
-      .prepare('UPDATE QueueEntry SET calledAt = NULL, almostReady = 0, joinedAt = ? WHERE entryId = ?')
+      .prepare('UPDATE QueueEntry SET calledAt = NULL, almostReady = 0, joinedAt = ?, reminderSentAt = NULL, reminderNotificationId = NULL, reminderDismissed = 0, reminderWaitMinutes = NULL, reminderLeadMinutes = NULL WHERE entryId = ?')
       .run(localTimestamp(), serving.id)
 
     const waiting = line.filter((e) => e !== serving)
@@ -344,4 +380,33 @@ export function myQueues(userId: string): QueueView[] {
   const rows = getDb().prepare(`${ACTIVE_ENTRIES} AND e.userId = ? ORDER BY e.rowid`).all(userId) as EntryRow[]
   const serviceIds = new Set(rows.map((row) => row.serviceId))
   return [...serviceIds].flatMap((id) => getQueue(id).filter((e) => e.userId === userId))
+}
+
+/** A customer may edit only their own active waiting entry. Editing never rearms a sent reminder. */
+export function updateReminder(user: User, serviceId: string, body: unknown): QueueView {
+  return transaction(() => {
+    getService(serviceId)
+    const minutes = validateReminderMinutes(body)
+    const entry = findActiveEntry(user.id, serviceId)
+    if (!entry) throw new HttpError(404, 'You are not in this queue.')
+    if ((body as { entryId?: string }).entryId !== undefined && (body as { entryId: string }).entryId !== entry.id) throw new HttpError(409, 'Your queue visit changed. Refresh before changing the reminder.')
+    if (entry.status === 'serving') throw new HttpError(409, 'Your turn has already started.')
+    getDb().prepare('UPDATE QueueEntry SET reminderMinutes = ? WHERE entryId = ?').run(minutes, entry.id)
+    sendDueReminders(getService(serviceId), getQueue(serviceId))
+    return viewOf(entry.id, serviceId)
+  })
+}
+
+export function dismissReminder(user: User, serviceId: string, body: unknown): QueueView {
+  return transaction(() => {
+    assertValid(body, { notificationId: { type: 'string', required: true, min: 1 } })
+    const entry = findActiveEntry(user.id, serviceId)
+    if (!entry) throw new HttpError(404, 'You are not in this queue.')
+    if (entry.status === 'serving' || !entry.reminderNotificationId || entry.reminderNotificationId !== (body as { notificationId: string }).notificationId) {
+      throw new HttpError(409, 'This reminder is no longer active.')
+    }
+    getDb().prepare('UPDATE QueueEntry SET reminderDismissed = 1 WHERE entryId = ?').run(entry.id)
+    getDb().prepare("UPDATE Notification SET status = 'viewed' WHERE notificationId = ? AND userId = ?").run(entry.reminderNotificationId, user.id)
+    return viewOf(entry.id, serviceId)
+  })
 }

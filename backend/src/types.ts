@@ -37,6 +37,12 @@ export type QueueEntry = {
   joinedAt: string
   calledAt?: string
   outcome?: Outcome
+  reminderMinutes: number
+  reminderSentAt?: string
+  reminderNotificationId?: string
+  reminderDismissed: boolean
+  reminderWaitMinutes?: number
+  reminderLeadMinutes?: number
 }
 
 export type AppNotification = {

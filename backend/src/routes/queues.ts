@@ -1,6 +1,7 @@
 import { Router } from 'express'
+import { assertValid } from '../validation.ts'
 import { currentUser, requireRole } from '../middleware.ts'
-import { assignPriority, getQueue, joinQueue, leaveQueue, myQueues, openQueues, removeFromQueue, reorder, requeue, serveNext } from '../modules/queue.ts'
+import { assignPriority, dismissReminder, updateReminder, getQueue, joinQueue, leaveQueue, myQueues, openQueues, removeFromQueue, reorder, requeue, serveNext } from '../modules/queue.ts'
 
 export const queuesRouter = Router()
 
@@ -42,4 +43,13 @@ queuesRouter.post('/:serviceId/entries/:entryId/reorder', requireRole('admin'), 
 
 queuesRouter.post('/:serviceId/entries/:entryId/priority', requireRole('admin', 'employee'), (req, res) => {
   res.json(assignPriority(String(req.params.serviceId), String(req.params.entryId), req.body))
+})
+
+queuesRouter.put('/:serviceId/reminder', requireRole('user'), (req, res) => {
+  assertValid(req.body, { entryId: { type: 'string', required: true, min: 1 } })
+  res.json(updateReminder(currentUser(res), String(req.params.serviceId), req.body))
+})
+
+queuesRouter.post('/:serviceId/reminder/dismiss', requireRole('user'), (req, res) => {
+  res.json(dismissReminder(currentUser(res), String(req.params.serviceId), req.body))
 })
