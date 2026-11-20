@@ -1,6 +1,8 @@
 import { DatabaseSync } from 'node:sqlite'
 import { moveLiveSeedToNow, seedDemoYear } from './demoData.ts'
 import { hashPassword } from './password.ts'
+import { migrateDatabase } from './migrations.ts'
+import { withTransaction } from './transaction.ts'
 import type { Role } from './types.ts'
 
 const SCHEMA = `
@@ -67,6 +69,7 @@ CREATE TABLE IF NOT EXISTS History (
   historyId   TEXT PRIMARY KEY,
   userId      TEXT NOT NULL REFERENCES UserCredentials(userId) ON DELETE CASCADE,
   serviceName TEXT NOT NULL,
+  serviceId   TEXT REFERENCES Service(serviceId) ON DELETE SET NULL,
   occurredOn  TEXT NOT NULL,
   outcome     TEXT NOT NULL CHECK (outcome IN ('served', 'left', 'removed'))
 );
@@ -75,22 +78,38 @@ CREATE TABLE IF NOT EXISTS History (
 export function openDatabase(file = process.env.DB_FILE ?? 'queuesmart.db'): DatabaseSync {
   const database = new DatabaseSync(file)
   database.exec('PRAGMA foreign_keys = ON')
-  database.exec(SCHEMA)
-  return database
+  try {
+    withTransaction(database, () => {
+      database.exec(SCHEMA)
+      migrateDatabase(database)
+    })
+    return database
+  } catch (error) {
+    database.close()
+    throw error
+  }
 }
 
 let database: DatabaseSync | undefined
 
 export function getDb(): DatabaseSync {
   if (!database) {
-    database = openDatabase()
-    if (!database.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) {
-      seedAll(database)
-      // Tests use an in-memory database and the small seed only.
-      if (process.env.DB_FILE !== ':memory:') {
-        seedDemoYear(database)
-        moveLiveSeedToNow(database)
-      }
+    const opened = openDatabase()
+    try {
+      withTransaction(opened, () => {
+        if (!opened.prepare('SELECT 1 FROM UserCredentials LIMIT 1').get()) {
+          seedAll(opened)
+          // Tests use an in-memory database and the small seed only.
+          if (process.env.DB_FILE !== ':memory:') {
+            seedDemoYear(opened)
+            moveLiveSeedToNow(opened)
+          }
+        }
+      })
+      database = opened
+    } catch (error) {
+      opened.close()
+      throw error
     }
   }
   return database
@@ -256,25 +275,27 @@ const SEED_HISTORY = [
 
 function seedHistory(target: DatabaseSync): void {
   const add = target.prepare(
-    'INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome, serviceId) VALUES (?, ?, ?, ?, ?, ?)',
   )
   for (const h of SEED_HISTORY) {
-    add.run(h.id, h.userId, h.serviceName, h.occurredOn, h.outcome)
+    add.run(h.id, h.userId, h.serviceName, h.occurredOn, h.outcome, SEED_SERVICES.find(service => service.name === h.serviceName)!.id)
   }
 }
 
 function seedAll(target: DatabaseSync): void {
   seedUsers(target)
   seedNotifications(target)
-  seedHistory(target)
   seedServices(target)
+  seedHistory(target)
   seedEntries(target)
 }
 
 /** Empties the user and service tables (which clears queues and entries) and puts the seed data back. Used by tests. */
 export function resetDatabase(): void {
   const target = getDb()
-  target.exec('DELETE FROM UserCredentials')
-  target.exec('DELETE FROM Service')
-  seedAll(target)
+  withTransaction(target, () => {
+    target.exec('DELETE FROM UserCredentials')
+    target.exec('DELETE FROM Service')
+    seedAll(target)
+  })
 }

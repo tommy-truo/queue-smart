@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { hashPassword } from './password.ts'
+import { withTransaction } from './transaction.ts'
 
 // Two more services, a year of finished visits so reports and wait estimates have real history to work with,
 // and more people in line. Only loaded into the app's database file, never into the in-memory test database.
@@ -74,7 +75,7 @@ export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
     'INSERT INTO QueueEntry (entryId, queueId, userId, position, priority, joinedAt, calledAt, status) VALUES (?, ?, ?, 1, ?, ?, ?, ?)',
   )
   const addHistory = target.prepare(
-    'INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome, serviceId) VALUES (?, ?, ?, ?, ?, (SELECT serviceId FROM Queue WHERE queueId = ?))',
   )
   const addService = target.prepare(
     'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification) VALUES (?, ?, ?, ?, ?, NULL)',
@@ -84,8 +85,7 @@ export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
     "INSERT INTO QueueEntry (entryId, queueId, userId, position, priority, joinedAt, calledAt, almostReady, status) VALUES (?, ?, ?, ?, 'medium', ?, ?, ?, 'waiting')",
   )
 
-  target.exec('BEGIN')
-  try {
+  withTransaction(target, () => {
     for (const s of NEW_SERVICES) {
       addService.run(s.id, s.name, s.description, s.duration, s.priority)
       addQueue.run(s.queueId, s.id)
@@ -125,7 +125,7 @@ export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
           const userId = pick(userIds)
 
           addEntry.run(`dq${visit}`, service.queueId, userId, service.priority, stamp(joined), called, outcome === 'served' ? 'served' : 'canceled')
-          addHistory.run(`dh${visit}`, userId, service.name, stamp(joined).slice(0, 10), outcome)
+          addHistory.run(`dh${visit}`, userId, service.name, stamp(joined).slice(0, 10), outcome, service.queueId)
         }
       }
     }
@@ -134,11 +134,7 @@ export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
     for (const [i, e] of LINE.entries()) {
       addInLine.run(`dl${i + 1}`, e.queueId, e.userId, e.position, at(e.joinedAt), at(e.calledAt), e.almostReady)
     }
-    target.exec('COMMIT')
-  } catch (error) {
-    target.exec('ROLLBACK')
-    throw error
-  }
+  })
 }
 
 /**
