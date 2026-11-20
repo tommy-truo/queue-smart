@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import { homePath, useAuth } from './auth/AuthContext.ts'
 import RequireGuest from './auth/RequireGuest.tsx'
 import RequireRole from './auth/RequireRole.tsx'
+import ErrorBoundary from './components/ErrorBoundary.tsx'
 import Layout from './components/Layout.tsx'
 import Login from './pages/auth/Login.tsx'
 import Register from './pages/auth/Register.tsx'
@@ -22,6 +23,7 @@ function Home() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
@@ -49,5 +51,6 @@ export default function App() {
         </Route>
       </Route>
     </Routes>
+    </ErrorBoundary>
   )
 }
