@@ -2,18 +2,18 @@
 
 Repository: https://github.com/tommy-truo/queue-smart
 
-Checked November 19, 2026, on `pete-branch`, using Node.js 22.23.2. These results cover the committed implementation on `pete-branch`, based on `b53d621`. The contribution record links each fix to its commit.
+Checked November 20, 2026, on `pete-branch`, using Node.js 22.23.2. These results include Smart Queue Reminders on `pete-branch`. The contribution record links the QA fixes and reminder implementation to their commits.
 
 ## 1. Code Coverage Report
 
-All 206 backend tests in 13 files pass. Output of `npm run coverage` (Vitest with v8):
+All 234 backend tests in 14 files pass. Output of `npm run coverage` (Vitest with v8):
 
 | Metric | Covered | Percent |
 | --- | --- | --- |
-| Statements | 698 / 702 | 99.43% |
-| Branches | 336 / 342 | 98.24% |
-| Functions | 162 / 162 | 100% |
-| Lines | 608 / 612 | 99.34% |
+| Statements | 778 / 782 | 99.48% |
+| Branches | 409 / 415 | 98.55% |
+| Functions | 180 / 180 | 100% |
+| Lines | 677 / 681 | 99.41% |
 
 The backend enforces an 80% minimum for all four metrics. The HTML coverage report is generated at `backend/coverage/index.html`.
 
@@ -21,9 +21,10 @@ The backend enforces an 80% minimum for all four metrics. The HTML coverage repo
 
 | Check | Result |
 | --- | --- |
-| Backend tests and coverage | 206 tests pass |
-| Frontend regression tests | 19 tests in 3 files pass |
-| API smoke crawl | 200 HTTP checks pass |
+| Backend tests and coverage | 234 tests pass |
+| Frontend regression tests | 29 tests in 4 files pass |
+| API smoke crawl | 224 HTTP checks pass |
+| Chrome reminder walkthrough | Joined with a five-minute reminder, changed it to 15 minutes, dismissed the banner, reloaded, and confirmed the saved notification remains on the dashboard |
 | Backend TypeScript check | Pass, including the smoke script |
 | Frontend production build | Pass |
 | Frontend lint | Pass |
@@ -32,7 +33,7 @@ The backend enforces an 80% minimum for all four metrics. The HTML coverage repo
 | Development frontend proxy | Login, session lookup, CSV export, logout, and revoked-session rejection passed after the fixes |
 | Development database migration | Original column values and rows preserved across all seven existing tables |
 
-The API crawl starts its own server on an available port and uses a temporary SQLite database. It signs in with real session cookies and checks role permissions, queue operations, staff priority, history, notifications, report exports, invalid requests, service renaming, cross-site rejection, session expiry, and logout. It restarts the API and confirms that the account, services, history, and session persist. It removes its temporary database and processes afterward.
+The API crawl starts its own server on an available port and uses a temporary SQLite database. It signs in with real session cookies and checks role permissions, queue operations, staff priority, history, notifications, report exports, invalid requests, service renaming, cross-site rejection, session expiry, and logout. It waits for a real background reminder check without customer requests, then restarts the API and checks persisted reminder preferences, dismissal, account, services, history, and session. It removes its temporary database and processes afterward.
 
 The database backup is stored locally at `backend/backups/pre-qa-fixes-2026-11-19.db` and is excluded from Git. The original assignment records and their historical coverage results have not been overwritten.
 
@@ -51,9 +52,9 @@ The database backup is stored locally at `backend/backups/pre-qa-fixes-2026-11-1
 
 ## 4. Smart Feature for the Demo
 
-Staff-controlled priority handling uses explicit rules: high priority precedes medium, medium precedes low, and the person being served remains first. Customers cannot promote themselves. Staff can assign priority through the administrator or employee queue screen, and customers receive updated positions and wait estimates as the queue refreshes.
+Smart Queue Reminders use each customer's selected lead time and the current service's elapsed time to send an advance notice when the estimated wait reaches their threshold. The demo uses a six-minute service and a five-minute reminder to show an alert triggering with no staff action after the customer joins. The walkthrough also covers changing the preference, dismissing the banner, and requeueing. See [Smart Queue Reminders](Smart_Reminders.md).
 
-Demonstrate this by joining a service with two customer accounts, assigning the later arrival high priority as staff, and showing the changed order and customer status. Explain the operational reason for assigning priority and how it helps staff handle exceptions consistently.
+Staff-controlled priority remains available and feeds the live order used by the estimate.
 
 ## 5. Reproduce the Checks
 
@@ -76,9 +77,9 @@ Start the application with `npm run dev`; the frontend runs at http://localhost:
 
 ## 6. Remaining Demo and Submission Checks
 
-- Repeat the live-browser walkthrough after browser control is available. The initial QA visited all 11 screens, but the final post-fix browser retest could not run because browser control was unavailable. The automated component/API checks above are complete.
+- Run the complete team demo walkthrough. The November 20 Chrome retest covered the new customer reminder flow. The API crawl covers timer delivery, staff operations, reports, and restart persistence.
 - Check narrow-screen layouts and the final visual appearance of staff priority controls and dialogs.
 - Download an example CSV from administrator Reports and include it with an explanation of its contents, filters, and administrator-only access in the final submission.
 - Capture the current coverage summary for the submission.
-- Rehearse login, queue interaction, administrator service/queue management, persistence, reporting, and priority handling with every group member participating.
-- Push and review the committed work before merging. The [contribution record](Contribution_Record.md) contains the local commit hashes; its GitHub links become available after the branch is pushed.
+- Rehearse login, queue interaction, administrator service/queue management, persistence, reporting, and smart reminders with every group member participating.
+- Review the changes on `pete-branch` before merging. The [contribution record](Contribution_Record.md) links the implementation commits.
