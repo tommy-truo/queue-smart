@@ -150,8 +150,8 @@ function viewOf(entryId: string, serviceId: string): QueueView {
 export function joinQueue(user: User, serviceId: string, body: unknown): QueueView {
   return transaction(() => {
     const service = getService(serviceId)
-    assertValid(body, { priority: { type: 'string', oneOf: PRIORITIES } })
-    const priority = (body as { priority?: Priority } | undefined)?.priority ?? 'medium'
+    assertValid(body, { priority: { type: 'string', oneOf: ['medium'] } })
+    const priority: Priority = 'medium'
 
     if (!service.open) throw new HttpError(409, `${service.name} is not accepting people right now.`)
     if (findActiveEntry(user.id, serviceId)) throw new HttpError(409, `You are already in line for ${service.name}.`)
@@ -303,6 +303,27 @@ export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?
   })
 }
 
+/** Staff assign priority; equal-priority customers retain their existing relative order. */
+export function assignPriority(serviceId: string, entryId: string, body: unknown): QueueView {
+  return transaction(() => {
+    const service = getService(serviceId)
+    assertValid(body, { priority: { type: 'string', required: true, oneOf: PRIORITIES } })
+    const priority = (body as { priority: Priority }).priority
+    const entry = findEntry(serviceId, entryId)
+    if (!entry) throw new HttpError(404, `That person is not in line for ${service.name}.`)
+    if (entry.priority === priority) return viewOf(entryId, serviceId)
+    getDb().prepare('UPDATE QueueEntry SET priority = ? WHERE entryId = ?').run(priority, entryId)
+    if (entry.status !== 'serving') {
+      const others = orderedEntries(serviceId).filter(e => e.id !== entryId)
+      const serving = others.filter(e => e.status === 'serving')
+      const waiting = others.filter(e => e.status !== 'serving')
+      const index = insertionIndex(waiting, priority)
+      savePositions([...serving, ...waiting.slice(0, index), { ...entry, priority }, ...waiting.slice(index)])
+    }
+    updateStatuses(service)
+    return viewOf(entryId, serviceId)
+  })
+}
 
 /** The user's active entries across all services. */
 export function myQueues(userId: string): QueueView[] {
