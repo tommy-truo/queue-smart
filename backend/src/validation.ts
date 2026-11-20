@@ -4,6 +4,8 @@ import type { FieldErrors } from './errors.ts'
 type Rule = {
   type: 'string' | 'number' | 'boolean'
   required?: boolean
+  /** Passwords use their raw length; other text fields are trimmed. */
+  trim?: boolean
   /** Min/max length for strings, min/max value for numbers. */
   min?: number
   max?: number
@@ -18,7 +20,7 @@ export type Schema = Record<string, Rule>
 function checkField(field: string, value: unknown, rule: Rule): string | undefined {
   if (rule.type === 'string') {
     if (typeof value !== 'string') return `${field} must be a string.`
-    const length = value.trim().length
+    const length = rule.trim === false ? value.length : value.trim().length
     if (rule.required && length === 0) return `${field} is required.`
     if (rule.min !== undefined && length < rule.min) return `${field} must be at least ${rule.min} characters.`
     if (rule.max !== undefined && length > rule.max) return `${field} must be at most ${rule.max} characters.`

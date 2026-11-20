@@ -35,13 +35,13 @@ function checkPhone(phone: string) {
 export const registerSchema: Schema = {
   fullName: { type: 'string', required: true, max: 50, check: checkName },
   email: { type: 'string', required: true, max: 254, check: checkEmail },
-  password: { type: 'string', required: true, min: 8, max: 64, check: checkPassword },
+  password: { type: 'string', required: true, trim: false, min: 8, max: 64, check: checkPassword },
   phone: { type: 'string', required: false, min: 10, max: 17, check: checkPhone},
 }
 
 export const loginSchema: Schema = {
   email: { type: 'string', required: true, max: 254 },
-  password: { type: 'string', required: true, max: 64 },
+  password: { type: 'string', required: true, trim: false, max: 64 },
 }
 
 function normalizeEmail(email: string): string {
