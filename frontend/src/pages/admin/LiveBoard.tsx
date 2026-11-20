@@ -61,7 +61,6 @@ export default function LiveBoard() {
     <section className="live-board" aria-labelledby="live-board-title">
       <div className="live-board__head">
         <h2 id="live-board-title">Live queues</h2>
-        <span className="live-board__live">Live</span>
         <span className="live-board__info">
           <button type="button" aria-label="What the timer colours mean" aria-describedby="live-board-legend">i</button>
           <span id="live-board-legend" role="tooltip" className="live-board__legend">

@@ -13,35 +13,6 @@
   margin: 0;
 }
 
-/* Small pulsing dot so it is clear the board updates by itself. */
-.live-board__live {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: #2f855a;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.live-board__live::before {
-  content: '';
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  background: #38a169;
-  animation: live-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes live-pulse {
-  50% { opacity: 0.25; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .live-board__live::before { animation: none; }
-}
-
 .live-board__nav {
   display: flex;
   gap: 0.3rem;
