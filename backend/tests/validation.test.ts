@@ -19,8 +19,8 @@ describe('validate', () => {
     expect(validate({}, schema)).toEqual({ name: 'name is required.', count: 'count is required.' })
   })
 
-  it('treats a non-object body as empty', () => {
-    expect(Object.keys(validate('nope', schema))).toEqual(['name', 'count'])
+  it('rejects a non-object body', () => {
+    expect(validate('nope', schema)).toEqual({ body: 'Request body must be an object.' })
   })
 
   it('rejects blank strings for required fields', () => {

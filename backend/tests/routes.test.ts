@@ -88,7 +88,7 @@ describe('queue routes', () => {
   })
 
   it('returns 409 when joining a closed service', async () => {
-    const res = await request(app).post('/api/queues/s4/join').set('x-user-id', 'u1')
+    const res = await request(app).post('/api/queues/s4/join').set('x-user-id', 'u1').send({})
     expect(res.status).toBe(409)
   })
 

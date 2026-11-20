@@ -42,11 +42,14 @@ function checkField(field: string, value: unknown, rule: Rule): string | undefin
  */
 export function validate(body: unknown, schema: Schema, partial = false): FieldErrors {
   const errors: FieldErrors = {}
-  const data = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return { body: 'Request body must be an object.' }
+  }
+  const data = body as Record<string, unknown>
 
   for (const [field, rule] of Object.entries(schema)) {
     const value = data[field]
-    if (value === undefined || value === null) {
+    if (value === undefined) {
       if (rule.required && !partial) errors[field] = `${field} is required.`
       continue
     }
