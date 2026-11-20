@@ -23,25 +23,40 @@ function Dashboard({ fullName }: { fullName?: string }) {
   const [{ entries, services, notifications }, setData] = useState<DashboardData>({ entries: [], services: [], notifications: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [revision, setRevision] = useState(0)
 
   useEffect(() => {
     let active = true
-    Promise.all([
-      api<QueueView[]>('/queues/mine'),
-      api<ServiceSummary[]>('/services'),
-      api<AppNotification[]>('/me/notifications'),
-    ])
-      .then(([entries, services, notifications]) => {
-        if (active) setData({ entries, services, notifications })
-      })
-      .catch(error => { if (active) setError(error instanceof Error ? error.message : 'Could not load your dashboard.') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    let request: AbortController | undefined
+    async function load() {
+      request?.abort()
+      const controller = new AbortController()
+      request = controller
+      try {
+        const [entries, services, notifications] = await Promise.all([
+          api<QueueView[]>('/queues/mine', { signal: controller.signal }),
+          api<ServiceSummary[]>('/services', { signal: controller.signal }),
+          api<AppNotification[]>('/me/notifications', { signal: controller.signal }),
+        ])
+        if (active && !controller.signal.aborted) {
+          setData({ entries, services, notifications })
+          setHasLoaded(true)
+          setError('')
+        }
+      } catch (error) {
+        if (active && !controller.signal.aborted) setError(error instanceof Error ? error.message : 'Could not load your dashboard.')
+      } finally {
+        if (active && !controller.signal.aborted) setLoading(false)
+      }
+    }
+    void load()
+    const timer = window.setInterval(load, 5000)
+    window.addEventListener('focus', load)
+    return () => { active = false; request?.abort(); window.clearInterval(timer); window.removeEventListener('focus', load) }
   }, [revision])
 
   function refresh() {
-    setLoading(true)
     setError('')
     setRevision(value => value + 1)
   }
@@ -50,11 +65,12 @@ function Dashboard({ fullName }: { fullName?: string }) {
   const unread = notifications.filter((n) => !n.read)
 
   if (loading) return <div className="page"><h1>Welcome{fullName ? `, ${fullName}` : ''}</h1><p role="status" className="loading">Loading dashboard…</p></div>
-  if (error) return <div className="page"><h1>Welcome{fullName ? `, ${fullName}` : ''}</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
+  if (error && !hasLoaded) return <div className="page"><h1>Welcome{fullName ? `, ${fullName}` : ''}</h1><p role="alert">{error}</p><button type="button" onClick={refresh}>Retry</button></div>
 
   return (
     <div className="page">
       <h1>Welcome{fullName ? `, ${fullName}` : ''}</h1>
+      {error ? <p role="alert">{error}</p> : null}
       <p>
         <button type="button" onClick={refresh}>Refresh</button>
       </p>
