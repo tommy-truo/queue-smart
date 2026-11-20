@@ -125,8 +125,10 @@ export function waitByHourReport(filters: ReportFilters): WaitByHourRow[] {
 }
 
 function csvCell(value: unknown): string {
-  const text = value === null || value === undefined ? '' : String(value)
-  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+  let text = value === null || value === undefined ? '' : String(value)
+  // Spreadsheet applications interpret these prefixes even inside quoted CSV cells.
+  if (typeof value === 'string' && /^[\s\u0000-\u001f]*[=+@-]|^[\t\r\n]/.test(value)) text = `'${text}`
+  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 
 /** A report column: the field in each row, and the heading shown in the file. */
