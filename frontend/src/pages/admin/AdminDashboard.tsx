@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { api } from '../../api.ts'
 import { capitalize } from '../../format.ts'
@@ -15,28 +15,44 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [savingId, setSavingId] = useState<string | null>(null)
+  const saving = useRef(false)
+  const request = useRef<AbortController | undefined>(undefined)
 
   useEffect(() => {
     let active = true
-    api<ServiceSummary[]>('/services')
-      .then(data => { if (active) setServices(data) })
-      .catch(error => { if (active) setLoadError(error instanceof Error ? error.message : 'Could not load services.') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    async function load() {
+      if (saving.current) return
+      request.current?.abort()
+      const controller = new AbortController()
+      request.current = controller
+      try {
+        const data = await api<ServiceSummary[]>('/services', { signal: controller.signal })
+        if (active && !controller.signal.aborted) { setServices(data); setLoadError('') }
+      } catch (error) {
+        if (active && !controller.signal.aborted) setLoadError(error instanceof Error ? error.message : 'Could not load services.')
+      } finally {
+        if (active && !controller.signal.aborted) setLoading(false)
+      }
+    }
+    void load()
+    const timer = window.setInterval(load, 5000)
+    window.addEventListener('focus', load)
+    return () => { active = false; request.current?.abort(); window.clearInterval(timer); window.removeEventListener('focus', load) }
   }, [reload])
 
   function retry() {
-    setLoading(true)
     setLoadError('')
     setReload(value => value + 1)
   }
 
   async function toggleOpen(id: string) {
-    if (savingId) return
+    if (saving.current) return
     const service = services.find((s) => s.id === id)
     if (!service) return
     setMessage('')
     setActionError('')
+    saving.current = true
+    request.current?.abort()
     setSavingId(id)
     try {
       const saved = await api<Service>(`/services/${encodeURIComponent(id)}`, { method: 'PUT', body: { open: !service.open } })
@@ -46,7 +62,9 @@ export default function AdminDashboard() {
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Could not update the service.')
     } finally {
+      saving.current = false
       setSavingId(null)
+      setReload(value => value + 1)
     }
   }
 
@@ -54,7 +72,7 @@ export default function AdminDashboard() {
   const openCount = services.filter((s) => s.open).length
 
   if (loading) return <div className="page"><h1>Admin dashboard</h1><p role="status" className="loading">Loading services…</p></div>
-  if (loadError) return <div className="page"><h1>Admin dashboard</h1><p role="alert">{loadError}</p><button type="button" onClick={retry}>Retry</button></div>
+  if (loadError && services.length === 0) return <div className="page"><h1>Admin dashboard</h1><p role="alert">{loadError}</p><button type="button" onClick={retry}>Retry</button></div>
 
   return (
     <div className="page">
@@ -63,6 +81,8 @@ export default function AdminDashboard() {
         {openCount} of {services.length} queues open, {totalWaiting} people in line.
       </p>
 
+      {loadError ? <p role="alert">{loadError}</p> : null}
+      <button type="button" onClick={retry}>Refresh</button>
       <LiveBoard />
 
       <h2>Services</h2>
