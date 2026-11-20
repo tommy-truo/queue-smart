@@ -248,7 +248,7 @@ export function requeue(serviceId: string): QueueView {
 export function reorder(serviceId: string, entryId: string, body: unknown): QueueView {
   return transaction(() => {
     const service = getService(serviceId)
-    assertValid(body, { direction: { type: 'string', oneOf: ['up', 'down'] as const } })
+    assertValid(body, { direction: { type: 'string', required: true, oneOf: ['up', 'down'] as const } })
     const direction = (body as { direction: 'up' | 'down' }).direction
 
     const entry = findEntry(serviceId, entryId)
