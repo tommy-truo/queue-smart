@@ -1,9 +1,13 @@
-export const SESSION_USER_KEY = 'queuesmart.sessionUser'
+export const SESSION_EVENT_KEY = 'queuesmart.sessionChanged'
+export const SESSION_EXPIRED_EVENT = 'queuesmart:sessionExpired'
+let sessionGeneration = 0
+
+/** Invalidates responses that started under an earlier account/session. */
+export function invalidateSessionRequests(): void { sessionGeneration += 1 }
 
 export class ApiError extends Error {
   status: number
   fields?: Record<string, string>
-
   constructor(status: number, message: string, fields?: Record<string, string>) {
     super(message)
     this.status = status
@@ -11,55 +15,63 @@ export class ApiError extends Error {
   }
 }
 
-function sessionUserId(): string | null {
-  try {
-    const raw = localStorage.getItem(SESSION_USER_KEY)
-    return raw ? (JSON.parse(raw) as { id: string }).id : null
-  } catch {
-    return null
+type Options = { method?: string; body?: unknown; signal?: AbortSignal }
+
+function sessionCheckpoint() {
+  const generation = sessionGeneration
+  const marker = localStorage.getItem(SESSION_EVENT_KEY)
+  return () => {
+    if (generation !== sessionGeneration || marker !== localStorage.getItem(SESSION_EVENT_KEY)) {
+      throw new DOMException('The session changed. Please retry.', 'AbortError')
+    }
   }
 }
 
-/** Calls the backend (proxied to /api by Vite) and throws an ApiError on failure. */
-export async function api<T>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
-  const headers: Record<string, string> = {}
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json'
-  const userId = sessionUserId()
-  if (userId) headers['x-user-id'] = userId
-
+async function response(path: string, options: Options = {}): Promise<Response> {
+  const generation = sessionGeneration
+  const marker = localStorage.getItem(SESSION_EVENT_KEY)
   let res: Response
   try {
     res = await fetch(`/api${path}`, {
       method: options.method ?? 'GET',
-      headers,
+      credentials: 'same-origin',
+      headers: options.body === undefined ? {} : { 'Content-Type': 'application/json' },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      signal: options.signal,
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
     throw new ApiError(0, 'Could not connect to QueueSmart. Check your connection and try again.')
   }
+  if (generation !== sessionGeneration || marker !== localStorage.getItem(SESSION_EVENT_KEY)) {
+    throw new DOMException('The session changed. Please retry.', 'AbortError')
+  }
+  if (!res.ok) {
+    if (res.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+    const data = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, data.error ?? 'Request failed.', data.fields)
+  }
+  return res
+}
 
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new ApiError(res.status, data.error ?? 'Request failed.', data.fields)
+export async function api<T>(path: string, options: Options = {}): Promise<T> {
+  const check = sessionCheckpoint()
+  const res = await response(path, options)
+  const data = res.status === 204 ? undefined : await res.json()
+  check()
   return data as T
 }
 
-/** Downloads a file from the backend (sent with the signed-in user) and saves it under the given name. */
 export async function download(path: string, filename: string): Promise<void> {
-  const userId = sessionUserId()
-  let res: Response
-  try {
-    res = await fetch(`/api${path}`, { headers: userId ? { 'x-user-id': userId } : {} })
-  } catch {
-    throw new ApiError(0, 'Could not connect to QueueSmart. Check your connection and try again.')
-  }
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}))
-    throw new ApiError(res.status, data.error ?? 'Download failed.')
-  }
-  const url = URL.createObjectURL(await res.blob())
+  const check = sessionCheckpoint()
+  const res = await response(path)
+  const blob = await res.blob()
+  check()
+  const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
   link.download = filename
   link.click()
-  URL.revokeObjectURL(url)
+  // Defer revocation until the browser has begun processing the download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

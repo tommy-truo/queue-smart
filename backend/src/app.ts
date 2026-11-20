@@ -1,6 +1,7 @@
 import express from 'express'
 import type { NextFunction, Request, Response } from 'express'
 import { HttpError } from './errors.ts'
+import { protectMutations } from './middleware.ts'
 import { authRouter } from './routes/auth.ts'
 import { meRouter } from './routes/me.ts'
 import { queuesRouter } from './routes/queues.ts'
@@ -9,7 +10,9 @@ import { servicesRouter } from './routes/services.ts'
 
 export function createApp() {
   const app = express()
+  app.use('/api', protectMutations)
   app.use(express.json())
+  app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next() })
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' })
