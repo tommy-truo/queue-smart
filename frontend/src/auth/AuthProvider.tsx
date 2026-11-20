@@ -32,11 +32,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         if (active && generation === syncGeneration.current) setReady(true)
       }
     }
+    const changed = (event: StorageEvent) => { if (event.key === SESSION_EVENT_KEY || event.key === null) void sync(true) }
     const expired = () => { void sync(true) }
     localStorage.removeItem('queuesmart.sessionUser')
     void sync()
+    window.addEventListener('storage', changed)
     window.addEventListener(SESSION_EXPIRED_EVENT, expired)
-    return () => { active = false; window.removeEventListener(SESSION_EXPIRED_EVENT, expired) }
+    return () => { active = false; window.removeEventListener('storage', changed); window.removeEventListener(SESSION_EXPIRED_EVENT, expired) }
   }, [])
 
   async function login(email: string, password: string): Promise<LoginResult> {
