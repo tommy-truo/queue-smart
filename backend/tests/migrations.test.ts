@@ -30,6 +30,24 @@ function legacyFile(): string {
 }
 
 describe('schema migrations', () => {
+  it('upgrades the previous version-three schema with default reminders and preserves existing data', () => {
+    const file = path.join(directory, 'pre-reminder.db')
+    const old = new DatabaseSync(file)
+    old.exec(fs.readFileSync(new URL('./fixtures/pre-reminder-schema.sql', import.meta.url), 'utf8'))
+    old.prepare('INSERT INTO UserCredentials VALUES (?,?,?,?)').run('u', 'old@example.com', 'hash', 'user')
+    old.prepare('INSERT INTO UserProfile (userId,fullName,email) VALUES (?,?,?)').run('u', 'Old User', 'old@example.com')
+    old.prepare('INSERT INTO Service (serviceId,name,description,expectedDuration,priority) VALUES (?,?,?,?,?)').run('s','Old Help','Description',15,'medium')
+    old.prepare('INSERT INTO Queue VALUES (?,?,?,?)').run('q','s','open','2026-09-29')
+    old.prepare('INSERT INTO QueueEntry (entryId,queueId,userId,position,priority,joinedAt,status) VALUES (?,?,?,?,?,?,?)').run('e','q','u',1,'medium','2026-09-29T09:00:00','waiting')
+    old.close()
+    const upgraded = openDatabase(file)
+    try {
+      expect(upgraded.prepare('SELECT * FROM QueueEntry').get()).toMatchObject({ entryId: 'e', joinedAt: '2026-09-29T09:00:00', status: 'waiting', reminderMinutes: 10, reminderSentAt: null, reminderNotificationId: null, reminderDismissed: 0 })
+      expect(() => upgraded.prepare('UPDATE QueueEntry SET reminderMinutes = 7').run()).toThrow()
+      expect(upgraded.prepare('PRAGMA foreign_key_check').all()).toEqual([])
+    } finally { upgraded.close() }
+  })
+
   it('upgrades the actual legacy schema while preserving accounts, queues, snapshots, and legacy phone data', () => {
     const db = openDatabase(legacyFile())
     try {
