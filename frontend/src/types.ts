@@ -30,6 +30,12 @@ export type QueueEntry = {
   calledAt?: string
   /** Unset while still in line; set when served, left or removed. */
   outcome?: Outcome
+  reminderMinutes?: number
+  reminderSentAt?: string
+  reminderNotificationId?: string
+  reminderDismissed?: boolean
+  reminderWaitMinutes?: number
+  reminderLeadMinutes?: number
 }
 
 export type AppNotification = {

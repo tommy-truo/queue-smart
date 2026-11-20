@@ -490,3 +490,11 @@ main {
 @keyframes loading-appear {
   to { opacity: 1; }
 }
+
+/* Customer reminders use the same card and form language as the queue screens. */
+.queue-reminders { max-width: 960px; margin: 24px auto; padding: 0 20px; }
+.reminder-banner { display: flex; align-items: flex-start; gap: 20px; justify-content: space-between; padding: 20px; margin-bottom: 12px; border: 1px solid #8ba9c8; border-left: 5px solid #315c85; border-radius: 12px; background: #edf5ff; color: #172b40; }
+.reminder-banner strong { font-size: 1.1rem; }
+.reminder-banner p { margin: 8px 0 0; }
+.wait-note { display: block; max-width: 32rem; margin-top: 5px; }
+@media (max-width: 600px) { .reminder-banner { flex-direction: column; } .reminder-banner button { align-self: flex-end; } }

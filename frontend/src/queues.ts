@@ -3,7 +3,16 @@ import { api } from './api.ts'
 import { useAuth } from './auth/AuthContext.ts'
 import type { Priority, QueueEntry, Service } from './types.ts'
 
-export type QueueView = QueueEntry & { position: number; estimatedWait: number }
+export type QueueView = QueueEntry & {
+  position: number
+  estimatedWait: number
+  estimatedWaitSeconds?: number
+  estimateUpdatedAt?: number
+  peopleAhead?: number
+  serviceDelayed?: boolean
+  awaitingStaff?: boolean
+  countdownFloorSeconds?: number
+}
 export type ServiceSummary = Service & { queueLength: number; estimatedWait: number }
 type QueueData = { key: string; services: ServiceSummary[]; entries: QueueView[]; serviceId: string }
 
@@ -90,8 +99,8 @@ export function useQueues(serviceId?: string) {
   }
 }
 
-export function joinQueue(id: string) {
-  return api<QueueView>(`/queues/${encodeURIComponent(id)}/join`, { method: 'POST', body: {} })
+export function joinQueue(id: string, reminderMinutes = 10) {
+  return api<QueueView>(`/queues/${encodeURIComponent(id)}/join`, { method: 'POST', body: { reminderMinutes } })
 }
 
 export function leaveQueue(id: string) {
@@ -121,4 +130,12 @@ export function setQueuePriority(serviceId: string, entryId: string, priority: P
   return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/entries/${encodeURIComponent(entryId)}/priority`, {
     method: 'POST', body: { priority },
   })
+}
+
+export function updateQueueReminder(serviceId: string, entryId: string, reminderMinutes: number) {
+  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/reminder`, { method: 'PUT', body: { entryId, reminderMinutes } })
+}
+
+export function dismissQueueReminder(serviceId: string, notificationId: string) {
+  return api<QueueView>(`/queues/${encodeURIComponent(serviceId)}/reminder/dismiss`, { method: 'POST', body: { notificationId } })
 }

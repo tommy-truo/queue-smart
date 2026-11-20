@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import QueueReminders from './QueueReminders.tsx'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { useAuth, type Role } from '../auth/AuthContext.ts'
 
@@ -59,6 +60,7 @@ export default function Layout() {
       </header>
       <main>
         {logoutError && <p role="alert">{logoutError}</p>}
+        {role === 'user' ? <QueueReminders /> : null}
         <Outlet />
       </main>
     </>

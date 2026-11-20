@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { leaveQueue, useQueues } from '../../queues.ts'
+import { leaveQueue, updateQueueReminder, useQueues } from '../../queues.ts'
 import type { QueueView } from '../../queues.ts'
+import LiveWait from '../../components/LiveWait.tsx'
 import StatusBadge from '../../components/StatusBadge.tsx'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
 
@@ -12,7 +13,7 @@ export default function QueueStatus() {
   // Position excludes the person being served; the estimate counts everyone ahead, them included.
   const peopleAhead = (entry: QueueView) => {
     const duration = services.find(service => service.id === entry.serviceId)?.expectedDuration
-    return duration ? Math.max(0, Math.round(entry.estimatedWait / duration)) : 0
+    return entry.peopleAhead ?? (duration ? Math.max(0, Math.round(entry.estimatedWait / duration)) : 0)
   }
 
   function confirmLeave() {
@@ -37,14 +38,25 @@ export default function QueueStatus() {
       {actionError ? <p role="alert">{actionError}</p> : null}
       {entries.length === 0 ? <p>You are not currently in a queue. <Link to="/join">Join a queue</Link></p> : (
         <table>
-          <thead><tr><th>Service</th><th>Estimated wait</th><th>Position</th><th>People ahead</th><th>Status</th><th /></tr></thead>
+          <thead><tr><th>Service</th><th>Estimated wait</th><th>Position</th><th>People ahead</th><th>Status</th><th>Reminder</th><th /></tr></thead>
           <tbody>{entries.map(entry => (
             <tr key={entry.id}>
               <td>{serviceName(entry.serviceId)}</td>
-              <td>{entry.estimatedWait} min</td>
+              <td><LiveWait entry={entry} /></td>
               <td>{entry.position === 0 ? 'Being served' : entry.position}</td>
               <td>{peopleAhead(entry)}</td>
               <td><StatusBadge status={entry.status} /></td>
+              <td><label>Remind me before {serviceName(entry.serviceId)}
+                <select aria-label={`Reminder for ${serviceName(entry.serviceId)}`} value={entry.reminderMinutes ?? 10} disabled={busy || entry.status === 'serving'} onChange={event => {
+                  const minutes = Number(event.target.value)
+                  void runAction(async () => {
+                    await updateQueueReminder(entry.serviceId, entry.id, minutes)
+                    return `Reminder set to ${minutes} minutes for ${serviceName(entry.serviceId)}.`
+                  })
+                }}>
+                  <option value={5}>5 minutes</option><option value={10}>10 minutes</option><option value={15}>15 minutes</option>
+                </select>
+              </label>{entry.reminderSentAt && entry.status !== 'serving' ? <small className="wait-note">Reminder already sent for this waiting period. Changing the setting will not send another.</small> : null}</td>
               <td><button type="button" disabled={busy} onClick={() => setLeaving(entry)}>Leave</button></td>
             </tr>
           ))}</tbody>

@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { joinQueue, leaveQueue, useQueues } from '../../queues.ts'
 import type { Service } from '../../types.ts'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
+import LiveWait from '../../components/LiveWait.tsx'
 
 export default function JoinQueue() {
   const [serviceId, setServiceId] = useState('')
+  const [reminderMinutes, setReminderMinutes] = useState(10)
   const [leaving, setLeaving] = useState<Service | null>(null)
   const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues()
   const selected = services.find(service => service.id === serviceId)
@@ -44,15 +46,21 @@ export default function JoinQueue() {
           <p>Expected duration: {selected.expectedDuration} min</p>
           {entry ? (
             <>
-              <p>Position: {entry.position === 0 ? 'Being served' : entry.position}. Estimated wait: {entry.estimatedWait} min.</p>
+              <p>Position: {entry.position === 0 ? 'Being served' : entry.position}. Estimated wait: <LiveWait entry={entry} /></p>
               <button type="button" disabled={busy} onClick={() => setLeaving(selected)}>Leave</button>
               <span className="note">You are already in this queue.</span>
             </>
           ) : (
             <>
               <p>Estimated wait: {selected.open ? `${selected.estimatedWait} min` : 'Closed'}</p>
+              <label className="field">Remind me before service
+                <select value={reminderMinutes} disabled={busy} onChange={event => setReminderMinutes(Number(event.target.value))}>
+                  <option value={5}>5 minutes</option><option value={10}>10 minutes</option><option value={15}>15 minutes</option>
+                </select>
+              </label>
+              <p className="note">One in-app reminder when your estimated wait reaches this time. Estimates may change.</p>
               <button type="button" className="primary" disabled={busy || !selected.open} onClick={() => void runAction(async () => {
-                await joinQueue(selected.id)
+                await joinQueue(selected.id, reminderMinutes)
                 return `You joined ${selected.name}.`
               })}>Join</button>
               {!selected.open ? <span className="note">This queue is closed right now.</span> : null}
