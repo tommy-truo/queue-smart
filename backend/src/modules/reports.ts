@@ -166,6 +166,6 @@ export const SERVICE_ACTIVITY_COLUMNS: CsvColumn[] = [
 
 export const WAIT_BY_HOUR_COLUMNS: CsvColumn[] = [
   ['hour', 'Hour (0-23)'],
-  ['visits', 'Visits served'],
+  ['visits', 'Visits called'],
   ['averageWait', 'Average wait (min)'],
 ]

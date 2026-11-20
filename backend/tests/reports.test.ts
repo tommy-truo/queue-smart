@@ -96,7 +96,7 @@ describe('report routes', () => {
     const sections = res.text.split('\n\n')
     expect(sections).toHaveLength(2)
     expect(sections[0].split('\n')[0]).toMatch(/^Service,/)
-    expect(sections[1].split('\n').slice(0, 3)).toEqual(['Average wait by time of day', 'Hour (0-23),Visits served,Average wait (min)', '9,1,20'])
+    expect(sections[1].split('\n').slice(0, 3)).toEqual(['Average wait by time of day', 'Hour (0-23),Visits called,Average wait (min)', '9,1,20'])
   })
 
   it('serve the wait-by-hour chart data', async () => {
