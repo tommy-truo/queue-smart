@@ -131,3 +131,48 @@ describe('atomic multi-table changes', () => {
     } finally { getDb().exec('DROP TRIGGER fail_qa') }
   })
 })
+
+describe('stale staff action preconditions', () => {
+  it('rejects a second serve action against the old serving head', () => {
+    serveNext('s1', { expectedEntryId: 'q1', expectedStatus: 'serving' })
+    const before = getQueue('s1')
+    const historyBefore = getDb().prepare('SELECT * FROM History').all()
+    const notesBefore = getDb().prepare('SELECT * FROM Notification').all()
+    expect(() => serveNext('s1', { expectedEntryId: 'q1', expectedStatus: 'serving' })).toThrow(/queue changed/)
+    expect(getQueue('s1')).toEqual(before)
+    expect(getDb().prepare('SELECT * FROM History').all()).toEqual(historyBefore)
+    expect(getDb().prepare('SELECT * FROM Notification').all()).toEqual(notesBefore)
+  })
+
+  it('rejects requeue after another staff member has served the selected person', () => {
+    serveNext('s1', { expectedEntryId: 'q1', expectedStatus: 'serving' })
+    const before = getQueue('s1')
+    expect(() => requeue('s1', { expectedEntryId: 'q1', expectedStatus: 'serving' })).toThrow(/queue changed/)
+    expect(getQueue('s1')).toEqual(before)
+    expect(requeue('s1', { expectedEntryId: 'q2', expectedStatus: 'serving' }).userId).toBe('u3')
+  })
+
+  it('allows calling the expected waiting head and rejects a reordered stale head', () => {
+    expect(serveNext('s3', { expectedEntryId: 'q5', expectedStatus: 'almost-ready' }).nowServing?.id).toBe('q5')
+    reorder('s1', 'q3', { direction: 'up' })
+    removeFromQueue('s1', 'q1')
+    const before = getQueue('s1')
+    expect(() => serveNext('s1', { expectedEntryId: 'q2', expectedStatus: 'serving' })).toThrow(/queue changed/)
+    expect(getQueue('s1')).toEqual(before)
+  })
+
+  it('rejects a duplicate call when the waiting head became serving with the same ID', () => {
+    const snapshot = { expectedEntryId: 'q5', expectedStatus: 'almost-ready' }
+    serveNext('s3', snapshot)
+    const before = getQueue('s3')
+    expect(() => serveNext('s3', snapshot)).toThrow(/queue changed/)
+    expect(getQueue('s3')).toEqual(before)
+  })
+
+  it.each([null, [], {}, { expectedEntryId: null }, { expectedEntryId: '' }, { expectedEntryId: 1 }, { expectedEntryId: 'q1' }, { expectedStatus: 'serving' }, { expectedEntryId: 'q1', expectedStatus: 'invalid' }])('rejects malformed precondition %s', body => {
+    const before = getQueue('s1')
+    expect(() => serveNext('s1', body)).toThrow('Invalid input')
+    expect(() => requeue('s1', body)).toThrow('Invalid input')
+    expect(getQueue('s1')).toEqual(before)
+  })
+})
