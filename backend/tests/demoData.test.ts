@@ -29,6 +29,19 @@ describe('demo year', () => {
     expect(count("SELECT COUNT(*) AS n FROM History WHERE historyId LIKE 'dh%' AND strftime('%w', occurredOn) IN ('0', '6')")).toBe(0)
   })
 
+  it('adds two open services and more people in line', () => {
+    seedDemoYear(getDb(), new Date('2026-11-19T12:00:00Z'))
+
+    expect(count("SELECT COUNT(*) AS n FROM Queue WHERE queueId IN ('qu5', 'qu6') AND status = 'open'")).toBe(2)
+    expect(count("SELECT COUNT(*) AS n FROM QueueEntry WHERE entryId LIKE 'dl%' AND status = 'waiting'")).toBe(17)
+    // Each open queue has at least four people, and no queue has two people at the same position.
+    const smallest = getDb()
+      .prepare("SELECT MIN(n) AS n FROM (SELECT COUNT(*) AS n FROM QueueEntry WHERE status = 'waiting' GROUP BY queueId)")
+      .get() as { n: number }
+    expect(smallest.n).toBeGreaterThanOrEqual(4)
+    expect(count("SELECT COUNT(*) AS n FROM (SELECT 1 FROM QueueEntry WHERE status = 'waiting' GROUP BY queueId, position HAVING COUNT(*) > 1)")).toBe(0)
+  })
+
   it('gives the same data every time', () => {
     const snapshot = () =>
       getDb().prepare("SELECT entryId, userId, joinedAt, calledAt FROM QueueEntry WHERE entryId LIKE 'dq%' ORDER BY entryId").all()

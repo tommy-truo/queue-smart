@@ -42,7 +42,7 @@ npm install
 npm run dev
 ```
 
-The API runs on http://localhost:3940. The first start creates `backend/queuesmart.db` with the seed data plus a year of demo visits (extra users, served/left/removed history) so reports have something to show. Delete that file to start fresh. Run tests with `npm test`, or `npm run coverage` for a coverage report.
+The API runs on http://localhost:3940. The first start creates `backend/queuesmart.db` with the seed data plus demo data (extra users, two more services, more people in line, and a year of served/left/removed history) so reports have something to show. Delete that file to start fresh. Run tests with `npm test`, or `npm run coverage` for a coverage report.
 
 Requests that need a signed-in user send the `x-user-id` header with the `id` returned by login.
 

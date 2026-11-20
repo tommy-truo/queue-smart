@@ -1,10 +1,10 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { hashPassword } from './password.ts'
 
-// A year of finished visits so reports and wait estimates have real history to work with.
-// Only loaded into the app's database file, never into the in-memory test database.
+// Two more services, a year of finished visits so reports and wait estimates have real history to work with,
+// and more people in line. Only loaded into the app's database file, never into the in-memory test database.
 
-const FIRST_NAMES = ['Ava', 'Ben', 'Chloe', 'Diego', 'Elena', 'Faisal', 'Grace', 'Hiro', 'Isla', 'Jamal', 'Kira', 'Liam']
+const FIRST_NAMES = ['Ava', 'Ben', 'Chloe', 'Diego', 'Elena', 'Faisal', 'Grace', 'Hiro', 'Isla', 'Jamal', 'Kira', 'Liam', 'Maya', 'Noah', 'Omar', 'Priya', 'Quinn', 'Rosa']
 const LAST_NAMES = ['Nguyen', 'Garcia', 'Okafor', 'Smith']
 
 const SERVICES = [
@@ -12,6 +12,37 @@ const SERVICES = [
   { queueId: 'qu2', name: 'Financial Aid Help Desk', duration: 10, priority: 'medium' },
   { queueId: 'qu3', name: 'IT Support', duration: 20, priority: 'low' },
   { queueId: 'qu4', name: 'Student ID Office', duration: 5, priority: 'low' },
+  { queueId: 'qu5', name: "Registrar's Office", duration: 10, priority: 'medium' },
+  { queueId: 'qu6', name: 'Career Center', duration: 20, priority: 'low' },
+]
+
+const NEW_SERVICES = [
+  { id: 's5', queueId: 'qu5', name: "Registrar's Office", description: 'Transcripts, enrollment verification and records requests.', duration: 10, priority: 'medium' },
+  { id: 's6', queueId: 'qu6', name: 'Career Center', description: 'Resume reviews and help finding internships.', duration: 20, priority: 'low' },
+]
+
+/**
+ * More people in line, on the same morning as the small seed so moveLiveSeedToNow shifts them together.
+ * Positions follow on from the small seed's entries in each queue. One person is being served in each new queue.
+ */
+const LINE = [
+  { queueId: 'qu1', userId: 'd1', position: 4, joinedAt: '09:24', calledAt: null, almostReady: 0 },
+  { queueId: 'qu1', userId: 'd2', position: 5, joinedAt: '09:27', calledAt: null, almostReady: 0 },
+  { queueId: 'qu2', userId: 'd3', position: 2, joinedAt: '09:19', calledAt: null, almostReady: 0 },
+  { queueId: 'qu2', userId: 'd4', position: 3, joinedAt: '09:22', calledAt: null, almostReady: 0 },
+  { queueId: 'qu2', userId: 'd5', position: 4, joinedAt: '09:25', calledAt: null, almostReady: 0 },
+  { queueId: 'qu2', userId: 'd6', position: 5, joinedAt: '09:28', calledAt: null, almostReady: 0 },
+  { queueId: 'qu3', userId: 'd7', position: 3, joinedAt: '09:21', calledAt: null, almostReady: 0 },
+  { queueId: 'qu3', userId: 'd8', position: 4, joinedAt: '09:26', calledAt: null, almostReady: 0 },
+  { queueId: 'qu3', userId: 'd9', position: 5, joinedAt: '09:28', calledAt: null, almostReady: 0 },
+  { queueId: 'qu5', userId: 'd10', position: 1, joinedAt: '08:58', calledAt: '09:20', almostReady: 0 },
+  { queueId: 'qu5', userId: 'd11', position: 2, joinedAt: '09:06', calledAt: null, almostReady: 1 },
+  { queueId: 'qu5', userId: 'd12', position: 3, joinedAt: '09:14', calledAt: null, almostReady: 0 },
+  { queueId: 'qu5', userId: 'd13', position: 4, joinedAt: '09:23', calledAt: null, almostReady: 0 },
+  { queueId: 'qu6', userId: 'd14', position: 1, joinedAt: '08:50', calledAt: '09:15', almostReady: 0 },
+  { queueId: 'qu6', userId: 'd15', position: 2, joinedAt: '09:10', calledAt: null, almostReady: 1 },
+  { queueId: 'qu6', userId: 'd16', position: 3, joinedAt: '09:19', calledAt: null, almostReady: 0 },
+  { queueId: 'qu6', userId: 'd17', position: 4, joinedAt: '09:27', calledAt: null, almostReady: 0 },
 ]
 
 /** How busy each opening hour is, relative to an average hour. */
@@ -32,7 +63,7 @@ function random(seed: number): () => number {
 
 const stamp = (date: Date) => date.toISOString().slice(0, 19)
 
-/** Adds demo users and one year of visits ending yesterday. */
+/** Adds demo users, two more services, one year of visits ending yesterday, and more people in line. */
 export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
   const rand = random(39)
   const pick = <T>(items: T[]) => items[Math.floor(rand() * items.length)]
@@ -45,9 +76,21 @@ export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
   const addHistory = target.prepare(
     'INSERT INTO History (historyId, userId, serviceName, occurredOn, outcome) VALUES (?, ?, ?, ?, ?)',
   )
+  const addService = target.prepare(
+    'INSERT INTO Service (serviceId, name, description, expectedDuration, priority, notification) VALUES (?, ?, ?, ?, ?, NULL)',
+  )
+  const addQueue = target.prepare("INSERT INTO Queue (queueId, serviceId, status, createdAt) VALUES (?, ?, 'open', '2026-09-29T08:00:00')")
+  const addInLine = target.prepare(
+    "INSERT INTO QueueEntry (entryId, queueId, userId, position, priority, joinedAt, calledAt, almostReady, status) VALUES (?, ?, ?, ?, 'medium', ?, ?, ?, 'waiting')",
+  )
 
   target.exec('BEGIN')
   try {
+    for (const s of NEW_SERVICES) {
+      addService.run(s.id, s.name, s.description, s.duration, s.priority)
+      addQueue.run(s.queueId, s.id)
+    }
+
     const userIds = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6']
     const hash = hashPassword('UserPass1')
     let n = 0
@@ -85,6 +128,11 @@ export function seedDemoYear(target: DatabaseSync, today = new Date()): void {
           addHistory.run(`dh${visit}`, userId, service.name, stamp(joined).slice(0, 10), outcome)
         }
       }
+    }
+
+    const at = (time: string | null) => (time ? `2026-09-29T${time}:00` : null)
+    for (const [i, e] of LINE.entries()) {
+      addInLine.run(`dl${i + 1}`, e.queueId, e.userId, e.position, at(e.joinedAt), at(e.calledAt), e.almostReady)
     }
     target.exec('COMMIT')
   } catch (error) {
