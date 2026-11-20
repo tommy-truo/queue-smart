@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetDatabase } from '../src/db.ts'
-import { getQueue, reorder } from '../src/modules/queue.ts'
+import { findUserById } from '../src/modules/auth.ts'
+import { assignPriority, getQueue, joinQueue, reorder } from '../src/modules/queue.ts'
 import { getService, updateService } from '../src/modules/services.ts'
 import { validate } from '../src/validation.ts'
 
@@ -25,5 +26,27 @@ describe('request validation regressions', () => {
     const before = getQueue('s1')
     expect(() => reorder('s1', 'q2', body)).toThrow('Invalid input')
     expect(getQueue('s1')).toEqual(before)
+  })
+})
+
+describe('priority assignment', () => {
+  it.each(['high', 'low', null])('prevents regular users from choosing priority %s', priority => {
+    expect(() => joinQueue(findUserById('u1')!, 's3', { priority })).toThrow('Invalid input')
+    expect(getQueue('s3')).toHaveLength(2)
+  })
+
+  it('promotes waiting entries, preserves serving position, and demotes behind equal ranks', () => {
+    const entry = joinQueue(findUserById('u4')!, 's1', {})
+    expect(assignPriority('s1', entry.id, { priority: 'high' }).position).toBe(1)
+    expect(getQueue('s1')[0].id).toBe('q1')
+    expect(assignPriority('s1', entry.id, { priority: 'medium' }).position).toBe(3)
+    expect(assignPriority('s1', 'q1', { priority: 'low' }).status).toBe('serving')
+    expect(assignPriority('s1', 'q1', { priority: 'low' }).position).toBe(0)
+  })
+
+  it('rejects missing, invalid, and foreign entries', () => {
+    expect(() => assignPriority('s1', 'q2', {})).toThrow('Invalid input')
+    expect(() => assignPriority('s1', 'q2', { priority: 'urgent' })).toThrow('Invalid input')
+    expect(() => assignPriority('s1', 'q4', { priority: 'high' })).toThrow(/not in line/)
   })
 })
