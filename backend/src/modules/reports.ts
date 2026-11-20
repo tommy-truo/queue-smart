@@ -32,16 +32,29 @@ export type ServiceActivityRow = {
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
+function validCalendarDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00Z`)
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
 /** Reads from, to and serviceId out of a query string. */
 export function parseFilters(query: Record<string, unknown>): ReportFilters {
   const filters: ReportFilters = {}
   for (const key of ['from', 'to'] as const) {
     const value = query[key]
     if (value === undefined || value === '') continue
-    if (typeof value !== 'string' || !DATE.test(value)) throw new HttpError(400, `${key} must be a date like 2026-09-29.`)
+    if (typeof value !== 'string' || !DATE.test(value) || !validCalendarDate(value)) {
+      throw new HttpError(400, `${key} must be a date like 2026-09-29.`)
+    }
     filters[key] = value
   }
-  if (typeof query.serviceId === 'string' && query.serviceId) filters.serviceId = query.serviceId
+  if (query.serviceId !== undefined && query.serviceId !== '') {
+    if (typeof query.serviceId !== 'string') throw new HttpError(400, 'serviceId must be a single service ID.')
+    filters.serviceId = query.serviceId
+  }
+  if (filters.from && filters.to && filters.from > filters.to) {
+    throw new HttpError(400, 'from must be on or before to.')
+  }
   return filters
 }
 
