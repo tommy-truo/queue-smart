@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { api } from '../../api.ts'
 import { capitalize } from '../../format.ts'
 import type { Service } from '../../types.ts'
+import LiveBoard from './LiveBoard.tsx'
 
 type ServiceSummary = Service & { queueLength: number }
 
@@ -62,6 +63,9 @@ export default function AdminDashboard() {
         {openCount} of {services.length} queues open, {totalWaiting} people in line.
       </p>
 
+      <LiveBoard />
+
+      <h2>Services</h2>
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
       {services.length === 0 ? <p>No services yet. <Link to="/admin/services">Create a service</Link>.</p> : null}

@@ -1,8 +1,12 @@
 import { Router } from 'express'
 import { currentUser, requireRole } from '../middleware.ts'
-import { getQueue, joinQueue, leaveQueue, myQueues, removeFromQueue, reorder, requeue, serveNext } from '../modules/queue.ts'
+import { getQueue, joinQueue, leaveQueue, myQueues, openQueues, removeFromQueue, reorder, requeue, serveNext } from '../modules/queue.ts'
 
 export const queuesRouter = Router()
+
+queuesRouter.get('/', requireRole('admin'), (_req, res) => {
+  res.json(openQueues())
+})
 
 queuesRouter.get('/mine', requireRole('user'), (_req, res) => {
   res.json(myQueues(currentUser(res).id))

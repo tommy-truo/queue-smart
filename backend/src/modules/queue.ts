@@ -5,7 +5,7 @@ import type { Priority, QueueEntry, Service, User } from '../types.ts'
 import { assertValid } from '../validation.ts'
 import { recordHistory } from './history.ts'
 import { notify } from './notifications.ts'
-import { getService, PRIORITIES } from './services.ts'
+import { getService, listServices, PRIORITIES } from './services.ts'
 import { estimateWait } from './waitTime.ts'
 
 /** People at or above this position (1 = next up) are marked almost ready. */
@@ -110,6 +110,13 @@ export function getQueue(serviceId: string): QueueView[] {
     position: someoneServing ? index : index + 1,
     estimatedWait: estimateWait(index, service.expectedDuration),
   }))
+}
+
+/** Every open queue with its summary and the people in it, for the admin live board. */
+export function openQueues() {
+  return listServices()
+    .filter((service) => service.open)
+    .map((service) => ({ ...service, ...queueSummary(service), entries: getQueue(service.id) }))
 }
 
 /** Queue length and the wait someone joining now would get. */

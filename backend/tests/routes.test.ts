@@ -92,6 +92,17 @@ describe('queue routes', () => {
     expect(res.status).toBe(409)
   })
 
+  it('lets admins see every open queue with the people in it', async () => {
+    const res = await request(app).get('/api/queues').set('x-user-id', 'a1')
+    expect(res.status).toBe(200)
+    // Student ID Office is closed, so it is left out.
+    expect(res.body.map((q: { name: string }) => q.name)).toEqual(['Academic Advising', 'Financial Aid Help Desk', 'IT Support'])
+    expect(res.body[0].queueLength).toBe(3)
+    expect(res.body[0].entries.map((e: { userName: string }) => e.userName)).toEqual(['Jordan Lee', 'Sam Patel', 'Alex Kim'])
+
+    expect((await request(app).get('/api/queues').set('x-user-id', 'e1')).status).toBe(403)
+  })
+
   it('lets staff view the queue and serve the next person', async () => {
     const queue = await request(app).get('/api/queues/s1').set('x-user-id', 'e1')
     expect(queue.body).toHaveLength(3)
