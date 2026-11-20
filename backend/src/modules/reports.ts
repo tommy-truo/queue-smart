@@ -47,15 +47,16 @@ export function parseFilters(query: Record<string, unknown>): ReportFilters {
 
 /** Every user's queue history, newest first. */
 export function participationReport(filters: ReportFilters): ParticipationRow[] {
-  const serviceName = filters.serviceId ? getService(filters.serviceId).name : null
+  if (filters.serviceId) getService(filters.serviceId)
+  const serviceId = filters.serviceId ?? null
   return getDb()
     .prepare(
       `SELECT p.fullName AS userName, p.email, h.serviceName, h.occurredOn AS date, h.outcome
        FROM History h JOIN UserProfile p ON p.userId = h.userId
-       WHERE (? IS NULL OR h.occurredOn >= ?) AND (? IS NULL OR h.occurredOn <= ?) AND (? IS NULL OR h.serviceName = ?)
+       WHERE (? IS NULL OR h.occurredOn >= ?) AND (? IS NULL OR h.occurredOn <= ?) AND (? IS NULL OR h.serviceId = ?)
        ORDER BY h.occurredOn DESC, p.fullName`,
     )
-    .all(filters.from ?? null, filters.from ?? null, filters.to ?? null, filters.to ?? null, serviceName, serviceName) as ParticipationRow[]
+    .all(filters.from ?? null, filters.from ?? null, filters.to ?? null, filters.to ?? null, serviceId, serviceId) as ParticipationRow[]
 }
 
 /** One row per service: its details, who is waiting now, outcomes, and the average actual wait. */
@@ -68,11 +69,11 @@ export function serviceActivityReport(filters: ReportFilters): ServiceActivityRo
     .prepare(
       `SELECT s.name AS serviceName, s.expectedDuration, s.priority, q.status AS queueStatus,
          (SELECT COUNT(*) FROM QueueEntry e WHERE e.queueId = q.queueId AND e.status = 'waiting') AS waitingNow,
-         (SELECT COUNT(*) FROM History h WHERE h.serviceName = s.name AND h.outcome = 'served'
+         (SELECT COUNT(*) FROM History h WHERE h.serviceId = s.serviceId AND h.outcome = 'served'
             AND (?1 IS NULL OR h.occurredOn >= ?1) AND (?2 IS NULL OR h.occurredOn <= ?2)) AS served,
-         (SELECT COUNT(*) FROM History h WHERE h.serviceName = s.name AND h.outcome = 'left'
+         (SELECT COUNT(*) FROM History h WHERE h.serviceId = s.serviceId AND h.outcome = 'left'
             AND (?1 IS NULL OR h.occurredOn >= ?1) AND (?2 IS NULL OR h.occurredOn <= ?2)) AS left,
-         (SELECT COUNT(*) FROM History h WHERE h.serviceName = s.name AND h.outcome = 'removed'
+         (SELECT COUNT(*) FROM History h WHERE h.serviceId = s.serviceId AND h.outcome = 'removed'
             AND (?1 IS NULL OR h.occurredOn >= ?1) AND (?2 IS NULL OR h.occurredOn <= ?2)) AS removed,
          (SELECT AVG((julianday(e.calledAt) - julianday(e.joinedAt)) * 1440) FROM QueueEntry e
             WHERE e.queueId = q.queueId AND e.calledAt IS NOT NULL

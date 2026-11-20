@@ -192,7 +192,7 @@ export function leaveQueue(user: User, serviceId: string): QueueEntry {
   if (!entry) throw new HttpError(404, `You are not in line for ${service.name}.`)
 
   finish(entry.id, 'canceled')
-  recordHistory(user.id, service.name, 'left')
+  recordHistory(user.id, service.name, 'left', service.id)
   renumber(serviceId)
   updateStatuses(service)
   return { ...entry, outcome: 'left' }
@@ -205,7 +205,7 @@ export function removeFromQueue(serviceId: string, entryId: string): QueueEntry 
   if (!entry) throw new HttpError(404, `That person is not in line for ${service.name}.`)
 
   finish(entry.id, 'canceled')
-  recordHistory(entry.userId, service.name, 'removed')
+  recordHistory(entry.userId, service.name, 'removed', service.id)
   notify(entry.userId, 'queue-update', `You were removed from the queue for ${service.name}.`)
   renumber(serviceId)
   updateStatuses(service)
@@ -272,7 +272,7 @@ export function serveNext(serviceId: string): { served?: QueueEntry; nowServing?
   if (line[0].status === 'serving') {
     served = { ...line.shift()!, status: 'served', outcome: 'served' }
     finish(served.id, 'served')
-    recordHistory(served.userId, service.name, 'served')
+    recordHistory(served.userId, service.name, 'served', service.id)
   }
 
   let nowServing: QueueEntry | undefined
