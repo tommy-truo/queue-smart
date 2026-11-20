@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
 import { removeFromQueue, requeue, serveNext, useQueues, type QueueView } from '../../queues.ts'
 import { waitSince } from './formatWait.ts'
 import './employeeQueue.css'
 
 export default function EmployeeQueue() {
-  const [serviceId, setServiceId] = useState('s1')
-  const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(serviceId)
+  const [params, setParams] = useSearchParams()
+  const requestedServiceId = params.get('serviceId') ?? ''
+  const { services, entries, loading, error, busy, message, actionError, refresh, runAction, selectedServiceId: serviceId } = useQueues(requestedServiceId)
   const [removing, setRemoving] = useState<QueueView | null>(null)
-  const [requeuing, setRequeuing] = useState(false)
+  const [requeuing, setRequeuing] = useState<QueueView | null>(null)
   const [nowMs, setNowMs] = useState(() => Date.now())
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 30_000)
@@ -20,11 +22,13 @@ export default function EmployeeQueue() {
   const service = services.find(service => service.id === serviceId)
 
   function confirmRequeue() {
-    if (!serving) return
-    const name = serving.userName
-    setRequeuing(false)
+    if (!requeuing) return
+    const entry = requeuing
+    const name = entry.userName
+    setRequeuing(null)
     void runAction(async () => {
-      await requeue(serviceId)
+      if (serving?.id !== entry.id) throw new Error('The person being served changed. Review the queue and try again.')
+      await requeue(entry.serviceId)
       return `Put ${name} back in line.`
     })
   }
@@ -46,10 +50,12 @@ export default function EmployeeQueue() {
     <section className="employee-queue">
       <h1>Queue</h1>
       <label>Service{' '}
-        <select value={serviceId} disabled={busy} onChange={event => setServiceId(event.target.value)}>
+        <select value={serviceId} disabled={busy} onChange={event => setParams({ serviceId: event.target.value })}>
           {services.map(service => <option key={service.id} value={service.id}>{service.name}{service.open ? '' : ' (closed)'}</option>)}
         </select>
       </label>
+      <button type="button" disabled={busy} onClick={refresh}>Refresh</button>
+      {services.length === 0 ? <p>No services available. Create a service first.</p> : null}
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
       <div className="employee-queue__now-serving">
@@ -57,7 +63,7 @@ export default function EmployeeQueue() {
         {serving ? (
           <div className="employee-queue__serving-row">
             <span className="employee-queue__serving-name">{serving.userName}</span>
-            <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRequeuing(true)}>Put back in line</button>
+            <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRequeuing(serving)}>Put back in line</button>
           </div>
         ) : <p className="employee-queue__now-serving-empty">No one is being served.</p>}
       </div>
@@ -77,12 +83,13 @@ export default function EmployeeQueue() {
             <span className="employee-queue__position">{index + 1}.</span>
             <span className="employee-queue__serving-name">{entry.userName}</span>
             <span className="employee-queue__wait">{waitSince(entry.joinedAt, nowMs)}</span>
-            <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
+
+                  <button type="button" className="employee-queue__remove-btn" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
           </li>
         ))}</ul>
       )}
-      <ConfirmModal open={requeuing} title="Put back in line?" message={`Put ${serving?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
-        confirmLabel="Put back in line" onConfirm={confirmRequeue} onCancel={() => setRequeuing(false)} />
+      <ConfirmModal open={requeuing !== null} title="Put back in line?" message={`Put ${requeuing?.userName ?? ''} back in line for ${service?.name ?? 'this queue'}?`}
+        confirmLabel="Put back in line" onConfirm={confirmRequeue} onCancel={() => setRequeuing(null)} />
       <ConfirmModal open={removing !== null} title="Remove from queue?" message={`Remove ${removing?.userName ?? ''} from ${service?.name ?? 'this queue'}?`}
         confirmLabel="Remove" onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
     </section>

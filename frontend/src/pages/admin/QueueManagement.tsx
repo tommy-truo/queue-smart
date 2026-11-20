@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import ConfirmModal from '../../components/ConfirmModal.tsx'
 import { formatTime } from '../../format.ts'
 import StatusBadge from '../../components/StatusBadge.tsx'
@@ -7,8 +8,9 @@ import { removeFromQueue, reorderQueueEntry, requeue, serveNext, useQueues, type
 type PendingReorder = { entry: QueueView; direction: 'up' | 'down' }
 
 export default function QueueManagement() {
-  const [serviceId, setServiceId] = useState('s1')
-  const { services, entries, loading, error, busy, message, actionError, refresh, runAction } = useQueues(serviceId)
+  const [params, setParams] = useSearchParams()
+  const requestedServiceId = params.get('serviceId') ?? ''
+  const { services, entries, loading, error, busy, message, actionError, refresh, runAction, selectedServiceId: serviceId } = useQueues(requestedServiceId)
   const [removing, setRemoving] = useState<QueueView | null>(null)
   const [requeuing, setRequeuing] = useState<QueueView | null>(null)
   const [reordering, setReordering] = useState<PendingReorder | null>(null)
@@ -19,6 +21,7 @@ export default function QueueManagement() {
     const entry = requeuing
     setRequeuing(null)
     void runAction(async () => {
+      if (entries.find(item => item.status === 'serving')?.id !== entry.id) throw new Error('The person being served changed. Review the queue and try again.')
       await requeue(entry.serviceId)
       return `Put ${entry.userName} back in line.`
     })
@@ -62,11 +65,13 @@ export default function QueueManagement() {
     <div className="page">
       <h1>Queue management</h1>
       <label>Service{' '}
-        <select value={serviceId} disabled={busy} onChange={event => setServiceId(event.target.value)}>
+        <select value={serviceId} disabled={busy} onChange={event => setParams({ serviceId: event.target.value })}>
           {services.map(service => <option key={service.id} value={service.id}>{service.name}{service.open ? '' : ' (closed)'}</option>)}
         </select>
       </label>
       <p>{entries.length} in line{service ? `, about ${service.expectedDuration} min each` : ''}.</p>
+      <button type="button" disabled={busy} onClick={refresh}>Refresh</button>
+      {services.length === 0 ? <p>No services available. Create a service first.</p> : null}
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
       {entries.length === 0 ? <p>No one is in this queue.</p> : (
@@ -103,6 +108,7 @@ export default function QueueManagement() {
                   {entry.status === 'serving' ? (
                     <button type="button" disabled={busy} onClick={() => setRequeuing(entry)}>Put back in line</button>
                   ) : null}{' '}
+
                   <button type="button" disabled={busy} onClick={() => setRemoving(entry)}>Remove</button>
                 </td>
               </tr>

@@ -92,7 +92,7 @@ export default function AdminDashboard() {
                   <button type="button" disabled={savingId !== null} onClick={() => toggleOpen(s.id)}>
                     {savingId === s.id ? 'Saving…' : s.open ? 'Close queue' : 'Open queue'}
                   </button>
-                  <Link to="/admin/queue">View queue</Link>
+                  <Link to={`/admin/queue?serviceId=${encodeURIComponent(s.id)}`}>View queue</Link>
                 </div>
               </td>
             </tr>
