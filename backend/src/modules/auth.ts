@@ -1,5 +1,6 @@
 import { HttpError } from '../errors.ts'
 import { getDb } from '../db.ts'
+import { transaction } from '../transaction.ts'
 import { hashPassword, verifyPassword } from '../password.ts'
 import { nextId } from '../util.ts'
 import type { Role, User } from '../types.ts'
@@ -62,7 +63,7 @@ export function findUserById(id: string): User | undefined {
   return row && toUser(row)
 }
 
-export function register(body: unknown): User {
+function registerAccount(body: unknown): User {
   assertValid(body, registerSchema)
   const { fullName, email, password, phone } = body as { fullName: string; email: string; password: string; phone?: string }
 
@@ -98,4 +99,8 @@ export function login(body: unknown): User {
     throw new HttpError(401, 'Invalid email or password.')
   }
   return toUser(row)
+}
+
+export function register(body: unknown): User {
+  return transaction(() => registerAccount(body))
 }
