@@ -32,6 +32,7 @@ export default function QueueStatus() {
   return (
     <div className="page">
       <h1>Queue status</h1>
+      <button type="button" disabled={busy} onClick={refresh}>Refresh</button>
       {message ? <p role="status">{message}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
       {entries.length === 0 ? <p>You are not currently in a queue. <Link to="/join">Join a queue</Link></p> : (
