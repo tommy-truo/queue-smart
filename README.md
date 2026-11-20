@@ -51,6 +51,7 @@ Requests that need a signed-in user send the `x-user-id` header with the `id` re
 | POST | `/api/auth/register`, `/api/auth/login` | anyone |
 | GET | `/api/services` | signed in |
 | POST / PUT | `/api/services`, `/api/services/:id` | admin |
+| GET | `/api/queues` (all open queues with the people in them) | admin |
 | GET | `/api/queues/mine` | user |
 | POST | `/api/queues/:serviceId/join`, `/api/queues/:serviceId/leave` | user |
 | GET | `/api/queues/:serviceId` | admin, employee |
